@@ -13,7 +13,7 @@
 ## 运行方式
 
 ```bash
-cd /root/.openclaw/workspace/games/deep_sea_odyssey
+cd /data/games/deep_sea_odyssey
 python3 game.py
 ```
 
