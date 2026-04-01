@@ -1,0 +1,210 @@
+<!-- atmosphere-added: 🌨️ 凛冬将至 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🌨️ 凛冬将至 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { padding-top: 0; background: linear-gradient(180deg, #0a1628 0%, #1a3a5c 30%, #2c4a6e 60%, #0a1628 100%); min-height: 100vh; }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(10,22,40,0.95); border-bottom: 1px solid rgba(135,206,235,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #87ceeb; flex: 1; }
+    .back-btn { background: none; border: none; color: #87ceeb; font-size: 20px; cursor: pointer; padding: 8px; }
+    .content { margin-top: 60px; padding: 12px; position: relative; z-index: 10; }
+    .stats-card, .battle-card, .quest-progress, .result-card { background: rgba(10,22,40,0.9); border: 2px solid #87ceeb; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+    .card-title { font-size: 14px; color: #87ceeb; margin-bottom: 8px; }
+    .stat-bar { height: 12px; background: rgba(0,0,0,0.4); border-radius: 6px; margin: 8px 0; overflow: hidden; }
+    .stat-bar-fill { height: 100%; border-radius: 6px; transition: width 0.3s; }
+    .stat-bar-fill.hp { background: linear-gradient(90deg, #ff4444, #ff6b6b); }
+    .stat-bar-fill.exp { background: linear-gradient(90deg, #ffd43b, #f59f00); }
+    .stat-row { display: flex; justify-content: space-between; font-size: 13px; color: #ffd43b; margin-top: 4px; }
+    .monster-display { font-size: 80px; margin: 20px 0; animation: winterPulse 4s ease-in-out infinite; }
+    @keyframes winterPulse { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } }
+    .monster-hp-bar { height: 16px; background: rgba(0,0,0,0.4); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+    .monster-hp-fill { height: 100%; background: linear-gradient(90deg, #ff4444, #ff6b6b); transition: width 0.3s; }
+    .monster-name { font-size: 18px; color: #87ceeb; margin-bottom: 4px; }
+    .monster-level { font-size: 12px; color: rgba(135,206,235,0.7); margin-bottom: 8px; }
+    .monster-hp-text { font-size: 12px; color: #87ceeb; }
+    .monster-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+    .monster-btn { background: rgba(135,206,235,0.1); border: 1px solid rgba(135,206,235,0.4); border-radius: 12px; padding: 12px 8px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .monster-btn:hover { background: rgba(135,206,235,0.2); }
+    .monster-btn.selected { border-color: #ffd43b; background: rgba(255,212,59,0.15); }
+    .monster-btn-icon { font-size: 32px; }
+    .monster-btn-name { font-size: 11px; color: #87ceeb; margin-top: 4px; }
+    .monster-btn-level { font-size: 10px; color: rgba(135,206,235,0.6); }
+    .attack-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #87ceeb, #b0e0e6); border: none; border-radius: 12px; color: #0a1628; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 16px; }
+    .quest-bar { height: 10px; background: rgba(0,0,0,0.4); border-radius: 5px; overflow: hidden; }
+    .quest-fill { height: 100%; background: linear-gradient(90deg, #ffd43b, #f59f00); transition: width 0.3s; }
+    .quest-text { font-size: 12px; color: rgba(135,206,235,0.8); margin-top: 6px; }
+    .result-icon { font-size: 48px; margin-bottom: 12px; }
+    .result-text { font-size: 18px; color: #ffd43b; margin-bottom: 8px; }
+    .result-reward { font-size: 14px; color: rgba(255,212,59,0.8); }
+  
+    /* Atmosphere: 🌨️ 凛冬将至 */
+
+    .storm-aura { position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 50% 0%,rgba(100,160,220,0.12) 0%,transparent 60%);pointer-events:none;z-index:1;animation:stormPulse 6s ease-in-out infinite; }
+    @keyframes stormPulse { 0%,100%{opacity:0.5}50%{opacity:1} }
+    .blizzard-h { position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:4;opacity:0.06;background:repeating-linear-gradient(100deg,transparent,transparent 3px,rgba(200,230,255,0.4) 3px,rgba(200,230,255,0.4) 5px);animation:blizzardHMove 0.3s linear infinite; }
+    @keyframes blizzardHMove { 0%{transform:translateX(0) translateY(0)}100%{transform:translateX(5px) translateY(3px)} }
+    .ice-shard { position:fixed;font-size:20px;opacity:0;animation:iceShardFall linear infinite;pointer-events:none;z-index:3;color:rgba(180,220,255,0.6); }
+    @keyframes iceShardFall { 0%{transform:translateY(-30px) rotate(0deg);opacity:0}15%{opacity:0.7}85%{opacity:0.4}100%{transform:translateY(100vh) rotate(180deg);opacity:0} }
+    .wind-gust { position:fixed;font-size:22px;opacity:0;animation:windGust ease-in-out infinite;pointer-events:none;z-index:4;color:rgba(180,210,255,0.4); }
+    @keyframes windGust { 0%,100%{opacity:0;transform:translateX(-50px) scaleX(0.8)}50%{opacity:0.5;transform:translateX(50vw) scaleX(1.2)} }
+    .aurora-borealis { position:fixed;top:0;left:0;right:0;height:40%;background:linear-gradient(180deg,rgba(80,200,150,0.05) 0%,rgba(100,150,255,0.06) 40%,rgba(150,100,200,0.04) 70%,transparent 100%);pointer-events:none;z-index:2;animation:auroraWave 10s ease-in-out infinite; }
+    @keyframes auroraWave { 0%,100%{opacity:0.4;transform:translateX(-5%) skewX(-2deg)}50%{opacity:0.8;transform:translateX(5%) skewX(2deg)} }
+    .frost-rune { position:fixed;font-size:18px;opacity:0;animation:frostRuneAppear ease-in-out infinite;pointer-events:none;z-index:3;color:rgba(150,210,255,0.5); }
+    @keyframes frostRuneAppear { 0%,100%{opacity:0;transform:scale(0.5)}50%{opacity:0.4;transform:scale(1.2)} }
+    .polar-bear-sil { position:fixed;font-size:45px;opacity:0.06;pointer-events:none;z-index:2;animation:bearRoam linear infinite; }
+    @keyframes bearRoam { 0%{transform:translateX(-100px)}100%{transform:translateX(calc(100vw + 100px))} }
+    .ice-floor { position:fixed;bottom:0;left:0;right:0;height:10%;background:linear-gradient(180deg,transparent,rgba(150,200,255,0.08) 50%,rgba(100,180,255,0.15));pointer-events:none;z-index:2; }
+    .vignette { position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:6;background:radial-gradient(ellipse at 50% 50%,transparent 35%,rgba(0,10,30,0.6) 100%); }
+</style>
+</head>
+<body>
+  
+  <div class="storm-aura"></div>
+  <div class="aurora-borealis"></div>
+  <div class="blizzard-h"></div>
+  <div id="iceShardContainer"></div>
+  <div id="windGustContainer"></div>
+  <div id="frostRuneContainer"></div>
+  <div id="polarBearContainer"></div>
+  <div class="ice-floor"></div>
+  <div class="vignette"></div>
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/seas.html'">←</button>
+    <h1>🌨️ 凛冬将至</h1>
+  </div>
+  <div class="content">
+    <div class="stats-card">
+      <div class="card-title">⚔️ 我的状态</div>
+      <div class="stat-bar"><div class="stat-bar-fill hp" id="playerHpBar" style="width:100%"></div></div>
+      <div class="stat-row"><span>❤️ HP: <span id="playerHp">0/0</span></span><span>⚡ 体力: <span id="playerEnergy">0</span></span></div>
+      <div class="stat-bar" style="margin-top:8px"><div class="stat-bar-fill exp" id="playerExpBar" style="width:0%"></div></div>
+      <div class="stat-row"><span>📈 Lv.<span id="playerLevel">1</span></span><span>EXP: <span id="playerExp">0</span>/<span id="playerMaxExp">100</span></span></div>
+    </div>
+    <div class="battle-card">
+      <div class="card-title">🎯 选择目标</div>
+      <div class="monster-list" id="monsterList"></div>
+    </div>
+    <div class="battle-card" id="battleArea" style="display:none">
+      <div class="card-title">⚔️ 战斗中</div>
+      <div class="monster-display" id="monsterDisplay">❄️</div>
+      <div class="monster-name" id="monsterName">寒冰精灵</div>
+      <div class="monster-level" id="monsterLevel">Lv.1</div>
+      <div class="monster-hp-bar"><div class="monster-hp-fill" id="monsterHpFill" style="width:100%"></div></div>
+      <div class="monster-hp-text">❤️ <span id="monsterHp">100</span>/<span id="monsterMaxHp">100</span></div>
+      <button class="attack-btn" onclick="attack()">⚔️ 攻击</button>
+    </div>
+    <div class="quest-progress" id="questProgress" style="display:none">
+      <div class="card-title">📋 凛冬试炼进度</div>
+      <div class="quest-bar"><div class="quest-fill" id="questFill" style="width:0%"></div></div>
+      <div class="quest-text">击败冬之战士: <span id="questCount">0</span>/10</div>
+    </div>
+    <div class="result-card" id="resultArea" style="display:none">
+      <div class="result-icon" id="resultIcon">🏆</div>
+      <div class="result-text" id="resultText">胜利！</div>
+      <div class="result-reward" id="resultReward">+50 经验 +10 金贝</div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="/shared.js"></script>
+  <script>
+    const monsters = [
+      { id: 1, name: '寒冰精灵', icon: '🧚', level: 4, hp: 150, attack: 25, exp: 55, gold: 22 },
+      { id: 2, name: '冬狼', icon: '🐺', level: 6, hp: 250, attack: 40, exp: 95, gold: 42 },
+      { id: 3, name: '冰霜巨人', icon: '🗿', level: 8, hp: 400, attack: 60, exp: 160, gold: 75 },
+      { id: 4, name: '凛冬骑士', icon: '⚔️', level: 11, hp: 700, attack: 95, exp: 280, gold: 130 },
+      { id: 5, name: '极寒领主', icon: '👑', level: 14, hp: 1050, attack: 125, exp: 420, gold: 190 },
+      { id: 6, name: '凛冬之王', icon: '❄️', level: 20, hp: 2000, attack: 180, exp: 750, gold: 380 },
+    ];
+    let currentMonster = null, playerData = {}, questKills = 0, battleInProgress = false;
+    async function loadPlayerData() {
+      try {
+        const res = await fetch(`${API_BASE}/player/profile`, { headers: getAuthHeader() });
+        const data = await res.json();
+        if (data.player) { playerData = data.player; updatePlayerUI(); }
+      } catch (e) {}
+    }
+    function updatePlayerUI() {
+      const hp = playerData.hp || 0, maxHp = playerData.max_hp || 100, exp = playerData.exp || 0, level = playerData.level || 1, maxExp = level * level * 100;
+      document.getElementById('playerHp').textContent = `${hp}/${maxHp}`;
+      document.getElementById('playerHpBar').style.width = `${(hp/maxHp*100).toFixed(1)}%`;
+      document.getElementById('playerEnergy').textContent = playerData.energy || 0;
+      document.getElementById('playerLevel').textContent = level;
+      document.getElementById('playerExp').textContent = exp;
+      document.getElementById('playerMaxExp').textContent = maxExp;
+      document.getElementById('playerExpBar').style.width = `${(exp/maxExp*100).toFixed(1)}%`;
+    }
+    function renderMonsterList() {
+      document.getElementById('monsterList').innerHTML = monsters.map(m => `<div class="monster-btn" onclick="selectMonster(${m.id})"><div class="monster-btn-icon">${m.icon}</div><div class="monster-btn-name">${m.name}</div><div class="monster-btn-level">Lv.${m.level}</div></div>`).join('');
+    }
+    function selectMonster(id) {
+      currentMonster = monsters.find(m => m.id === id);
+      if (!currentMonster) return;
+      document.querySelectorAll('.monster-btn').forEach((btn, i) => btn.classList.toggle('selected', monsters[i].id === id));
+      document.getElementById('battleArea').style.display = 'block';
+      document.getElementById('resultArea').style.display = 'none';
+      document.getElementById('questProgress').style.display = 'block';
+      document.getElementById('monsterDisplay').textContent = currentMonster.icon;
+      document.getElementById('monsterName').textContent = currentMonster.name;
+      document.getElementById('monsterLevel').textContent = `Lv.${currentMonster.level}`;
+      document.getElementById('monsterHp').textContent = currentMonster.hp;
+      document.getElementById('monsterMaxHp').textContent = currentMonster.hp;
+      document.getElementById('monsterHpFill').style.width = '100%';
+      battleInProgress = true;
+    }
+    function attack() {
+      if (!battleInProgress || !currentMonster) return;
+      const playerAttack = Math.floor((playerData.power || 10) / 10) + 5;
+      currentMonster.hp -= playerAttack;
+      if (currentMonster.hp < 0) currentMonster.hp = 0;
+      const hpPct = (currentMonster.hp / currentMonster.maxHp) * 100;
+      document.getElementById('monsterHp').textContent = currentMonster.hp;
+      document.getElementById('monsterHpFill').style.width = `${hpPct}%`;
+      if (currentMonster.hp <= 0) { battleInProgress = false; questKills++; updateQuestProgress(); showResult(true); return; }
+      const newHp = playerData.hp - currentMonster.attack;
+      playerData.hp = newHp <= 0 ? 0 : newHp;
+      updatePlayerUI();
+      if (playerData.hp <= 0) { battleInProgress = false; showResult(false); }
+    }
+    function showResult(won) {
+      document.getElementById('battleArea').style.display = 'none';
+      document.getElementById('resultArea').style.display = 'block';
+      if (won) {
+        document.getElementById('resultIcon').textContent = '🏆';
+        document.getElementById('resultText').textContent = '胜利！';
+        document.getElementById('resultReward').textContent = `+${currentMonster.exp} 经验 +${currentMonster.gold} 金贝`;
+        setTimeout(() => { document.getElementById('resultArea').style.display = 'none'; document.getElementById('questProgress').style.display = 'none'; document.querySelectorAll('.monster-btn').forEach(btn => btn.classList.remove('selected')); currentMonster = null; }, 2000);
+      } else {
+        document.getElementById('resultIcon').textContent = '💀';
+        document.getElementById('resultText').textContent = '战败...';
+        document.getElementById('resultReward').textContent = '休息一下再来吧';
+        setTimeout(() => { loadPlayerData(); document.getElementById('resultArea').style.display = 'none'; }, 2000);
+      }
+    }
+    function updateQuestProgress() {
+      const pct = Math.min(100, (questKills / 10) * 100);
+      document.getElementById('questFill').style.width = `${pct}%`;
+      document.getElementById('questCount').textContent = questKills;
+      if (questKills >= 10) showToast('🎉 凛冬试炼完成！');
+    }
+    loadPlayerData();
+    renderMonsterList();
+  
+
+    // Winter storm atmosphere
+    const isc = document.getElementById('iceShardContainer');
+    for(let i=0;i<20;i++){const s=document.createElement('div');s.className='ice-shard';s.textContent=['❄','❅','❆','🧊','🔹'][i%5];s.style.left=Math.random()*100+'%';s.style.fontSize=(Math.random()*14+10)+'px';s.style.animationDuration=(Math.random()*6+4)+'s';s.style.animationDelay=(Math.random()*6)+'s';isc.appendChild(s);}
+    const wgc = document.getElementById('windGustContainer');
+    ['💨','🌬️','💨'].forEach((icon,i)=>{const w=document.createElement('div');w.className='wind-gust';w.textContent=icon;w.style.top=(10+i*25)+'%';w.style.animationDuration=(4+Math.random()*3)+'s';w.style.animationDelay=(i*3)+'s';wgc.appendChild(w);});
+    const frc = document.getElementById('frostRuneContainer');
+    const runeIcons = ['✦','❄','✦','❄','✦','❄'];
+    runeIcons.forEach((icon,i)=>{const r=document.createElement('div');r.className='frost-rune';r.textContent=icon;r.style.left=(8+i*15)+'%';r.style.top=(15+i*10)+'%';r.style.fontSize=(16+Math.random()*8)+'px';r.style.animationDuration=(4+Math.random()*3)+'s';r.style.animationDelay=(i*1.5)+'s';frc.appendChild(r);});
+    const pbc = document.getElementById('polarBearContainer');
+    ['🐻‍❄️','🐻‍❄️'].forEach((icon,i)=>{const b=document.createElement('div');b.className='polar-bear-sil';b.textContent=icon;b.style.animationDuration=(80+i*30)+'s';b.style.animationDelay=(i*40)+'s';pbc.appendChild(b);});
+
+</script>
+</body>
+</html>

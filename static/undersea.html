@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🐠 海底世界 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { 
+      padding-top: 0; 
+      background: linear-gradient(180deg, #001a35 0%, #003366 25%, #006699 45%, #00aadd 60%, #00ccff 75%, #004466 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .depth-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,50,0.15) 100%);
+      pointer-events: none; z-index: 1;
+    }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(0,80,130,0.9); border-bottom: 1px solid rgba(0,200,255,0.4); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #00ffff; flex: 1; text-shadow: 0 0 8px rgba(0,255,255,0.4); }
+    .back-btn { background: none; border: none; color: #00ffff; font-size: 20px; cursor: pointer; padding: 8px; }
+
+    /* Water caustics */
+    .caustics {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: 
+        radial-gradient(ellipse at 20% 0%, rgba(100,220,255,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 60% 0%, rgba(100,200,255,0.06) 0%, transparent 40%),
+        radial-gradient(ellipse at 80% 10%, rgba(150,240,255,0.07) 0%, transparent 45%);
+      pointer-events: none; z-index: 2; animation: causticsShift 6s ease-in-out infinite;
+    }
+    @keyframes causticsShift {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    /* Light rays from surface */
+    .ray {
+      position: absolute;
+      top: -10%;
+      width: 60px;
+      background: linear-gradient(180deg, rgba(200,240,255,0.2), transparent);
+      transform-origin: top center;
+      animation: rayWave linear infinite;
+      pointer-events: none;
+    }
+    @keyframes rayWave {
+      0% { opacity: 0.3; transform: rotate(-3deg); }
+      50% { opacity: 0.7; transform: rotate(3deg); }
+      100% { opacity: 0.3; transform: rotate(-3deg); }
+    }
+
+    /* Bubbles */
+    .bubbles {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none; overflow: hidden; z-index: 3;
+    }
+    .bubble {
+      position: absolute; bottom: -50px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.7), rgba(100,200,255,0.2));
+      border-radius: 50%; animation: rise linear infinite;
+      box-shadow: inset -2px -2px 4px rgba(255,255,255,0.3);
+    }
+    @keyframes rise {
+      0% { transform: translateY(0) translateX(0) scale(1); opacity: 0.8; }
+      25% { transform: translateY(-25vh) translateX(10px) scale(1.05); }
+      50% { opacity: 0.5; transform: translateY(-50vh) translateX(-5px); }
+      75% { transform: translateY(-75vh) translateX(8px) scale(0.9); }
+      100% { transform: translateY(-110vh) translateX(0) scale(0.4); opacity: 0; }
+    }
+
+    /* Swimming fish */
+    .fish-container {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none; overflow: hidden; z-index: 4;
+    }
+    .fish {
+      position: absolute; font-size: 24px; animation: swim linear infinite;
+    }
+    @keyframes swim {
+      0% { transform: translateX(-80px) scaleX(1); }
+      49% { transform: translateX(calc(100vw + 80px)) scaleX(1); }
+      50% { transform: translateX(calc(100vw + 80px)) scaleX(-1); }
+      99% { transform: translateX(-80px) scaleX(-1); }
+      100% { transform: translateX(-80px) scaleX(1); }
+    }
+
+    /* Jellyfish */
+    .jellyfish-container {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none; overflow: hidden; z-index: 3;
+    }
+    .jellyfish {
+      position: absolute; font-size: 36px; animation: jellyFloat ease-in-out infinite;
+    }
+    @keyframes jellyFloat {
+      0%, 100% { transform: translateY(0) scaleX(1); opacity: 0.7; }
+      30% { transform: translateY(-30px) scaleX(1.05); opacity: 0.9; }
+      60% { transform: translateY(-10px) scaleX(0.95); opacity: 0.7; }
+    }
+
+    /* Kelp forest */
+    .kelp-container {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 35%; pointer-events: none; overflow: hidden; z-index: 2;
+    }
+    .kelp {
+      position: absolute; bottom: 0; font-size: 60px;
+      transform-origin: bottom center; animation: kelpSway ease-in-out infinite;
+    }
+    @keyframes kelpSway {
+      0%, 100% { transform: rotate(-8deg) scaleY(1); }
+      50% { transform: rotate(8deg) scaleY(1.03); }
+    }
+
+    /* Manta ray */
+    .manta {
+      position: fixed; font-size: 55px; opacity: 0.15;
+      pointer-events: none; z-index: 3;
+      animation: mantaGlide linear infinite;
+    }
+    @keyframes mantaGlide {
+      0% { transform: translateX(-100px) translateY(0); }
+      25% { transform: translateX(25vw) translateY(-20px); }
+      50% { transform: translateX(50vw) translateY(10px); }
+      75% { transform: translateX(75vw) translateY(-15px); }
+      100% { transform: translateX(calc(100vw + 100px)) translateY(0); }
+    }
+
+    /* Turtle */
+    .turtle {
+      position: fixed; font-size: 40px; opacity: 0.18;
+      pointer-events: none; z-index: 3;
+      animation: turtleSwim linear infinite;
+    }
+    @keyframes turtleSwim {
+      0% { transform: translateX(-80px) translateY(0) rotate(-5deg); }
+      50% { transform: translateX(50vw) translateY(-30px) rotate(5deg); }
+      100% { transform: translateX(calc(100vw + 80px)) translateY(0) rotate(-5deg); }
+    }
+
+    /* Phosphorescence / plankton */
+    .plankton {
+      position: fixed; width: 4px; height: 4px;
+      background: radial-gradient(circle, rgba(0,255,200,0.8), rgba(0,150,255,0.3));
+      border-radius: 50%; pointer-events: none; z-index: 5;
+      animation: planktonGlow ease-in-out infinite;
+    }
+    @keyframes planktonGlow {
+      0%, 100% { opacity: 0.2; transform: scale(1); }
+      50% { opacity: 0.9; transform: scale(1.8); }
+    }
+
+    /* Treasure chest */
+    .treasure-chest {
+      position: fixed; font-size: 36px; opacity: 0.2;
+      pointer-events: none; z-index: 3;
+      animation: chestBob ease-in-out infinite;
+      bottom: 30%;
+    }
+    @keyframes chestBob {
+      0%, 100% { transform: translateY(0) rotate(-2deg); }
+      50% { transform: translateY(-15px) rotate(2deg); }
+    }
+
+    /* Sand ripples on floor */
+    .sand-floor {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 15%;
+      background: linear-gradient(180deg, transparent, rgba(194,178,128,0.1) 50%, rgba(194,178,128,0.2));
+      pointer-events: none; z-index: 2;
+    }
+    .sand-ripple {
+      position: absolute; bottom: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(194,178,128,0.3), transparent);
+      animation: rippleMove linear infinite;
+    }
+    @keyframes rippleMove {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+
+    .content { 
+      margin-top: 60px; padding: 16px; position: relative; z-index: 10;
+    }
+    .sea-card {
+      background: rgba(0,80,130,0.75);
+      border: 2px solid rgba(0,200,255,0.5);
+      border-radius: 16px; padding: 20px; margin-bottom: 12px;
+      backdrop-filter: blur(8px); position: relative; overflow: hidden;
+    }
+    .sea-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 2px; background: linear-gradient(90deg, transparent, rgba(0,255,255,0.4), transparent);
+    }
+    .sea-title {
+      font-size: 16px; color: #00ffff; margin-bottom: 12px;
+      text-align: center; text-shadow: 0 0 10px rgba(0,255,255,0.5);
+    }
+    .creatures-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    }
+    .creature {
+      background: rgba(0,150,200,0.3); border-radius: 12px;
+      padding: 12px 8px; text-align: center; transition: all 0.3s;
+    }
+    .creature:hover {
+      background: rgba(0,200,255,0.4); transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0,255,255,0.3);
+    }
+    .creature-icon { font-size: 28px; }
+    .creature-name { font-size: 10px; color: rgba(0,200,255,0.8); margin-top: 4px; }
+    .coral-section {
+      display: flex; justify-content: center; gap: 15px;
+      margin-top: 20px; font-size: 32px;
+    }
+    .coral { animation: coralSway 3s ease-in-out infinite; }
+    .coral:nth-child(2) { animation-delay: 0.5s; }
+    .coral:nth-child(3) { animation-delay: 1s; }
+    @keyframes coralSway {
+      0%, 100% { transform: rotate(-5deg); }
+      50% { transform: rotate(5deg); }
+    }
+    .treasure {
+      background: rgba(255,180,0,0.2); border: 2px solid rgba(255,200,0,0.5); margin-top: 16px;
+    }
+    .treasure-title { color: #ffd700; }
+    .treasure-info { font-size: 12px; color: rgba(255,215,0,0.7); margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="depth-overlay"></div>
+  <div class="caustics"></div>
+  <div class="kelp-container" id="kelpContainer"></div>
+  <div class="sand-floor" id="sandFloor"></div>
+  <div id="raysContainer"></div>
+  <div class="bubbles" id="bubbles"></div>
+  <div class="fish-container" id="fishContainer"></div>
+  <div class="jellyfish-container" id="jellyfishContainer"></div>
+  <div id="mantaContainer"></div>
+  <div id="turtleContainer"></div>
+  <div id="planktonContainer"></div>
+  <div id="treasureChest"></div>
+  
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/seas.html'">←</button>
+    <h1>🐠 海底世界</h1>
+  </div>
+
+  <div class="content">
+    <div class="sea-card">
+      <div class="sea-title">🌟 海底奇观 🌟</div>
+      <div class="creatures-grid">
+        <div class="creature">
+          <div class="creature-icon">🐠</div>
+          <div class="creature-name">小丑鱼</div>
+        </div>
+        <div class="creature">
+          <div class="creature-icon">🐟</div>
+          <div class="creature-name">神仙鱼</div>
+        </div>
+        <div class="creature">
+          <div class="creature-icon">🐡</div>
+          <div class="creature-name">河豚</div>
+        </div>
+        <div class="creature">
+          <div class="creature-icon">🐠</div>
+          <div class="creature-name">蓝唐王</div>
+        </div>
+        <div class="creature">
+          <div class="creature-icon">🦈</div>
+          <div class="creature-name">鲨鱼</div>
+        </div>
+        <div class="creature">
+          <div class="creature-icon">🐙</div>
+          <div class="creature-name">章鱼</div>
+        </div>
+        <div class="creature">
+          <div class="creature-icon">🦑</div>
+          <div class="creature-name">乌贼</div>
+        </div>
+        <div class="creature">
+          <div class="creature-icon">🦀</div>
+          <div class="creature-name">螃蟹</div>
+        </div>
+      </div>
+      <div class="coral-section">
+        <div class="coral">🪸</div>
+        <div class="coral">🪷</div>
+        <div class="coral">🪸</div>
+      </div>
+    </div>
+    
+    <div class="sea-card treasure">
+      <div class="sea-title treasure-title">💎 海底宝藏</div>
+      <div class="treasure-info">
+        海底世界藏有无数珍宝<br>
+        探索各个海域收集贝壳和珍珠<br>
+        解锁更多稀有生物和宝藏
+      </div>
+    </div>
+    
+    <div class="sea-card">
+      <div class="sea-title">🐚 收集图鉴</div>
+      <div class="creatures-grid">
+        <div class="creature">
+          <div class="creature-icon">🐚</div>
+          <div class="creature-name">珍珠贝</div>
+        </div>
+        <div class="creature">
+          <div class="creature-icon">🪸</div>
+          <div class="creature-name">珊瑚</div>
+        </div>
+        <div class="creature">
+          <div class="creature-icon">⭐</div>
+          <div class="creature-name">海星</div>
+        </div>
+        <div class="creature">
+          <div class="creature-icon">🐚</div>
+          <div class="creature-name">扇贝</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Light rays
+    const raysContainer = document.getElementById('raysContainer');
+    for (let i = 0; i < 8; i++) {
+      const ray = document.createElement('div');
+      ray.className = 'ray';
+      ray.style.left = (5 + i * 13) + '%';
+      ray.style.height = '80%';
+      ray.style.animationDuration = (5 + i * 0.7) + 's';
+      ray.style.animationDelay = (i * 0.6) + 's';
+      raysContainer.appendChild(ray);
+    }
+
+    // Bubbles
+    const bubblesContainer = document.getElementById('bubbles');
+    for (let i = 0; i < 20; i++) {
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      const size = Math.random() * 28 + 8;
+      bubble.style.width = size + 'px';
+      bubble.style.height = size + 'px';
+      bubble.style.left = Math.random() * 100 + '%';
+      bubble.style.animationDuration = (Math.random() * 10 + 7) + 's';
+      bubble.style.animationDelay = (Math.random() * 8) + 's';
+      bubblesContainer.appendChild(bubble);
+    }
+
+    // Swimming fish
+    const fishContainer = document.getElementById('fishContainer');
+    const fishTypes = ['🐠', '🐟', '🐡', '🦈', '🐙', '🦑'];
+    for (let i = 0; i < 7; i++) {
+      const fish = document.createElement('div');
+      fish.className = 'fish';
+      fish.textContent = fishTypes[Math.floor(Math.random() * fishTypes.length)];
+      fish.style.top = (Math.random() * 60 + 10) + '%';
+      fish.style.animationDuration = (Math.random() * 12 + 12) + 's';
+      fish.style.animationDelay = (Math.random() * 12) + 's';
+      fish.style.fontSize = (Math.random() * 14 + 18) + 'px';
+      fishContainer.appendChild(fish);
+    }
+
+    // Jellyfish
+    const jellyContainer = document.getElementById('jellyfishContainer');
+    const jellyColors = ['🪼', '🪼', '🪼'];
+    for (let i = 0; i < 4; i++) {
+      const jelly = document.createElement('div');
+      jelly.className = 'jellyfish';
+      jelly.textContent = jellyColors[0];
+      jelly.style.left = (10 + i * 22) + '%';
+      jelly.style.top = (15 + Math.random() * 30) + '%';
+      jelly.style.animationDuration = (6 + Math.random() * 4) + 's';
+      jelly.style.animationDelay = (i * 1.5) + 's';
+      jellyContainer.appendChild(jelly);
+    }
+
+    // Manta rays
+    const mantaContainer = document.getElementById('mantaContainer');
+    for (let i = 0; i < 2; i++) {
+      const manta = document.createElement('div');
+      manta.className = 'manta';
+      manta.textContent = '🦅';
+      manta.style.top = (10 + i * 25) + '%';
+      manta.style.animationDuration = (45 + i * 20) + 's';
+      manta.style.animationDelay = (i * 20) + 's';
+      mantaContainer.appendChild(manta);
+    }
+
+    // Turtles
+    const turtleContainer = document.getElementById('turtleContainer');
+    for (let i = 0; i < 2; i++) {
+      const turtle = document.createElement('div');
+      turtle.className = 'turtle';
+      turtle.textContent = '🐢';
+      turtle.style.top = (20 + i * 30) + '%';
+      turtle.style.animationDuration = (35 + i * 15) + 's';
+      turtle.style.animationDelay = (i * 18) + 's';
+      turtleContainer.appendChild(turtle);
+    }
+
+    // Phosphorescence plankton
+    const planktonContainer = document.getElementById('planktonContainer');
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      p.className = 'plankton';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.top = Math.random() * 80 + '%';
+      p.style.animationDuration = (Math.random() * 3 + 2) + 's';
+      p.style.animationDelay = (Math.random() * 5) + 's';
+      planktonContainer.appendChild(p);
+    }
+
+    // Kelp forest
+    const kelpContainer = document.getElementById('kelpContainer');
+    const kelpTypes = ['🌿', '🌱', '🍃', '🌿'];
+    for (let i = 0; i < 8; i++) {
+      const kelp = document.createElement('div');
+      kelp.className = 'kelp';
+      kelp.textContent = kelpTypes[i % kelpTypes.length];
+      kelp.style.left = (2 + i * 13) + '%';
+      kelp.style.fontSize = (50 + Math.random() * 30) + 'px';
+      kelp.style.animationDuration = (3 + Math.random() * 2) + 's';
+      kelp.style.animationDelay = (i * 0.4) + 's';
+      kelp.style.opacity = 0.15 + Math.random() * 0.15;
+      kelpContainer.appendChild(kelp);
+    }
+
+    // Sand ripples
+    const sandFloor = document.getElementById('sandFloor');
+    for (let i = 0; i < 5; i++) {
+      const ripple = document.createElement('div');
+      ripple.className = 'sand-ripple';
+      ripple.style.width = (80 + Math.random() * 120) + 'px';
+      ripple.style.bottom = (Math.random() * 40) + '%';
+      ripple.style.animationDuration = (6 + Math.random() * 4) + 's';
+      ripple.style.animationDelay = (i * 2) + 's';
+      sandFloor.appendChild(ripple);
+    }
+
+    // Treasure chest
+    const chest = document.createElement('div');
+    chest.className = 'treasure-chest';
+    chest.textContent = '📦';
+    chest.style.left = '75%';
+    chest.style.animationDuration = '4s';
+    chest.style.animationDelay = '1s';
+    document.getElementById('treasureChest').appendChild(chest);
+  </script>
+</body>
+</html>

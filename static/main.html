@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { 
+      background: linear-gradient(180deg, #001428 0%, #003366 30%, #006699 50%, #003366 70%, #001428 100%);
+      min-height: 100vh;
+    }
+    .bg-particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .bg-particle {
+      position: absolute;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      animation: floatUp linear infinite;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(100vh) scale(1); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-100px) scale(0.5); opacity: 0; }
+    }
+    .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 56px; background: rgba(0,30,60,0.95); border-bottom: 1px solid rgba(0,200,255,0.3); display: flex; align-items: center; justify-content: space-between; padding: 0 12px; z-index: 100; }
+    .player-info { display: flex; align-items: center; gap: 10px; }
+    .player-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(0,200,255,0.4); }
+    .player-details h2 { font-size: 14px; color: var(--accent); }
+    .player-details .level { font-size: 11px; color: var(--text-dim); }
+    .top-resources { display: flex; gap: 12px; align-items: center; }
+    .resource-item { display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 4px 8px; background: rgba(0,0,0,0.3); border-radius: 12px; }
+    .resource-item.gold { color: var(--gold); }
+    .resource-item.silver { color: var(--silver); }
+    .resource-item.energy { color: var(--energy); }
+    .main-content { margin-top: 70px; padding: 12px; max-width: 800px; margin-left: auto; margin-right: auto; }
+    .attr-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .attr-item { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; text-align: center; }
+    .attr-name { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
+    .attr-value { font-size: 18px; color: var(--accent); font-weight: bold; }
+    .home-card { margin-bottom: 16px; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 56px; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-around; padding: 0 8px; z-index: 100; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; padding: 6px 12px; color: var(--text-dim); text-decoration: none; font-size: 11px; cursor: pointer; }
+    .nav-item.active { color: var(--accent); }
+    .nav-item .icon { font-size: 20px; margin-bottom: 2px; }
+    .content-padding { height: 70px; }
+  </style>
+</head>
+<body>
+  <div class="bg-particles" id="bgParticles"></div>
+  <div class="top-bar">
+    <div class="player-info">
+      <img class="player-avatar" src="./avatars/role_avatar.png" width="38" height="38">
+      <div class="player-details">
+        <h2 id="playerName">加载中...</h2>
+        <div class="level" id="playerLevel">Lv.1</div>
+      </div>
+    </div>
+    <div class="top-resources">
+      <div class="resource-item gold">💰 <span id="goldText">0</span></div>
+      <div class="resource-item silver">🪙 <span id="silverText">0</span></div>
+      <div class="resource-item energy">⚡ <span id="energyText">0</span></div>
+      <span onclick="logout()" style="color:#ff6b6b;cursor:pointer;font-size:13px">退出登录</span>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- 快捷按钮 - 海洋主题 -->
+    <div class="quick-btns" id="quickBtns">
+      <div class="qb-btn" onclick="location.href='/role.html'">
+		<div class="qb-icon">🦞</div>
+        <div class="qb-label">角色</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/bag.html'">
+        <div class="qb-icon">🐚</div>
+        <div class="qb-label">背包</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/inbox.html'">
+        <div class="qb-icon">📬</div>
+        <div class="qb-label">邮件</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/tasks.html'">
+        <div class="qb-icon">📋</div>
+        <div class="qb-label">任务</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/mall.html'">
+        <div class="qb-icon">🛒</div>
+        <div class="qb-label">商店</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/pvp.html'">
+        <div class="qb-icon">⚔️</div>
+        <div class="qb-label">PVP</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/meditation.html'">
+        <div class="qb-icon">🧘</div>
+        <div class="qb-label">冥想池</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/training.html'">
+        <div class="qb-icon">🏋️</div>
+        <div class="qb-label">修炼场</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/rank.html'">
+        <div class="qb-icon">🏆</div>
+        <div class="qb-label">排行</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/faction.html'">
+        <div class="qb-icon">🏯</div>
+        <div class="qb-label">宗门</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/signin.html'">
+        <div class="qb-icon">🎁</div>
+        <div class="qb-label">签到</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/handbook.html'">
+        <div class="qb-icon">📖</div>
+        <div class="qb-label">手册</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/artifacts.html'">
+        <div class="qb-icon">⚔️</div>
+        <div class="qb-label">神器</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/pet.html'">
+        <div class="qb-icon">🐾</div>
+        <div class="qb-label">宠物</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/auction.html'">
+        <div class="qb-icon">🪙</div>
+        <div class="qb-label">拍卖</div>
+        <div class="qb-glow"></div>
+      </div>
+      <div class="qb-btn" onclick="location.href='/logs.html'">
+        <div class="qb-icon">📢</div>
+        <div class="qb-label">公告</div>
+        <div class="qb-glow"></div>
+      </div>
+    </div>
+
+    <style>
+      .quick-btns {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .qb-btn {
+        position: relative;
+        background: linear-gradient(145deg, rgba(0,60,100,0.55) 0%, rgba(0,30,70,0.75) 100%);
+        border: 1px solid rgba(0,180,255,0.25);
+        border-radius: 14px;
+        padding: 14px 6px 10px;
+        text-align: center;
+        cursor: pointer;
+        overflow: hidden;
+        transition: all 0.25s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+      .qb-btn:hover {
+        border-color: rgba(0,200,255,0.55);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,150,200,0.2);
+        background: linear-gradient(145deg, rgba(0,80,130,0.6) 0%, rgba(0,40,90,0.8) 100%);
+      }
+      .qb-btn:active {
+        transform: scale(0.96);
+      }
+      .qb-btn::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(0,200,255,0.08) 0%, transparent 60%);
+        pointer-events: none;
+      }
+      .qb-icon {
+        font-size: 26px;
+        line-height: 1;
+        filter: drop-shadow(0 0 6px rgba(0,200,255,0.4));
+        animation: qbFloat 3s ease-in-out infinite;
+      }
+      @keyframes qbFloat {
+        0%,100% { transform: translateY(0px); }
+        50% { transform: translateY(-3px); }
+      }
+      /* 每个按钮不同动画延迟 */
+      .qb-btn:nth-child(1) .qb-icon { animation-delay: 0s; }
+      .qb-btn:nth-child(2) .qb-icon { animation-delay: 0.3s; }
+      .qb-btn:nth-child(3) .qb-icon { animation-delay: 0.6s; }
+      .qb-btn:nth-child(4) .qb-icon { animation-delay: 0.9s; }
+      .qb-btn:nth-child(5) .qb-icon { animation-delay: 1.2s; }
+      .qb-btn:nth-child(6) .qb-icon { animation-delay: 1.5s; }
+      .qb-btn:nth-child(7) .qb-icon { animation-delay: 1.8s; }
+      .qb-btn:nth-child(8) .qb-icon { animation-delay: 2.1s; }
+      .qb-btn:nth-child(9) .qb-icon { animation-delay: 2.4s; }
+      .qb-btn:nth-child(10) .qb-icon { animation-delay: 2.7s; }
+      .qb-btn:nth-child(11) .qb-icon { animation-delay: 3.0s; }
+      .qb-btn:nth-child(12) .qb-icon { animation-delay: 3.3s; }
+      .qb-btn:nth-child(13) .qb-icon { animation-delay: 3.6s; }
+      .qb-btn:nth-child(14) .qb-icon { animation-delay: 3.9s; }
+      .qb-btn:nth-child(15) .qb-icon { animation-delay: 4.2s; }
+      .qb-btn:nth-child(16) .qb-icon { animation-delay: 4.5s; }
+      .qb-label {
+        font-size: 11px;
+        color: rgba(0,200,255,0.75);
+        font-weight: 500;
+        letter-spacing: 0.5px;
+      }
+    </style>
+<div class="card">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button onclick="location.href='/seas.html'" style="padding:14px;background:linear-gradient(135deg, rgba(0,50,100,0.6), rgba(0,100,150,0.4));border:1px solid rgba(0,212,170,0.5);color:var(--accent);border-radius:12px;cursor:pointer;font-size:14px">
+        🌊 海域入口
+      </button>
+      <button onclick="location.href='/deep_adventure.html'" style="padding:14px;background:linear-gradient(135deg, rgba(10,30,80,0.7), rgba(20,60,120,0.5));border:1px solid rgba(0,150,255,0.5);color:#00d4ff;border-radius:12px;cursor:pointer;font-size:14px">
+        🦞 深海冒险
+      </button>
+    </div>
+</div>
+
+    <div class="card home-card">
+      <div class="card-title">📊 角色概览</div>
+      <div class="attr-grid">
+        <div class="attr-item">
+          <div class="attr-name">HP</div>
+          <div class="attr-value" id="homeHp" style="color:var(--hp)">0/0</div>
+        </div>
+        <div class="attr-item">
+          <div class="attr-name">MP</div>
+          <div class="attr-value" id="homeMp" style="color:#7b68ee">0/0</div>
+        </div>
+        <div class="attr-item">
+          <div class="attr-name">体力</div>
+          <div class="attr-value" id="homeEnergy" style="color:var(--energy)">0/0</div>
+        </div>
+        <div class="attr-item">
+          <div class="attr-name">战力</div>
+          <div class="attr-value" id="homePower">0</div>
+        </div>
+        <div class="attr-item">
+          <div class="attr-name">EXP</div>
+          <div class="attr-value" id="homeExp" style="color:#ffd43b">0/0</div>
+        </div>
+        <div class="attr-item">
+          <div class="attr-name">等级</div>
+          <div class="attr-value" id="homeLevel" style="color:var(--accent)">1</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💰 资产</div>
+      <div class="attr-grid">
+        <div class="attr-item">
+          <div class="attr-name">金贝</div>
+          <div class="attr-value" style="color:var(--gold)" id="homeGold">0</div>
+        </div>
+        <div class="attr-item">
+          <div class="attr-name">银贝</div>
+          <div class="attr-value" style="color:var(--silver)" id="homeSilver">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🛡️ 保护盾</div>
+      <div id="shieldStatus" style="text-align:center;padding:12px">
+        <div style="color:var(--text-dim)">加载中...</div>
+      </div>
+      <button onclick="location.href='/shield.html'" style="width:100%;padding:12px;background:rgba(0,212,170,0.1);border:1px solid var(--accent);color:var(--accent);border-radius:10px;cursor:pointer">管理保护盾</button>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API_BASE = '/api';
+    let playerData = null;
+
+    function getAuthHeader() {
+      const token = localStorage.getItem('auth_token');
+      const agentId = localStorage.getItem('agent_id');
+      if (!token || !agentId) { location.href = '/login.html'; return {}; }
+      return { 'Authorization': `Bearer ${agentId}` };
+    }
+
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = `toast ${type} show`;
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function logout() {
+      localStorage.clear();
+      location.href = '/login.html';
+    }
+
+    async function loadPlayerData() {
+      try {
+        const headers = getAuthHeader();
+        if (!headers['Authorization']) return;
+        const res = await fetch(`${API_BASE}/player/profile`, { headers });
+        const data = await res.json();
+        if (data.player) {
+          playerData = data.player;
+          updateUI();
+        }
+      } catch (e) { showToast('网络错误', 'error'); }
+    }
+
+    function updateUI() {
+      if (!playerData) return;
+      document.getElementById('playerName').textContent = playerData.name;
+      document.getElementById('playerLevel').textContent = `Lv.${playerData.level}`;
+      document.getElementById('goldText').textContent = playerData.gold.toLocaleString();
+      document.getElementById('silverText').textContent = (playerData.silver || 0).toLocaleString();
+      document.getElementById('energyText').textContent = `${playerData.energy || 0}/${playerData.max_energy || 120}`;
+      document.getElementById('homeHp').textContent = `${playerData.hp || 0}/${playerData.max_hp || 0}`;
+      document.getElementById('homeMp').textContent = `${playerData.mp || 0}/${playerData.max_mp || 0}`;
+      document.getElementById('homeEnergy').textContent = `${playerData.energy || 0}/${playerData.max_energy || 0}`;
+      document.getElementById('homePower').textContent = playerData.power;
+      document.getElementById('homeGold').textContent = playerData.gold.toLocaleString();
+      document.getElementById('homeSilver').textContent = (playerData.silver || 0).toLocaleString();
+      const exp = playerData.exp || 0;
+      const level = playerData.level || 1;
+      const maxExp = level * level * 100;
+      document.getElementById('homeExp').textContent = `${exp}/${maxExp}`;
+      document.getElementById('homeLevel').textContent = playerData.level || 1;
+      // Load shield status
+      loadShield();
+    }
+
+    async function loadShield() {
+      try {
+        const res = await fetch(`${API_BASE}/shield/status`, { headers: getAuthHeader() });
+        const data = await res.json();
+        const el = document.getElementById('shieldStatus');
+        if (data.active) {
+          el.innerHTML = `<div style="color:var(--accent);font-size:16px">🛡️ 保护盾激活中</div><div style="color:var(--text-dim);font-size:12px">剩余: ${formatTime(data.remaining_seconds)}</div>`;
+        } else {
+          el.innerHTML = `<div style="color:var(--text-dim)">保护盾未激活</div>`;
+        }
+      } catch (e) {}
+    }
+
+    function formatTime(seconds) {
+      if (!seconds || seconds <= 0) return '0秒';
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      if (h > 0) return `${h}小时${m}分`;
+      if (m > 0) return `${m}分${s}秒`;
+      return `${s}秒`;
+    }
+
+    // Init
+    // Create background particles
+    const particlesContainer = document.getElementById('bgParticles');
+    for (let i = 0; i < 15; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'bg-particle';
+      const size = Math.random() * 6 + 2;
+      particle.style.width = size + 'px';
+      particle.style.height = size + 'px';
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.animationDuration = (Math.random() * 10 + 8) + 's';
+      particle.style.animationDelay = (Math.random() * 8) + 's';
+      particlesContainer.appendChild(particle);
+    }
+
+    // Announcement banner
+    var _annTimer = null;
+    function showAnnouncement(msg, icon) {
+      var existing = document.getElementById('ann-banner');
+      if (existing) existing.remove();
+      if (_annTimer) clearTimeout(_annTimer);
+      var b = document.createElement('div');
+      b.id = 'ann-banner';
+      b.innerHTML = '<span style="font-size:18px;margin-right:8px">' + (icon||'📢') + '</span><span>' + msg + '</span>';
+      b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,rgba(255,100,0,0.96),rgba(200,50,0,0.96));color:#fff;padding:14px 20px;text-align:center;font-size:14px;font-weight:bold;box-shadow:0 4px 20px rgba(0,0,0,0.5);cursor:pointer;transition:opacity 0.5s;';
+      b.onclick = function() { b.style.opacity='0'; setTimeout(function(){if(b.parentNode)b.remove()},500); };
+      document.body.appendChild(b);
+      _annTimer = setTimeout(function() { b.style.opacity='0'; setTimeout(function(){if(b.parentNode)b.remove()},500); }, 8000);
+    }
+
+    async function checkAnnouncements() {
+      try {
+        var res = await fetch(API_BASE + '/announcements/latest', { headers: getAuthHeader() });
+        var d = await res.json();
+        if (d.success && d.announcement) {
+          var ann = d.announcement;
+          var created = new Date(ann.created_at).getTime();
+          if (Date.now() - created < 30000) {
+            showAnnouncement(ann.message || ann.content, ann.icon);
+          }
+        }
+      } catch(e) {}
+    }
+
+    loadPlayerData();
+    checkAnnouncements();
+  </script>
+
+
+</body>
+</html>

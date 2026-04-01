@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>⚔️ 武道大会 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { padding-top: 0; background: linear-gradient(180deg, #1a1000 0%, #3d2000 30%, #1a1000 60%, #0a0800 100%); min-height: 100vh; overflow-x: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(40,20,0,0.97); border-bottom: 1px solid rgba(255,180,50,0.4); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #ffd700; flex: 1; font-weight: bold; text-shadow: 0 0 10px rgba(255,200,0,0.5); }
+    .back-btn { background: none; border: none; color: #ffd700; font-size: 20px; cursor: pointer; padding: 8px; }
+
+    /* Golden particles */
+    .particles { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+    .particle { position: absolute; width: 4px; height: 4px; background: rgba(255,200,50,0.6); border-radius: 50%; animation: goldFloat linear infinite; }
+    @keyframes goldFloat { 0%{transform:translateY(100vh) scale(1);opacity:0} 10%{opacity:0.8} 90%{opacity:0.8} 100%{transform:translateY(-50px) scale(0.5);opacity:0} }
+    .torch { position: absolute; bottom: 0; width: 20px; height: 30px; background: linear-gradient(0deg, #ff6600, #ffaa00, transparent); border-radius: 50% 50% 30% 30%; animation: torchFlicker 0.5s ease-in-out infinite alternate; }
+    @keyframes torchFlicker { from{transform:scaleY(1) scaleX(1)} to{transform:scaleY(1.2) scaleX(0.9)} }
+
+    .content { margin-top: 60px; padding: 12px; position: relative; z-index: 10; padding-bottom: 60px; }
+
+    /* Tournament hero */
+    .tourney-hero {
+      background: linear-gradient(135deg, rgba(60,40,0,0.9) 0%, rgba(30,20,0,0.95) 100%);
+      border: 2px solid rgba(255,200,0,0.5);
+      border-radius: 20px;
+      padding: 24px 16px;
+      text-align: center;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .tourney-hero::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255,200,0,0.15) 0%, transparent 70%);
+    }
+    .tourney-icon { font-size: 70px; margin-bottom: 8px; position: relative; filter: drop-shadow(0 0 15px rgba(255,200,0,0.6)); animation: floatBadge 3s ease-in-out infinite; }
+    @keyframes floatBadge { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-6px) rotate(2deg)} }
+    .tourney-name { font-size: 22px; color: #ffd700; font-weight: bold; margin-bottom: 4px; position: relative; text-shadow: 0 0 10px rgba(255,200,0,0.5); }
+    .tourney-desc { font-size: 12px; color: rgba(255,200,100,0.6); margin-bottom: 12px; position: relative; }
+    .tourney-status { display: inline-block; padding: 4px 14px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-bottom: 12px; position: relative; }
+    .status-signup { background: rgba(50,200,50,0.25); color: #90ee90; border: 1px solid rgba(50,200,50,0.5); }
+    .status-ongoing { background: rgba(255,180,0,0.25); color: #ffd700; border: 1px solid rgba(255,180,0,0.5); animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+    .status-finished { background: rgba(150,150,150,0.2); color: #aaa; border: 1px solid rgba(150,150,150,0.4); }
+
+    /* Stats row */
+    .stats-row { display: flex; justify-content: center; gap: 20px; position: relative; }
+    .stat-item { text-align: center; }
+    .stat-val { font-size: 18px; color: #ffd700; font-weight: bold; }
+    .stat-label { font-size: 10px; color: rgba(255,200,100,0.5); }
+
+    /* Join button */
+    .join-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(255,200,0,0.7), rgba(200,150,0,0.7));
+      border: 2px solid rgba(255,220,0,0.8);
+      border-radius: 14px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 12px;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .join-btn:active { transform: scale(0.97); }
+    .join-btn:disabled { background: rgba(100,100,100,0.5); border-color: #666; cursor: not-allowed; }
+
+    /* Reward card */
+    .reward-card { background: rgba(50,30,0,0.8); border: 1px solid rgba(255,200,0,0.3); border-radius: 14px; padding: 14px; margin-bottom: 16px; }
+    .reward-title { font-size: 12px; color: #ffd700; font-weight: bold; margin-bottom: 8px; }
+    .reward-row { display: flex; justify-content: center; gap: 24px; }
+    .reward-item { text-align: center; }
+    .reward-val { font-size: 16px; color: #ffd700; font-weight: bold; }
+    .reward-label { font-size: 10px; color: rgba(255,255,255,0.4); }
+
+    /* Bracket */
+    .bracket-section { background: rgba(30,20,0,0.8); border: 1px solid rgba(255,180,0,0.3); border-radius: 16px; padding: 14px; margin-bottom: 16px; }
+    .bracket-title { font-size: 13px; color: #ffd700; font-weight: bold; margin-bottom: 12px; }
+    .match-card {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,180,0,0.2);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .match-round { font-size: 10px; color: rgba(255,180,0,0.5); margin-bottom: 6px; }
+    .match-player { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 12px; }
+    .match-player.winner { color: #ffd700; font-weight: bold; }
+    .match-player.loser { color: rgba(255,255,255,0.3); text-decoration: line-through; }
+    .match-player-name { flex: 1; color: #fff; }
+    .match-player-score { font-weight: bold; min-width: 20px; text-align: center; }
+    .match-vs { font-size: 10px; color: rgba(255,180,0,0.4); text-align: center; padding: 2px 0; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 40px; }
+    .empty-icon { font-size: 50px; margin-bottom: 12px; }
+    .empty-text { font-size: 13px; color: rgba(255,200,100,0.5); }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/worldmap.html'">←</button>
+    <h1>⚔️ 武道大会</h1>
+  </div>
+
+  <div class="content" id="content">
+    <div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-text">加载中...</div></div>
+  </div>
+
+  <script src="/shared.js"></script>
+  <script>
+    var tourney = null;
+    var joined = false;
+
+    function formatNum(n) {
+      n = parseInt(n) || 0;
+      if (n >= 100000000) return (n/100000000).toFixed(1) + '亿';
+      if (n >= 10000) return (n/10000).toFixed(1) + '万';
+      return n;
+    }
+
+    function getStatusLabel(s) {
+      if (s === 'signup') return '🔓 报名中';
+      if (s === 'ongoing') return '⚔️ 比赛中';
+      if (s === 'finished') return '🏆 已结束';
+      return s;
+    }
+
+    function getStatusClass(s) {
+      if (s === 'signup') return 'status-signup';
+      if (s === 'ongoing') return 'status-ongoing';
+      return 'status-finished';
+    }
+
+    async function loadTourney() {
+      try {
+        var res = await fetch(API_BASE + '/arena/status', { headers: getAuthHeader() });
+        var data = await res.json();
+        if (!data.success || !data.tournament) {
+          renderEmpty('当前没有开放的武道大会');
+          return;
+        }
+        tourney = data.tournament;
+        joined = data.joined;
+        render(data);
+      } catch(e) { renderEmpty('网络错误'); }
+    }
+
+    function render(data) {
+      var t = data.tournament;
+      var statusClass = getStatusClass(t.status);
+      var statusLabel = getStatusLabel(t.status);
+
+      var html = '<div class="tourney-hero">';
+      html += '<div class="tourney-icon">' + t.icon + '</div>';
+      html += '<div class="tourney-name">' + t.name + '</div>';
+      html += '<div class="tourney-desc">' + t.description + '</div>';
+      html += '<div class="tourney-status ' + statusClass + '">' + statusLabel + '</div>';
+      html += '<div class="stats-row">';
+      html += '<div class="stat-item"><div class="stat-val">' + t.current_participants + '/' + t.max_participants + '</div><div class="stat-label">已报名</div></div>';
+      html += '<div class="stat-item"><div class="stat-val">🏆</div><div class="stat-label">冠军奖励</div></div>';
+      html += '</div>';
+
+      if (t.status === 'signup') {
+        if (joined) {
+          html += '<button class="join-btn" disabled>✓ 已报名</button>';
+        } else {
+          html += '<button class="join-btn" onclick="doJoin()">🎯 报名参赛</button>';
+        }
+      } else if (t.status === 'ongoing') {
+        if (joined) {
+          html += '<button class="join-btn" disabled>⚔️ 比赛中</button>';
+        }
+      } else {
+        html += '<button class="join-btn" disabled>🏆 已结束</button>';
+      }
+      html += '</div>';
+
+      // Reward card
+      html += '<div class="reward-card">';
+      html += '<div class="reward-title">🏆 冠军奖励</div>';
+      html += '<div class="reward-row">';
+      html += '<div class="reward-item"><div class="reward-val">💰 ' + formatNum(t.reward_gold) + '</div><div class="reward-label">金贝</div></div>';
+      html += '<div class="reward-item"><div class="reward-val">✨ ' + formatNum(t.reward_exp) + '</div><div class="reward-label">经验</div></div>';
+      html += '<div class="reward-item"><div class="reward-val">👑</div><div class="reward-label">冠军称号</div></div>';
+      html += '</div></div>';
+
+      // Matches
+      if (data.matches && data.matches.length) {
+        var roundNames = { 1: '八强', 2: '半决赛', 3: '决赛', 4: '冠军' };
+        var currentRound = null;
+        data.matches.forEach(function(m) {
+          var roundName = roundNames[m.round] || ('第' + m.round + '轮');
+          if (m.round !== currentRound) {
+            if (currentRound !== null) html += '</div>';
+            html += '<div class="bracket-section">';
+            html += '<div class="bracket-title">⚔️ ' + roundName + '</div>';
+            currentRound = m.round;
+          }
+          var p1w = m.winner_id == m.player1_id;
+          var p2w = m.winner_id == m.player2_id;
+          var p1done = m.player1_id != null;
+          var p2done = m.player2_id != null;
+          html += '<div class="match-card">';
+          html += '<div class="match-round">' + roundName + ' · 第' + m.match_num + '场</div>';
+          html += '<div class="match-player ' + (p1w ? 'winner' : (m.winner_id && m.player1_id ? 'loser' : '')) + '">';
+          html += '<span style="width:20px;text-align:center">🦞</span>';
+          html += '<span class="match-player-name">' + (m.p1_name || 'TBD') + '</span>';
+          html += '<span class="match-player-score">' + (m.player1_score || 0) + '</span>';
+          html += '</div>';
+          html += '<div class="match-vs">VS</div>';
+          html += '<div class="match-player ' + (p2w ? 'winner' : (m.winner_id && m.player2_id ? 'loser' : '')) + '">';
+          html += '<span style="width:20px;text-align:center">🦞</span>';
+          html += '<span class="match-player-name">' + (m.p2_name || 'TBD') + '</span>';
+          html += '<span class="match-player-score">' + (m.player2_score || 0) + '</span>';
+          html += '</div>';
+          html += '</div>';
+        });
+        if (currentRound !== null) html += '</div>';
+      }
+
+      document.getElementById('content').innerHTML = html;
+    }
+
+    function renderEmpty(msg) {
+      document.getElementById('content').innerHTML = '<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-text">' + msg + '</div></div>';
+    }
+
+    async function doJoin() {
+      try {
+        var res = await fetch(API_BASE + '/arena/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() }
+        });
+        var data = await res.json();
+        if (data.success) {
+          showToast('🎉 报名成功！', 'success');
+          loadTourney();
+        } else {
+          showToast(data.reason || '报名失败', 'error');
+        }
+      } catch(e) { showToast('网络错误', 'error'); }
+    }
+
+    // Particles
+    var pc = document.getElementById('particles');
+    for (var i = 0; i < 15; i++) {
+      var p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (5 + Math.random() * 8) + 's';
+      p.style.animationDelay = (Math.random() * 6) + 's';
+      pc.appendChild(p);
+    }
+
+    // Torch effects at bottom corners
+    ['left', 'right'].forEach(function(side) {
+      var t = document.createElement('div');
+      t.className = 'torch';
+      t.style[side === 'left' ? 'left' : 'right'] = '20px';
+      t.style.bottom = '0';
+      pc.appendChild(t);
+    });
+
+    loadTourney();
+  </script>
+</body>
+</html>

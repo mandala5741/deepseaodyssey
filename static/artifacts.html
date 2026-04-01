@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>⚔️ 神器榜 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { 
+      padding-top: 0; 
+      background: linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 40%, #0f0f2a 70%, #0a0a1a 100%);
+      min-height: 100vh;
+    }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(15,15,35,0.95); border-bottom: 1px solid rgba(255,215,0,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #ffd700; flex: 1; }
+    .back-btn { background: none; border: none; color: #ffd700; font-size: 20px; cursor: pointer; padding: 8px; }
+    
+    /* Shining particles */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: #ffd700;
+      border-radius: 50%;
+      animation: sparkle 3s ease-in-out infinite;
+    }
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+    
+    .content { 
+      margin-top: 60px; 
+      padding: 12px; 
+      position: relative;
+      z-index: 10;
+    }
+    
+    .info-card {
+      background: rgba(30,25,60,0.85);
+      border: 2px solid rgba(255,215,0,0.4);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .info-card h3 { color: #ffd700; font-size: 14px; margin-bottom: 8px; }
+    .info-card p { font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.6; }
+    
+    .section-title {
+      font-size: 14px;
+      color: #ffd700;
+      margin-bottom: 12px;
+      padding-left: 8px;
+      border-left: 3px solid #ffd700;
+    }
+    
+    .artifact-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    
+    .artifact-card {
+      background: rgba(30,25,60,0.8);
+      border: 2px solid rgba(100,100,150,0.3);
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .artifact-card:hover { 
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(255,215,0,0.2);
+    }
+    .artifact-card.owned {
+      border-color: rgba(255,215,0,0.5);
+    }
+    .artifact-card.locked {
+      opacity: 0.5;
+    }
+    .artifact-card.locked::after {
+      content: '🔒';
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 14px;
+    }
+    
+    .artifact-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+    .artifact-card.legendary::before { background: linear-gradient(90deg, #ffd700, #ff8c00, #ffd700); }
+    .artifact-card.epic::before { background: linear-gradient(90deg, #9370db, #da70d6, #9370db); }
+    .artifact-card.rare::before { background: linear-gradient(90deg, #4169e1, #6495ed, #4169e1); }
+    
+    .artifact-img {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 8px;
+      background: rgba(0,0,0,0.4);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      position: relative;
+    }
+    .artifact-card:not(.locked) .artifact-img {
+      animation: glow 2s ease-in-out infinite;
+    }
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+      50% { box-shadow: 0 0 20px rgba(255,215,0,0.6); }
+    }
+    
+    .artifact-name { font-size: 12px; color: #fff; margin-bottom: 4px; }
+    .artifact-rarity {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+    .artifact-rarity.legendary { background: rgba(255,215,0,0.2); color: #ffd700; }
+    .artifact-rarity.epic { background: rgba(218,112,214,0.2); color: #da70d6; }
+    .artifact-rarity.rare { background: rgba(65,105,225,0.2); color: #6495ed; }
+    
+    .artifact-bonus { font-size: 10px; color: #ffd700; margin-top: 4px; }
+    
+    .owned-tag {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(50,200,100,0.8);
+      color: #fff;
+      font-size: 10px;
+      padding: 4px;
+      display: none;
+    }
+    .artifact-card.owned .owned-tag { display: block; }
+    
+    /* Detail Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    
+    .modal-card {
+      background: linear-gradient(180deg, #1a1a3a 0%, #0f0f2a 100%);
+      border: 2px solid rgba(255,215,0,0.5);
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 320px;
+      width: 100%;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.5);
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .modal-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 16px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+    }
+    .modal-name { font-size: 18px; color: #fff; text-align: center; margin-bottom: 8px; }
+    .modal-rarity { text-align: center; margin-bottom: 12px; }
+    .modal-section {
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .modal-section-title { font-size: 12px; color: #ffd700; margin-bottom: 6px; }
+    .modal-section-content { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+    .modal-stats { display: flex; justify-content: center; gap: 20px; margin-top: 12px; }
+    .modal-stat { text-align: center; }
+    .modal-stat-icon { font-size: 20px; }
+    .modal-stat-value { font-size: 14px; color: #ffd700; }
+    .modal-stat-label { font-size: 10px; color: rgba(255,255,255,0.5); }
+    
+    .obtain-method {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,215,0,0.1);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 12px;
+    }
+    .obtain-icon { font-size: 24px; }
+    .obtain-info { flex: 1; }
+    .obtain-title { font-size: 12px; color: #ffd700; }
+    .obtain-desc { font-size: 11px; color: rgba(255,255,255,0.6); }
+    
+    .locked-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+    }
+    .locked-overlay span { font-size: 40px; }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+  
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>⚔️ 神器榜</h1>
+  </div>
+
+  <div class="content">
+    <div class="info-card">
+      <h3>🏆 神器系统</h3>
+      <p>神器是深海世界最强大的装备<br>通过各种活动或任务获取<br>每件神器都有独特的能力</p>
+    </div>
+    
+    <div class="section-title">🔥 传说神器</div>
+    <div class="artifact-grid">
+      <div class="artifact-card legendary locked" onclick="showDetail(0)">
+        <div class="artifact-img">👑</div>
+        <div class="artifact-name">深海帝王冠</div>
+        <div class="artifact-rarity legendary">传说</div>
+        <div class="artifact-bonus">战力 +800</div>
+        <div class="owned-tag">已拥有</div>
+      </div>
+      <div class="artifact-card legendary locked" onclick="showDetail(1)">
+        <div class="artifact-img">🔱</div>
+        <div class="artifact-name">三叉戟·深渊</div>
+        <div class="artifact-rarity legendary">传说</div>
+        <div class="artifact-bonus">攻击 +500</div>
+        <div class="owned-tag">已拥有</div>
+      </div>
+      <div class="artifact-card legendary locked" onclick="showDetail(2)">
+        <div class="artifact-img">🐉</div>
+        <div class="artifact-name">龙行之剑</div>
+        <div class="artifact-rarity legendary">传说</div>
+        <div class="artifact-bonus">战力 +1000</div>
+        <div class="owned-tag">已拥有</div>
+      </div>
+      <div class="artifact-card legendary locked" onclick="showDetail(3)">
+        <div class="artifact-img">⚡</div>
+        <div class="artifact-name">雷霆之怒</div>
+        <div class="artifact-rarity legendary">传说</div>
+        <div class="artifact-bonus">暴击 +50%</div>
+        <div class="owned-tag">已拥有</div>
+      </div>
+    </div>
+    
+    <div class="section-title">💜 史诗神器</div>
+    <div class="artifact-grid">
+      <div class="artifact-card epic locked" onclick="showDetail(4)">
+        <div class="artifact-img">🛡️</div>
+        <div class="artifact-name">海神护盾</div>
+        <div class="artifact-rarity epic">史诗</div>
+        <div class="artifact-bonus">防御 +300</div>
+        <div class="owned-tag">已拥有</div>
+      </div>
+      <div class="artifact-card epic locked" onclick="showDetail(5)">
+        <div class="artifact-img">🌊</div>
+        <div class="artifact-name">潮汐之戒</div>
+        <div class="artifact-rarity epic">史诗</div>
+        <div class="artifact-bonus">HP +1500</div>
+        <div class="owned-tag">已拥有</div>
+      </div>
+      <div class="artifact-card epic locked" onclick="showDetail(6)">
+        <div class="artifact-img">🐚</div>
+        <div class="artifact-name">珍珠龙珠</div>
+        <div class="artifact-rarity epic">史诗</div>
+        <div class="artifact-bonus">经验 +30%</div>
+        <div class="owned-tag">已拥有</div>
+      </div>
+      <div class="artifact-card epic locked" onclick="showDetail(7)">
+        <div class="artifact-img">🌀</div>
+        <div class="artifact-name">漩涡之翼</div>
+        <div class="artifact-rarity epic">史诗</div>
+        <div class="artifact-bonus">闪避 +25%</div>
+        <div class="owned-tag">已拥有</div>
+      </div>
+    </div>
+    
+    <div class="section-title">💎 稀有神器</div>
+    <div class="artifact-grid">
+      <div class="artifact-card rare locked" onclick="showDetail(8)">
+        <div class="artifact-img">⚓</div>
+        <div class="artifact-name">海神锚</div>
+        <div class="artifact-rarity rare">稀有</div>
+        <div class="artifact-bonus">攻击 +150</div>
+        <div class="owned-tag">已拥有</div>
+      </div>
+      <div class="artifact-card rare locked" onclick="showDetail(9)">
+        <div class="artifact-img">💎</div>
+        <div class="artifact-name">永恒钻石</div>
+        <div class="artifact-rarity rare">稀有</div>
+        <div class="artifact-bonus">防御 +100</div>
+        <div class="owned-tag">已拥有</div>
+      </div>
+      <div class="artifact-card rare locked" onclick="showDetail(10)">
+        <div class="artifact-img">🪸</div>
+        <div class="artifact-name">珊瑚手镯</div>
+        <div class="artifact-rarity rare">稀有</div>
+        <div class="artifact-bonus">HP +500</div>
+        <div class="owned-tag">已拥有</div>
+      </div>
+      <div class="artifact-card rare locked" onclick="showDetail(11)">
+        <div class="artifact-img">🦪</div>
+        <div class="artifact-name">珍珠吊坠</div>
+        <div class="artifact-rarity rare">稀有</div>
+        <div class="artifact-bonus">魅力 +80</div>
+        <div class="owned-tag">已拥有</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-icon" id="modalIcon">👑</div>
+      <div class="modal-name" id="modalName">深海帝王冠</div>
+      <div class="modal-rarity" id="modalRarity"></div>
+      
+      <div class="modal-section">
+        <div class="modal-section-title">📜 属性效果</div>
+        <div class="modal-section-content" id="modalEffect">
+          战力 +800
+        </div>
+      </div>
+      
+      <div class="modal-stats" id="modalStats">
+        <div class="modal-stat">
+          <div class="modal-stat-icon">⚔️</div>
+          <div class="modal-stat-value" id="modalAtk">0</div>
+          <div class="modal-stat-label">攻击</div>
+        </div>
+        <div class="modal-stat">
+          <div class="modal-stat-icon">🛡️</div>
+          <div class="modal-stat-value" id="modalDef">0</div>
+          <div class="modal-stat-label">防御</div>
+        </div>
+        <div class="modal-stat">
+          <div class="modal-stat-icon">❤️</div>
+          <div class="modal-stat-value" id="modalHp">0</div>
+          <div class="modal-stat-label">生命</div>
+        </div>
+        <div class="modal-stat">
+          <div class="modal-stat-icon">⚡</div>
+          <div class="modal-stat-value" id="modalCrit">0%</div>
+          <div class="modal-stat-label">暴击</div>
+        </div>
+      </div>
+      
+      <div class="obtain-method">
+        <div class="obtain-icon" id="obtainIcon">🏆</div>
+        <div class="obtain-info">
+          <div class="obtain-title" id="obtainTitle">如何获取</div>
+          <div class="obtain-desc" id="obtainDesc">武道大会冠军奖励</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  
+  <script>
+    const artifacts = [
+      {
+        icon: '👑', name: '深海帝王冠', key: 'crown_of_depths', rarity: 'legendary', rarityText: '传说',
+        effect: '战力 +800', atk: 200, def: 200, hp: 1000, crit: '20%',
+        obtain: '🏆', obtainTitle: '武道大会', obtainDesc: '武道大会冠军专属奖励'
+      },
+      {
+        icon: '🔱', name: '三叉戟·深渊', key: 'trident_abyss', rarity: 'legendary', rarityText: '传说',
+        effect: '攻击 +500', atk: 500, def: 0, hp: 0, crit: '0%',
+        obtain: '🎁', obtainTitle: 'VIP限定', obtainDesc: 'VIP10级可购买'
+      },
+      {
+        icon: '🐉', name: '龙行之剑', key: 'dragon_sword', rarity: 'legendary', rarityText: '传说',
+        effect: '战力 +1000', atk: 300, def: 100, hp: 500, crit: '30%',
+        obtain: '🌟', obtainTitle: '龙族遗迹', obtainDesc: '完成龙族遗迹副本'
+      },
+      {
+        icon: '⚡', name: '雷霆之怒', key: 'thunder_wrath', rarity: 'legendary', rarityText: '传说',
+        effect: '暴击 +50%', atk: 400, def: 0, hp: 0, crit: '50%',
+        obtain: '⛈️', obtainTitle: '雷暴天气', obtainDesc: '雷暴天气随机掉落'
+      },
+      {
+        icon: '🛡️', name: '海神护盾', key: 'poseidon_shield', rarity: 'epic', rarityText: '史诗',
+        effect: '防御 +300', atk: 0, def: 300, hp: 500, crit: '0%',
+        obtain: '🏛️', obtainTitle: '系统拍卖行', obtainDesc: '系统拍卖行竞拍'
+      },
+      {
+        icon: '🌊', name: '潮汐之戒', key: 'tidal_ring', rarity: 'epic', rarityText: '史诗',
+        effect: 'HP +1500', atk: 0, def: 100, hp: 1500, crit: '0%',
+        obtain: '🐚', obtainTitle: '珍珠湾', obtainDesc: '珍珠湾隐藏宝箱'
+      },
+      {
+        icon: '🐚', name: '珍珠龙珠', key: 'pearl_dragon_orb', rarity: 'epic', rarityText: '史诗',
+        effect: '经验 +30%', atk: 100, def: 50, hp: 200, crit: '10%',
+        obtain: '🐚', obtainTitle: '珍珠湾', obtainDesc: '珍珠湾Boss掉落'
+      },
+      {
+        icon: '🌀', name: '漩涡之翼', key: 'vortex_wing', rarity: 'epic', rarityText: '史诗',
+        effect: '闪避 +25%', atk: 50, def: 50, hp: 300, crit: '15%',
+        obtain: '🌀', obtainTitle: '深海漩涡', obtainDesc: '深海漩涡通关奖励'
+      },
+      {
+        icon: '⚓', name: '海神锚', key: 'anchors_of_poseidon', rarity: 'rare', rarityText: '稀有',
+        effect: '攻击 +150', atk: 150, def: 0, hp: 0, crit: '0%',
+        obtain: '🛒', obtainTitle: '市集', obtainDesc: '市集商人处购买'
+      },
+      {
+        icon: '💎', name: '永恒钻石', key: 'eternal_diamond', rarity: 'rare', rarityText: '稀有',
+        effect: '防御 +100', atk: 0, def: 100, hp: 200, crit: '0%',
+        obtain: '💎', obtainTitle: '冰封海峡', obtainDesc: '冰封海峡挖矿获得'
+      },
+      {
+        icon: '🪸', name: '珊瑚手镯', key: 'coral_bracelet', rarity: 'rare', rarityText: '稀有',
+        effect: 'HP +500', atk: 0, def: 30, hp: 500, crit: '0%',
+        obtain: '🏠', obtainTitle: '每日签到', obtainDesc: '连续签到7天奖励'
+      },
+      {
+        icon: '🦪', name: '珍珠吊坠', key: 'pearl_shell', rarity: 'rare', rarityText: '稀有',
+        effect: '魅力 +80', atk: 30, def: 30, hp: 100, crit: '5%',
+        obtain: '🎁', obtainTitle: '活动奖励', obtainDesc: '节日活动任务奖励'
+      }
+    ];
+    
+    // Create particles
+    const particlesContainer = document.getElementById('particles');
+    for (let i = 0; i < 30; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.top = Math.random() * 100 + '%';
+      particle.style.animationDelay = Math.random() * 3 + 's';
+      particlesContainer.appendChild(particle);
+    }
+    
+    function showDetail(index) {
+      const artifact = artifacts[index];
+      document.getElementById('modalIcon').textContent = artifact.icon;
+      document.getElementById('modalName').textContent = artifact.name;
+      document.getElementById('modalRarity').innerHTML = '<span class="artifact-rarity ' + artifact.rarity + '">' + artifact.rarityText + '</span>';
+      document.getElementById('modalEffect').textContent = artifact.effect;
+      document.getElementById('modalAtk').textContent = artifact.atk || '0';
+      document.getElementById('modalDef').textContent = artifact.def || '0';
+      document.getElementById('modalHp').textContent = artifact.hp || '0';
+      document.getElementById('modalCrit').textContent = artifact.crit;
+      document.getElementById('obtainIcon').textContent = artifact.obtain;
+      document.getElementById('obtainTitle').textContent = artifact.obtainTitle;
+      document.getElementById('obtainDesc').textContent = artifact.obtainDesc;
+      
+      document.getElementById('modal').classList.add('show');
+    }
+    
+    function closeModal() {
+      document.getElementById('modal').classList.remove('show');
+    }
+    
+    // Close modal on overlay click
+    document.getElementById('modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+    // Load player's owned artifacts and unlock them
+    async function loadOwnedArtifacts() {
+      try {
+        const res = await fetch(`${API_BASE}/player/artifacts`, { headers: getAuthHeader() });
+        const data = await res.json();
+        const ownedKeys = (data.artifacts || []).map(a => a.artifact_key);
+        console.log('Owned artifact keys:', ownedKeys);
+        
+        // Also build a name->key map from the artifacts array
+        const nameToKey = {};
+        artifacts.forEach((a, i) => { nameToKey[a.name] = i; });
+        
+        // Check each card and unlock if owned
+        const cards = document.querySelectorAll('.artifact-card');
+        cards.forEach(card => {
+          const nameEl = card.querySelector('.artifact-name');
+          if (!nameEl) return;
+          const name = nameEl.textContent;
+          const idx = nameToKey[name];
+          if (idx !== undefined && artifacts[idx].key && ownedKeys.includes(artifacts[idx].key)) {
+            card.classList.remove('locked');
+            card.classList.add('owned');
+            const overlay = card.querySelector('.locked-overlay');
+            if (overlay) overlay.style.display = 'none';
+          }
+        });
+      } catch (e) {
+        console.error('Failed to load owned artifacts:', e);
+      }
+    }
+    
+    loadOwnedArtifacts();
+  </script>
+</body>
+</html>

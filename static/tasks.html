@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>📋 任务中心 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    :root { --g:#2dcc3f; --g2:rgba(45,204,63,0.6); --glo:rgba(45,204,63,0.12); --gold:#ffd700; }
+    body { margin:0; padding:0; background:linear-gradient(180deg,#050e05 0%,#0a1f0a 50%,#071207 100%); min-height:100vh; font-family:-apple-system,sans-serif; color:#e8f5e9; }
+    .hdr { position:fixed; top:0; left:0; right:0; height:52px; background:rgba(5,14,5,0.97); border-bottom:1px solid rgba(45,204,63,0.25); display:flex; align-items:center; padding:0 12px; z-index:100; }
+    .hdr-back { background:none; border:none; color:var(--g); font-size:22px; cursor:pointer; padding:6px 8px; border-radius:8px; }
+    .hdr h1 { flex:1; text-align:center; font-size:17px; color:var(--g); letter-spacing:2px; text-shadow:0 0 12px rgba(45,204,63,0.4); margin:0; }
+    .hdr-spacer { width:40px; }
+    .cnt { margin-top:62px; padding:14px 12px; }
+
+    .section-head { display:flex; align-items:center; gap:8px; margin-bottom:12px; padding:0 4px; }
+    .section-icon { font-size:16px; }
+    .section-title { font-size:12px; color:var(--g2); font-weight:600; letter-spacing:1px; }
+    .section-line { flex:1; height:1px; background:linear-gradient(90deg,rgba(45,204,63,0.2),transparent); }
+
+    .task-card {
+      background:rgba(15,35,18,0.9);
+      border:1px solid rgba(45,204,63,0.2);
+      border-radius:16px; padding:14px;
+      margin-bottom:10px;
+      transition:all 0.2s;
+    }
+    .task-card:hover { border-color:rgba(45,204,63,0.4); }
+
+    .t-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+    .t-left { flex:1; }
+    .t-name { font-size:15px; color:#fff; font-weight:600; margin-bottom:4px; }
+    .t-badge { display:inline-block; font-size:10px; background:var(--glo); color:var(--g); padding:2px 8px; border-radius:20px; margin-right:5px; }
+    .t-reward { font-size:12px; color:var(--gold); font-weight:600; text-align:right; white-space:nowrap; margin-left:8px; }
+    .t-reward-num { font-size:14px; font-weight:700; }
+
+    .t-desc { font-size:12px; color:rgba(200,240,210,0.5); margin-bottom:10px; line-height:1.5; }
+
+    .t-prog { margin-bottom:6px; }
+    .t-bar { height:8px; background:rgba(0,0,0,0.4); border-radius:4px; overflow:hidden; margin-bottom:5px; }
+    .t-fill { height:100%; background:linear-gradient(90deg,#1a7a1a,var(--g)); border-radius:4px; transition:width 0.5s; }
+    .t-fill.full { background:linear-gradient(90deg,#b8860b,var(--gold)); }
+    .t-text { font-size:11px; color:var(--g2); display:flex; justify-content:space-between; }
+
+    .t-done { background:rgba(0,50,0,0.3); border:1px solid rgba(45,204,63,0.4); border-radius:16px; padding:14px; margin-bottom:10px; text-align:center; }
+    .t-done-icon { font-size:40px; margin-bottom:8px; }
+    .t-done-text { font-size:14px; color:var(--g); font-weight:600; }
+    .t-done-reward { font-size:12px; color:var(--gold); margin-top:4px; }
+
+    .empty { text-align:center; padding:60px 20px; color:var(--g2); }
+    .empty-ico { font-size:60px; margin-bottom:14px; opacity:0.4; }
+    .empty-text { font-size:14px; }
+
+    .info-bar { background:rgba(45,204,63,0.08); border:1px solid rgba(45,204,63,0.15); border-radius:12px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+    .info-icon { font-size:20px; }
+    .info-text { flex:1; font-size:12px; color:var(--g2); }
+    .info-val { font-size:13px; color:var(--g); font-weight:600; }
+
+    .complete-flash {
+      animation: flashIn 0.5s ease-out;
+    }
+    @keyframes flashIn {
+      0% { background: rgba(45,204,63,0.4); transform: scale(1.02); }
+      100% { background:rgba(15,35,18,0.9); transform: scale(1); }
+    }
+
+    .toast {
+      position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+      background:rgba(0,0,0,0.85); color:#fff; padding:12px 24px;
+      border-radius:25px; font-size:14px; z-index:300;
+      display:none; white-space:nowrap;
+      box-shadow:0 4px 20px rgba(0,0,0,0.5);
+    }
+    .toast.show { display:block; animation:fadeUp 0.3s ease-out; }
+    @keyframes fadeUp { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  </style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-spacer"></div>
+  <button class="hdr-back" onclick="location.href='/main.html'">←</button>
+  <h1>📋 任务中心</h1>
+</div>
+
+<div class="cnt" id="taskList">
+  <div class="info-bar">
+    <span class="info-icon">💡</span>
+    <span class="info-text">完成任务自动领取奖励</span>
+    <span class="info-val" id="taskCount">0 / 3</span>
+    <button id="refreshBtn" onclick="refreshTasks()" style="background:rgba(45,204,63,0.15);border:1px solid rgba(45,204,63,0.35);color:#2dcc3f;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer;margin-left:6px;display:none">🔄 刷新</button>
+  </div>
+
+  <div class="section-head">
+    <span class="section-icon">⚔️</span>
+    <span class="section-title">进行中的任务</span>
+    <span class="section-line"></span>
+  </div>
+  <div id="tasksWrap"><div class="empty"><div class="empty-ico">📋</div><div class="empty-text">加载中...</div></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/shared.js"></script>
+<script>
+var tasks = [];
+var refreshCount = 0;
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2500);
+}
+
+function esc(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderTasks() {
+  var wrap = document.getElementById('tasksWrap');
+  document.getElementById('taskCount').textContent = tasks.length + ' / 3';
+
+  // Show refresh count if available
+  if (typeof refreshCount !== 'undefined') {
+    var refreshEl = document.getElementById('refreshCount');
+    if (refreshEl) {
+      refreshEl.textContent = '🔄 ' + refreshCount + '次';
+      refreshEl.style.display = refreshCount > 0 ? 'inline-block' : 'none';
+    }
+  }
+
+  if (tasks.length === 0) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-ico">📋</div><div class="empty-text">暂无可用任务（请提升等级）</div></div>';
+    return;
+  }
+
+  var html = '';
+  for (var i = 0; i < tasks.length; i++) {
+    var t = tasks[i];
+    var pct = Math.min(100, ((t.progress || 0) / (t.target_count || 1)) * 100);
+    var isDone = pct >= 100;
+    var desc = t.description || '完成指定任务';
+    
+    var rewardText = (t.reward_gold || 0) > 0
+      ? '💰 ' + Number(t.reward_gold).toLocaleString() + '金贝'
+      : (t.reward_exp || 0) > 0 ? '✨ ' + Number(t.reward_exp).toLocaleString() + '经验' : '🎁';
+
+    html += '<div class="task-card' + (isDone ? ' complete-flash' : '') + '">' +
+      '<div class="t-top">' +
+        '<div class="t-left">' +
+          '<div class="t-name">' + esc(t.name) + '</div>' +
+          '<span class="t-badge">' + esc(t.task_type || '日常') + '</span>' +
+        '</div>' +
+        '<div class="t-reward">' + rewardText + '</div>' +
+      '</div>' +
+      '<div class="t-desc">' + esc(desc) + '</div>' +
+      '<div class="t-prog">' +
+        '<div class="t-bar"><div class="t-fill' + (isDone ? ' full' : '') + '" style="width:' + pct + '%"></div></div>' +
+        '<div class="t-text">' +
+          '<span>' + (isDone ? '✅ 已完成' : '进行中') + '</span>' +
+          '<span>' + (t.progress || 0) + ' / ' + (t.target_count || 0) + ' (' + Math.round(pct) + '%)</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  wrap.innerHTML = html;
+}
+
+async function loadTasks() {
+  try {
+    var r = await fetch(API_BASE + '/tasks/my', { headers: getAuthHeader() });
+    var d = await r.json();
+    if (d.success) {
+      tasks = d.tasks || [];
+      refreshCount = d.refresh_count !== undefined ? d.refresh_count : 3;
+      renderTasks();
+      var btn = document.getElementById('refreshBtn');
+      if (btn) {
+        btn.style.display = refreshCount > 0 ? 'inline-block' : 'none';
+        btn.textContent = '🔄 刷新(' + refreshCount + ')';
+      }
+    } else {
+      document.getElementById('tasksWrap').innerHTML = '<div class="empty"><div class="empty-ico">❌</div><div class="empty-text">加载失败</div></div>';
+    }
+  } catch (e) {
+    document.getElementById('tasksWrap').innerHTML = '<div class="empty"><div class="empty-ico">❌</div><div class="empty-text">网络错误</div></div>';
+  }
+}
+
+async function refreshTasks() {
+  var btn = document.getElementById('refreshBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '刷新中...'; }
+  try {
+    var r = await fetch(API_BASE + '/tasks/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeader() } });
+    var d = await r.json();
+    if (d.success) {
+      toast('🎉 ' + (d.message || '刷新成功！'));
+      tasks = d.tasks || [];
+      refreshCount = d.refresh_count !== undefined ? d.refresh_count : 0;
+      renderTasks();
+      if (btn) {
+        btn.textContent = '🔄 刷新(' + refreshCount + ')';
+        btn.style.display = refreshCount > 0 ? 'inline-block' : 'none';
+      }
+    } else {
+      toast(d.reason || '刷新失败', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = '🔄 刷新'; }
+    }
+  } catch (e) {
+    toast('网络错误', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 刷新'; }
+  }
+}
+
+// Auto-refresh every 30 seconds
+loadTasks();
+setInterval(loadTasks, 30000);
+</script>
+</body>
+</html>

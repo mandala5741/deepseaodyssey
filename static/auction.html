@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🏪 拍卖行 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { padding-top: 0; background: linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a1a 100%); min-height: 100vh; }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(10,10,30,0.95); border-bottom: 1px solid rgba(150,100,200,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #da70d6; flex: 1; }
+    .back-btn { background: none; border: none; color: #da70d6; font-size: 20px; cursor: pointer; padding: 8px; }
+    .content { margin-top: 60px; padding: 12px; }
+    
+    .auction-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 8px; }
+    .tab-btn { padding: 10px 16px; background: rgba(100,50,150,0.2); border: 1px solid rgba(150,100,200,0.3); border-radius: 20px; color: #da70d6; font-size: 13px; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
+    .tab-btn.active { background: rgba(150,100,200,0.4); border-color: #da70d6; }
+    
+    .auction-section { display: none; }
+    .auction-section.active { display: block; }
+    
+    .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .section-icon { font-size: 24px; }
+    .section-title { font-size: 16px; color: #da70d6; }
+    .section-desc { font-size: 11px; color: rgba(218,112,214,0.6); }
+    
+    .items-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .auction-item { background: rgba(30,20,50,0.8); border: 1px solid rgba(150,100,200,0.3); border-radius: 12px; padding: 12px; position: relative; overflow: hidden; }
+    .auction-item::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .auction-item.legendary::before { background: linear-gradient(90deg, #ffd700, #ff8c00, #ffd700); }
+    .auction-item.rare::before { background: linear-gradient(90deg, #9370db, #da70d6, #9370db); }
+    .auction-item.epic::before { background: linear-gradient(90deg, #00bfff, #1e90ff, #00bfff); }
+    .item-icon { font-size: 36px; text-align: center; margin: 8px 0; }
+    .item-name { font-size: 13px; color: #fff; text-align: center; margin-bottom: 4px; }
+    .item-rarity { font-size: 10px; text-align: center; padding: 2px 8px; border-radius: 10px; display: inline-block; margin: 0 auto 8px; }
+    .item-rarity.legendary { background: rgba(255,215,0,0.2); color: #ffd700; }
+    .item-rarity.rare { background: rgba(218,112,214,0.2); color: #da70d6; }
+    .item-rarity.epic { background: rgba(30,144,255,0.2); color: #1e90ff; }
+    .item-price { text-align: center; font-size: 12px; color: #ffd700; margin-bottom: 8px; }
+    .buy-btn { width: 100%; padding: 8px; background: linear-gradient(135deg, rgba(150,100,200,0.4), rgba(100,50,150,0.4)); border: 1px solid rgba(150,100,200,0.5); border-radius: 8px; color: #da70d6; font-size: 12px; cursor: pointer; }
+    .buy-btn:hover { background: linear-gradient(135deg, rgba(150,100,200,0.6), rgba(100,50,150,0.6)); }
+    .buy-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .timer { font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>🏪 拍卖行</h1>
+  </div>
+  
+  <div class="content">
+    <div class="auction-tabs">
+      <button class="tab-btn active" onclick="switchTab('system')">🏛️ 系统拍卖行</button>
+      <button class="tab-btn" onclick="switchTab('black')">🖤 黑市</button>
+      <button class="tab-btn" onclick="switchTab('market')">🏠 市集</button>
+      <button class="tab-btn" onclick="switchTab('caravan')">🐫 商队</button>
+      <button class="tab-btn" onclick="switchTab('flash')">⚡ 限时抢购</button>
+    </div>
+    
+    <!-- 系统拍卖行 -->
+    <div class="auction-section active" id="section-system">
+      <div class="section-header">
+        <div class="section-icon">🏛️</div>
+        <div>
+          <div class="section-title">系统拍卖行</div>
+          <div class="section-desc">官方认证，童叟无欺</div>
+        </div>
+      </div>
+      <div class="items-grid">
+        <div class="auction-item legendary">
+          <div class="item-icon">👑</div>
+          <div class="item-name">深海帝王冠</div>
+          <div class="item-rarity legendary">传说</div>
+          <div class="item-price">💰 1,000,000 金贝</div>
+          <button class="buy-btn" onclick="buyItem('深海帝王冠', 1000000)">竞拍</button>
+          <div class="timer">⏱️ 限时竞拍中</div>
+        </div>
+        <div class="auction-item legendary">
+          <div class="item-icon">🔱</div>
+          <div class="item-name">三叉戟·深渊</div>
+          <div class="item-rarity legendary">传说</div>
+          <div class="item-price">💰 888,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('三叉戟·深渊', 888888)">竞拍</button>
+          <div class="timer">⏱️ 限时竞拍中</div>
+        </div>
+        <div class="auction-item rare">
+          <div class="item-icon">💎</div>
+          <div class="item-name">永恒钻石</div>
+          <div class="item-rarity rare">稀有</div>
+          <div class="item-price">💰 188,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('永恒钻石', 188888)">购买</button>
+        </div>
+        <div class="auction-item rare">
+          <div class="item-icon">⚓</div>
+          <div class="item-name">海神锚</div>
+          <div class="item-rarity rare">稀有</div>
+          <div class="item-price">💰 128,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('海神锚', 128888)">购买</button>
+        </div>
+        <div class="auction-item epic">
+          <div class="item-icon">🦑</div>
+          <div class="item-name">深海巨兽蛋</div>
+          <div class="item-rarity epic">史诗</div>
+          <div class="item-price">💰 58,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('深海巨兽蛋', 58888)">购买</button>
+        </div>
+        <div class="auction-item epic">
+          <div class="item-icon">🐚</div>
+          <div class="item-name">珍珠龙珠</div>
+          <div class="item-rarity epic">史诗</div>
+          <div class="item-price">💰 38,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('珍珠龙珠', 38888)">购买</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 黑市 -->
+    <div class="auction-section" id="section-black">
+      <div class="section-header">
+        <div class="section-icon">🖤</div>
+        <div>
+          <div class="section-title">黑市</div>
+          <div class="section-desc">来路不明，概不退换</div>
+        </div>
+      </div>
+      <div class="items-grid">
+        <div class="auction-item legendary">
+          <div class="item-icon">💀</div>
+          <div class="item-name">骷髅王冠</div>
+          <div class="item-rarity legendary">传说</div>
+          <div class="item-price">💰 666,666 金贝</div>
+          <button class="buy-btn" onclick="buyItem('骷髅王冠', 666666)">购买</button>
+          <div class="timer">⚠️ 货源紧缺</div>
+        </div>
+        <div class="auction-item legendary">
+          <div class="item-icon">🗡️</div>
+          <div class="item-name">诅咒之刃</div>
+          <div class="item-rarity legendary">传说</div>
+          <div class="item-price">💰 588,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('诅咒之刃', 588888)">购买</button>
+          <div class="timer">⚠️ 货源紧缺</div>
+        </div>
+        <div class="auction-item rare">
+          <div class="item-icon">🦴</div>
+          <div class="item-name">亡灵之牙</div>
+          <div class="item-rarity rare">稀有</div>
+          <div class="item-price">💰 88,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('亡灵之牙', 88888)">购买</button>
+        </div>
+        <div class="auction-item rare">
+          <div class="item-icon">👁️</div>
+          <div class="item-name">幽灵眼</div>
+          <div class="item-rarity rare">稀有</div>
+          <div class="item-price">💰 66,666 金贝</div>
+          <button class="buy-btn" onclick="buyItem('幽灵眼', 66666)">购买</button>
+        </div>
+        <div class="auction-item epic">
+          <div class="item-icon">💀</div>
+          <div class="item-name">骷髅钥匙</div>
+          <div class="item-rarity epic">史诗</div>
+          <div class="item-price">💰 28,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('骷髅钥匙', 28888)">购买</button>
+        </div>
+        <div class="auction-item epic">
+          <div class="item-icon">🖤</div>
+          <div class="item-name">暗影披风</div>
+          <div class="item-rarity epic">史诗</div>
+          <div class="item-price">💰 22,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('暗影披风', 22888)">购买</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 市集 -->
+    <div class="auction-section" id="section-market">
+      <div class="section-header">
+        <div class="section-icon">🏠</div>
+        <div>
+          <div class="section-title">🏪 市集</div>
+          <div class="section-desc">平民天堂，淘货圣地 | 5%手续费</div>
+        </div>
+      </div>
+
+      <!-- 市集子标签 -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="tab-btn active" id="mTab-browse" onclick="mSwitchTab('browse')">🔍 逛市集</button>
+        <button class="tab-btn" id="mTab-my" onclick="mSwitchTab('my')">📦 我的上架</button>
+        <button class="tab-btn" id="mTab-sell" onclick="mSwitchTab('sell')">💰 我要卖</button>
+      </div>
+
+      <div id="market-content"></div>
+    </div>
+    
+    <!-- 商队 -->
+    <div class="auction-section" id="section-caravan">
+      <div class="section-header">
+        <div class="section-icon">🐫</div>
+        <div>
+          <div class="section-title">商队</div>
+          <div class="section-desc">神秘商人，漂洋过海</div>
+        </div>
+      </div>
+      <div class="items-grid">
+        <div class="auction-item legendary">
+          <div class="item-icon">🏺</div>
+          <div class="item-name">古埃及宝瓶</div>
+          <div class="item-rarity legendary">传说</div>
+          <div class="item-price">💰 388,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('古埃及宝瓶', 388888)">购买</button>
+          <div class="timer">🐫 商队停留中</div>
+        </div>
+        <div class="auction-item legendary">
+          <div class="item-icon">💫</div>
+          <div class="item-name">星辰之尘</div>
+          <div class="item-rarity legendary">传说</div>
+          <div class="item-price">💰 288,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('星辰之尘', 288888)">购买</button>
+          <div class="timer">🐫 商队停留中</div>
+        </div>
+        <div class="auction-item rare">
+          <div class="item-icon">🧂</div>
+          <div class="item-name">盐晶</div>
+          <div class="item-rarity rare">稀有</div>
+          <div class="item-price">💰 18,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('盐晶', 18888)">购买</button>
+        </div>
+        <div class="auction-item rare">
+          <div class="item-icon">🫖</div>
+          <div class="item-name">香料罐</div>
+          <div class="item-rarity rare">稀有</div>
+          <div class="item-price">💰 15,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('香料罐', 15888)">购买</button>
+        </div>
+        <div class="auction-item epic">
+          <div class="item-icon">🏮</div>
+          <div class="item-name">丝绸灯笼</div>
+          <div class="item-rarity epic">史诗</div>
+          <div class="item-price">💰 8,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('丝绸灯笼', 8888)">购买</button>
+        </div>
+        <div class="auction-item epic">
+          <div class="item-icon">🧶</div>
+          <div class="item-name">绒线球</div>
+          <div class="item-rarity epic">史诗</div>
+          <div class="item-price">💰 5,888 金贝</div>
+          <button class="buy-btn" onclick="buyItem('绒线球', 5888)">购买</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 限时抢购 -->
+    <div class="auction-section" id="section-flash">
+      <div class="section-header">
+        <div class="section-icon">⚡</div>
+        <div>
+          <div class="section-title">限时抢购</div>
+          <div class="section-desc">稀有装备，限时特惠</div>
+        </div>
+      </div>
+      <div id="flashItems" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 0">
+        <div style="text-align:center;padding:40px;color:rgba(255,200,0,0.4)">加载中...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  
+  <script src="/shared.js"></script>
+  <script>
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.auction-section').forEach(sec => sec.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('section-' + tab).classList.add('active');
+      if (tab === 'market') {
+        mSwitchTab(mCurrentTab);
+      }
+      if (tab === 'flash') {
+        loadFlashSale();
+      }
+    }
+
+    function showFlashEquipDetail(item) {
+      const existing = document.getElementById('flashEquipModal');
+      if (existing) existing.remove();
+      const tierRoman = ['零','Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ','Ⅵ','Ⅶ','Ⅷ','Ⅸ','Ⅹ','Ⅺ','Ⅻ','Ⅼ','Ⅽ','Ⅾ','Ⅿ'][item.tier] || item.tier;
+      const slotIcons = {weapon:'🗡️',helmet:'🪖',armor:'🛡️',greaves:'🦵',amulet:'📿',ring:'💍'};
+      const slotNames = {weapon:'武器',helmet:'头盔',armor:'盔甲',greaves:'护胫骨',amulet:'护身符',ring:'戒指'};
+      const tierColors = ['#aaa','#ff4444','#ff8800','#44ccff','#44ff88','#ffee44','#ff44ff','#ff8844','#88ff44','#44ffff','#ff44aa','#aa44ff','#44ff44','#ffaa44','#ff6644','#aa44aa','#44aaff'];
+      const color = tierColors[Math.min(item.tier - 1, tierColors.length - 1)];
+      const setIcon = item.set_type === 'wealth' ? '💛' : '💚';
+      const setLabel = item.set_type === 'wealth' ? '财富套装' : '兴盛套装';
+      const desc = item.description || `来自深海的神秘装备，蕴含着强大的${setLabel}力量。`;
+
+      const modal = document.createElement('div');
+      modal.id = 'flashEquipModal';
+      modal.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.88);padding:20px;backdrop-filter:blur(6px)';
+      modal.innerHTML = `
+        <div style="width:100%;max-width:340px;background:linear-gradient(160deg,#001828 0%,#001020 100%);border:2px solid ${color};border-radius:22px;padding:24px 18px;position:relative;box-shadow:0 0 50px rgba(0,0,0,0.8),0 0 20px ${color}40">
+          <style>@keyframes equipPop{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}</style>
+          <button onclick="document.getElementById('flashEquipModal').remove()" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+
+          <div style="text-align:center;margin-bottom:12px">
+            <div style="font-size:64px;filter:drop-shadow(0 0 12px ${color})">${slotIcons[item.slot] || '🗡️'}</div>
+          </div>
+
+          <div style="text-align:center;margin-bottom:4px">
+            <span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:bold;background:${color}20;color:${color};border:1px solid ${color}60">${item.tier_name} ${tierRoman}</span>
+          </div>
+          <div style="text-align:center;font-size:18px;color:#fff;font-weight:bold;margin-bottom:4px">${slotNames[item.slot] || item.slot}</div>
+          <div style="text-align:center;margin-bottom:14px">
+            <span style="font-size:11px;color:${item.set_type==='wealth'?'#ffd700':'#00e564'}">${setIcon} ${setLabel}</span>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.3);border-radius:14px;padding:14px;margin-bottom:14px;border:1px solid rgba(255,255,255,0.06)">
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:10px;text-align:center">📊 属性详情</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div style="background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.2);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:18px">⚔️</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.4)">攻击</div>
+                <div style="font-size:16px;color:#ff6666;font-weight:bold">+${item.base_power}</div>
+              </div>
+              <div style="background:rgba(80,130,255,0.1);border:1px solid rgba(80,130,255,0.2);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:18px">🛡️</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.4)">防御</div>
+                <div style="font-size:16px;color:#6699ff;font-weight:bold">+${item.base_defense}</div>
+              </div>
+              <div style="background:rgba(80,200,120,0.1);border:1px solid rgba(80,200,120,0.2);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:18px">❤️</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.4)">生命</div>
+                <div style="font-size:16px;color:#66cc88;font-weight:bold">+${item.base_hp}</div>
+              </div>
+              <div style="background:rgba(255,140,180,0.1);border:1px solid rgba(255,140,180,0.2);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:18px">💥</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.4)">暴击</div>
+                <div style="font-size:16px;color:#ff88bb;font-weight:bold">+${item.base_luck || 0}%</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.25);border-radius:12px;padding:12px;margin-bottom:14px;text-align:center;border:1px solid rgba(255,255,255,0.05)">
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">📜 装备描述</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.7;font-style:italic">"${desc}"</div>
+          </div>
+
+          <div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:12px">点击外部或右上角关闭</div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+    }
+
+    async function loadFlashSale() {
+      try {
+        const res = await fetch(`${API_BASE}/equipment/flash_sale`, { headers: getAuthHeader() });
+        const data = await res.json();
+        if (!data.items || data.items.length === 0) {
+          document.getElementById('flashItems').innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,200,0,0.4)">暂无抢购商品</div>';
+          return;
+        }
+        const slotNames = data.slot_display || {'weapon':'武器','helmet':'头盔','armor':'盔甲','greaves':'护胫骨','amulet':'护身符','ring':'戒指'};
+        const tierColors = ['#aaa','#ff4444','#ff8800','#44ccff','#44ff88','#ffee44','#ff44ff','#ff8844','#88ff44','#44ffff','#ff44aa','#aa44ff','#44ff44','#ffaa44','#ff6644','#aa44aa','#44aaff'];
+        let html = '';
+        for (const item of data.items) {
+          const color = tierColors[Math.min(item.tier - 1, tierColors.length - 1)];
+          const setIcon = item.set_type === 'wealth' ? '💛' : '💚';
+          const crit = item.base_luck || 0;
+          const tierRoman = ['零','Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ','Ⅵ','Ⅶ','Ⅷ','Ⅸ','Ⅹ','Ⅺ','Ⅻ','Ⅼ','Ⅽ','Ⅾ','Ⅿ'][item.tier] || item.tier;
+          const setLabel = item.set_type === 'wealth' ? '财富套装' : '兴盛套装';
+          html += `
+            <div style="background:rgba(0,30,50,0.9);border:2px solid ${color};border-radius:14px;padding:14px;text-align:center;cursor:pointer" onclick="showFlashEquipDetail(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+              <div style="font-size:11px;color:${color};font-weight:bold">${item.tier_name} ${tierRoman}</div>
+              <div style="font-size:14px;color:#fff;margin:4px 0">${slotNames[item.slot]}</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.5)">⚔️攻击+${item.base_power} 🛡️防御+${item.base_defense} ❤️生命+${item.base_hp} 💥暴击+${crit}%</div>
+              <div style="font-size:10px;color:${item.set_type === 'wealth' ? '#ffd700' : '#00e564'};margin:3px 0">${setIcon} ${setLabel}</div>
+              <div style="font-size:14px;color:#ffd700;font-weight:bold;margin:6px 0">💰 100,000 金贝</div>
+              <button onclick="event.stopPropagation();buyFlashItem(${item.id})" style="width:100%;padding:9px;background:linear-gradient(135deg,#ff8800,#ff4400);border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:bold;cursor:pointer">立即抢购</button>
+            </div>`;
+        }
+        document.getElementById('flashItems').innerHTML = html;
+      } catch(e) {
+        document.getElementById('flashItems').innerHTML = '<div style="text-align:center;padding:40px;color:#ff6b6b">加载失败</div>';
+      }
+    }
+
+    async function buyFlashItem(flashSaleId) {
+      try {
+        const res = await fetch(`${API_BASE}/equipment/flash_buy`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ flash_sale_id: flashSaleId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message);
+          loadFlashSale();
+        } else {
+          showToast(data.reason || '购买失败', 'error');
+        }
+      } catch(e) { showToast('网络错误', 'error'); }
+    }
+    
+    // 神器名称到key的映射
+    const artifactKeys = {
+      '深海帝王冠': 'crown_of_depths',
+      '三叉戟·深渊': 'trident_abyss',
+      '永恒钻石': 'eternal_diamond',
+      '海神锚': 'anchors_of_poseidon',
+      '深海巨兽蛋': 'deep_sea_beast_egg',
+      '珍珠龙珠': 'pearl_dragon_orb',
+      '骷髅王冠': 'skull_crown',
+      '诅咒之刃': 'cursed_blade',
+      '亡灵之牙': 'undead_fang',
+      '幽灵眼': 'ghost_eye',
+      '骷髅钥匙': 'skull_key',
+      '暗影披风': 'shadow_cloak',
+      '珍珠贝壳': 'pearl_shell',
+      '海星吊坠': 'starfish_pendant',
+      '珊瑚手镯': 'coral_bracelet',
+      '蟹黄金币': 'crab_gold_coin',
+      '观赏鱼·小丑': 'clownfish',
+      '气泡球': 'bubble_ball',
+      '古埃及宝瓶': 'egypt_vase',
+      '星辰之尘': 'stardust',
+      '盐晶': 'salt_crystal',
+      '香料罐': 'spice_jar',
+      '丝绸灯笼': 'silk_lantern',
+      '绒线球': 'yarn_ball'
+    };
+
+    const ARTIFACT_ICONS = {
+      'skull_key': '🗝️', 'cursed_blade': '⚔️', 'undead_fang': '🦷',
+      'skull_crown': '💀', 'ghost_eye': '👁️', 'shadow_cloak': '🧥',
+      'pearl_shell': '🪸', 'starfish_pendant': '⭐', 'coral_bracelet': '📿',
+      'deep_sea_beast_egg': '🥚', 'anchors_of_poseidon': '⚓',
+      'pearl_dragon_orb': '🐉', 'trident_abyss': '🔱', 'crown_of_depths': '👑',
+      'eternal_diamond': '💎', 'stardust': '✨', 'egypt_vase': '🏺',
+      'salt_crystal': '🧂', 'spice_jar': '🫙', 'yarn_ball': '🧶',
+      'skill_molting_palace': '🔮', 'skill_deep_abyss': '🌊',
+      'beast_deep_abyss': '🐙', 'beast_iron_claw': '🦀', 'beast_shadow_whisker': '🐙',
+      'beast_tide_clan': '🦑', 'beast_molting_palace': '🦞',
+      'weapon_iron_claw': '🦷', 'skill_shadow_whisker': '👻',
+      'skill_tide_clan': '🌊', 'armor_mystic_shell': '🛡️'
+    };
+    
+    async function buyItem(name, price) {
+      const key = artifactKeys[name];
+      if (!key) {
+        showToast('暂不支持购买该物品', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/auction/buy`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ artifact_key: key, price: price })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`🎉 ${name} 购买成功！`, 'success');
+        } else {
+          showToast(data.reason || '购买失败', 'error');
+        }
+      } catch (e) {
+        showToast('网络错误', 'error');
+      }
+    }
+
+    // ====== 市集功能 ======
+    let marketListings = [];
+    let myListings = [];
+    let inventory = [];
+    let playerArtifacts = [];
+    let playerEquipment = [];
+    let mSelectedItem = null;
+    let mCurrentTab = 'browse';
+    let playerGold = 0;
+
+    async function mLoadAll() {
+      await mLoadGold();
+      await mLoadMarket();
+      await mLoadMyListings();
+      await mLoadInventory();
+      await mLoadArtifacts();
+      await mLoadEquipment();
+    }
+
+    async function mLoadGold() {
+      try {
+        const r = await fetch(`${API_BASE}/player/profile`, { headers: getAuthHeader() });
+        const d = await r.json();
+        if (d.player) playerGold = d.player.gold;
+      } catch(e) {}
+    }
+    async function mLoadMarket() {
+      try {
+        const r = await fetch(`${API_BASE}/market`, { headers: getAuthHeader() });
+        const d = await r.json();
+        marketListings = d.listings || [];
+      } catch(e) {}
+    }
+    async function mLoadMyListings() {
+      try {
+        const r = await fetch(`${API_BASE}/market/my`, { headers: getAuthHeader() });
+        const d = await r.json();
+        myListings = d.listings || [];
+      } catch(e) {}
+    }
+    async function mLoadInventory() {
+      try {
+        const r = await fetch(`${API_BASE}/inventory`, { headers: getAuthHeader() });
+        const d = await r.json();
+        inventory = d.inventory || [];
+      } catch(e) {}
+    }
+    async function mLoadArtifacts() {
+      try {
+        const r = await fetch(`${API_BASE}/artifacts/my`, { headers: getAuthHeader() });
+        const d = await r.json();
+        playerArtifacts = d.artifacts || [];
+      } catch(e) {}
+    }
+
+    async function mLoadEquipment() {
+      try {
+        const r = await fetch(`${API_BASE}/equipment/my`, { headers: getAuthHeader() });
+        const d = await r.json();
+        // Only include unequipped items in the sell list
+        const equippedIds = new Set();
+        const eq = d.equipped || {};
+        for (const slot of ['weapon','helmet','armor','greaves','amulet','ring']) {
+          if (eq[slot] && eq[slot].id) equippedIds.add(eq[slot].id);
+        }
+        playerEquipment = (d.owned || []).filter(e => !equippedIds.has(e.id));
+      } catch(e) {}
+    }
+
+    function mSwitchTab(tab) {
+      mCurrentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        if (b.id && b.id.startsWith('mTab')) b.classList.remove('active');
+      });
+      document.getElementById('mTab-' + tab).classList.add('active');
+      if (tab === 'browse') mRenderBrowse();
+      else if (tab === 'my') mRenderMy();
+      else if (tab === 'sell') mRenderSell();
+    }
+
+    function mRarityClass(r) {
+      return r ? `rarity-${r}` : '';
+    }
+
+    function mEnrichItem(item) {
+      if (item._name) return item;
+      if (item.item_type === 'item') {
+        const inv = inventory.find(i => String(i.item_id) === String(item.item_key));
+        if (inv) { item._name = inv.name; item._icon = inv.icon; }
+        else { item._name = item.item_name; item._icon = item.item_icon; }
+      } else if (item.item_type === 'artifact') {
+        const art = playerArtifacts.find(a => String(a.artifact_key) === String(item.item_key));
+        if (art) { item._name = art.name; item._icon = ARTIFACT_ICONS[art.artifact_key] || '🏆'; }
+        else { item._name = item.item_name; item._icon = item.item_icon; }
+      } else if (item.item_type === 'equipment') {
+        const eq = playerEquipment.find(e => String(e.id) === String(item.item_key));
+        if (eq) { item._name = eq.name; item._icon = slotIcons[eq.slot] || '🗡️'; }
+        else { item._name = item.item_name; item._icon = item.item_icon || '🗡️'; }
+      } else {
+        item._name = item.item_name; item._icon = item.item_icon;
+      }
+      return item;
+    }
+
+    function mRenderBrowse() {
+      const c = document.getElementById('market-content');
+      let h = `<div style="margin-bottom:12px;color:#ffd700;font-size:13px">💰 我的金贝：${playerGold.toLocaleString()}</div>`;
+      h += `<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="tab-btn active" onclick="mFilterBrowse('all',this)" id="mFilter-all">全部</button>
+        <button class="tab-btn" onclick="mFilterBrowse('item',this)" id="mFilter-item">🎒 物品</button>
+        <button class="tab-btn" onclick="mFilterBrowse('artifact',this)" id="mFilter-artifact">⚔️ 神器</button>
+      </div>`;
+      if (!marketListings.length) {
+        h += '<div style="text-align:center;padding:30px;color:rgba(218,112,214,0.5)">暂无商品，快去上架吧～</div>';
+      } else {
+        h += '<div class="items-grid">';
+        marketListings.forEach(item => {
+          mEnrichItem(item);
+          const canBuy = playerGold >= item.price;
+          const sysBadge = item.is_system ? '<div style="position:absolute;top:6px;right:6px;background:rgba(255,80,80,0.8);color:#fff;font-size:9px;padding:2px 5px;border-radius:8px">系统</div>' : '';
+          h += `<div class="auction-item ${mRarityClass(item.rarity)}" style="position:relative">
+            ${sysBadge}
+            <div class="item-icon">${item._icon || item.item_icon}</div>
+            <div class="item-name">${item._name || item.item_name}</div>
+            ${item.rarity ? `<div class="item-rarity ${item.rarity}">${item.rarity}</div>` : ''}
+            <div style="font-size:10px;color:rgba(218,112,214,0.6);margin-bottom:4px">${item.is_system ? '⚙️ 系统' : '👤 '+item.seller_name}</div>
+            <div class="item-price">💰 ${item.price.toLocaleString()}</div>
+            <button class="buy-btn" ${canBuy?'':'disabled'} onclick="mBuy('${item.listing_id}')">${canBuy?'购买':'金贝不足'}</button>
+          </div>`;
+        });
+        h += '</div>';
+      }
+      c.innerHTML = h;
+    }
+
+    let mCurrentFilter = 'all';
+    function mFilterBrowse(type, el) {
+      mCurrentFilter = type;
+      document.querySelectorAll('[id^=mFilter]').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      const c = document.getElementById('market-content');
+      let h = `<div style="margin-bottom:12px;color:#ffd700;font-size:13px">💰 我的金贝：${playerGold.toLocaleString()}</div>`;
+      h += `<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="tab-btn ${type==='all'?'active':''}" onclick="mFilterBrowse('all',this)" id="mFilter-all">全部</button>
+        <button class="tab-btn ${type==='item'?'active':''}" onclick="mFilterBrowse('item',this)" id="mFilter-item">🎒 物品</button>
+        <button class="tab-btn ${type==='artifact'?'active':''}" onclick="mFilterBrowse('artifact',this)" id="mFilter-artifact">⚔️ 神器</button>
+      </div>`;
+      const filtered = type === 'all' ? marketListings : marketListings.filter(l => l.item_type === type);
+      if (!filtered.length) {
+        h += '<div style="text-align:center;padding:30px;color:rgba(218,112,214,0.5)">暂无商品～</div>';
+      } else {
+        h += '<div class="items-grid">';
+        filtered.forEach(item => {
+          mEnrichItem(item);
+          const canBuy = playerGold >= item.price;
+          const sysBadge = item.is_system ? '<div style="position:absolute;top:6px;right:6px;background:rgba(255,80,80,0.8);color:#fff;font-size:9px;padding:2px 5px;border-radius:8px">系统</div>' : '';
+          h += `<div class="auction-item ${mRarityClass(item.rarity)}" style="position:relative">
+            ${sysBadge}
+            <div class="item-icon">${item._icon || item.item_icon}</div>
+            <div class="item-name">${item._name || item.item_name}</div>
+            ${item.rarity ? `<div class="item-rarity ${item.rarity}">${item.rarity}</div>` : ''}
+            <div style="font-size:10px;color:rgba(218,112,214,0.6);margin-bottom:4px">${item.is_system ? '⚙️ 系统' : '👤 '+item.seller_name}</div>
+            <div class="item-price">💰 ${item.price.toLocaleString()}</div>
+            <button class="buy-btn" ${canBuy?'':'disabled'} onclick="mBuy('${item.listing_id}')">${canBuy?'购买':'金贝不足'}</button>
+          </div>`;
+        });
+        h += '</div>';
+      }
+      c.innerHTML = h;
+    }
+
+    async function mBuy(listingId) {
+      if (!confirm('确认购买？')) return;
+      try {
+        const r = await fetch(`${API_BASE}/market/buy`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ listing_id: listingId })
+        });
+        const d = await r.json();
+        if (d.success) {
+          showToast(d.message, 'success');
+          await mLoadAll();
+          mRenderBrowse();
+        } else {
+          showToast(d.reason || '购买失败', 'error');
+        }
+      } catch(e) { showToast('网络错误', 'error'); }
+    }
+
+    async function mRenderMy() {
+      await mLoadMyListings();
+      const c = document.getElementById('market-content');
+      const statusMap = { active: '🔵 出售中', sold: '✅ 已售出', cancelled: '❌ 已下架' };
+      const enriched = myListings.map(item => {
+        if (item.item_type === 'item') {
+          const inv = inventory.find(i => String(i.item_id) === String(item.item_key));
+          if (inv) { item._name = inv.name || item.item_name; item._icon = inv.icon || item.item_icon; }
+          else { item._name = item.item_name; item._icon = item.item_icon; }
+        } else {
+          const art = playerArtifacts.find(a => String(a.artifact_key) === String(item.item_key));
+          if (art) { item._name = art.name || item.item_name; item._icon = ARTIFACT_ICONS[art.artifact_key] || '🏆'; }
+          else { item._name = item.item_name; item._icon = item.item_icon; }
+        }
+        return item;
+      });
+
+      const active = enriched.filter(i => i.status === 'active');
+      const sold = enriched.filter(i => i.status === 'sold');
+      const cancelled = enriched.filter(i => i.status === 'cancelled');
+
+      let h = `<div style="margin-bottom:12px;color:#ffd700;font-size:13px">💰 我的金贝：${playerGold.toLocaleString()}</div>`;
+
+      // 子tab
+      h += `<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="tab-btn active" id="myTab-active" onclick="mSwitchMyTab('active',this)">🔵 出售中 (${active.length})</button>
+        <button class="tab-btn" id="myTab-sold" onclick="mSwitchMyTab('sold',this)">✅ 已售出 (${sold.length})</button>
+        <button class="tab-btn" id="myTab-cancelled" onclick="mSwitchMyTab('cancelled',this)">❌ 已下架 (${cancelled.length})</button>
+      </div>`;
+
+      h += `<div id="myTabContent"></div>`;
+      c.innerHTML = h;
+
+      // 默认显示active
+      mRenderMyTab('active', enriched);
+    }
+
+    let mMyCurrentTab = 'active';
+    function mSwitchMyTab(tab, el) {
+      mMyCurrentTab = tab;
+      document.querySelectorAll('[id^=myTab-]').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      // Re-enrich since we reload
+      const statusMap = { active: '🔵 出售中', sold: '✅ 已售出', cancelled: '❌ 已下架' };
+      const enriched = myListings.map(item => {
+        if (item.item_type === 'item') {
+          const inv = inventory.find(i => String(i.item_id) === String(item.item_key));
+          if (inv) { item._name = inv.name || item.item_name; item._icon = inv.icon || item.item_icon; }
+          else { item._name = item.item_name; item._icon = item.item_icon; }
+        } else {
+          const art = playerArtifacts.find(a => String(a.artifact_key) === String(item.item_key));
+          if (art) { item._name = art.name || item.item_name; item._icon = ARTIFACT_ICONS[art.artifact_key] || '🏆'; }
+          else { item._name = item.item_name; item._icon = item.item_icon; }
+        }
+        return item;
+      });
+      mRenderMyTab(tab, enriched);
+    }
+
+    function mRenderMyTab(tab, enriched) {
+      const statusMap = { active: '🔵 出售中', sold: '✅ 已售出', cancelled: '❌ 已下架' };
+      const items = enriched.filter(i => i.status === tab);
+      const container = document.getElementById('myTabContent');
+      if (!items.length) {
+        container.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(218,112,214,0.5)">暂无记录</div>';
+        return;
+      }
+      let h = '';
+      items.forEach(item => {
+        h += `<div style="background:rgba(30,20,50,0.8);border:1px solid rgba(150,100,200,0.3);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:28px">${item._icon || item.item_icon}</span>
+          <div style="flex:1;min-width:0">
+            <div style="color:#da70d6;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item._name || item.item_name} x${item.quantity}</div>
+            <div style="color:#ffd700;font-size:12px">💰 ${item.price.toLocaleString()} | ${statusMap[item.status]}</div>
+          </div>
+          ${item.status === 'active' ? `<button class="buy-btn" style="padding:6px 12px;width:auto" onclick="mCancel('${item.listing_id}')">下架</button>` : ''}
+          ${item.status !== 'active' ? `<button class="buy-btn" style="padding:6px 10px;width:auto;background:rgba(255,60,60,0.2);border-color:rgba(255,60,60,0.5);color:#ff6060" onclick="mDeleteRecord('${item.listing_id}')">删除</button>` : ''}
+        </div>`;
+      });
+      container.innerHTML = h;
+    }
+
+    async function mDeleteRecord(listingId) {
+      if (!confirm('确认删除该记录？删除后不可恢复。')) return;
+      try {
+        const r = await fetch(`${API_BASE}/market/delete_record`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ listing_id: listingId })
+        });
+        const d = await r.json();
+        if (d.success) { showToast(d.message, 'success'); await mLoadMyListings(); mRenderMy(); }
+        else { showToast(d.reason || '删除失败', 'error'); }
+      } catch(e) { showToast('网络错误', 'error'); }
+    }
+
+    async function mCancel(listingId) {
+      if (!confirm('确认下架？')) return;
+      try {
+        const r = await fetch(`${API_BASE}/market/cancel`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ listing_id: listingId })
+        });
+        const d = await r.json();
+        if (d.success) { showToast(d.message, 'success'); await mLoadAll(); mRenderMy(); }
+        else { showToast(d.reason || '下架失败', 'error'); }
+      } catch(e) { showToast('网络错误', 'error'); }
+    }
+
+    let mSellTab = 'items';
+    async function mRenderSell() {
+      await mLoadInventory();
+      await mLoadArtifacts();
+      mSelectedItem = null;
+      const c = document.getElementById('market-content');
+      c.innerHTML = `
+        <div style="margin-bottom:12px;color:#ffd700;font-size:13px">💰 我的金贝：${playerGold.toLocaleString()}</div>
+        <div style="background:rgba(30,20,50,0.8);border:1px solid rgba(150,100,200,0.3);border-radius:12px;padding:14px;margin-bottom:12px">
+          <div style="color:#da70d6;font-size:14px;margin-bottom:12px;text-align:center">选择要出售的物品</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <button class="tab-btn ${mSellTab==='items'?'active':''}" onclick="mSwitchSellTab('items',this)" id="mSellTab-items">🎒 背包</button>
+            <button class="tab-btn ${mSellTab==='artifacts'?'active':''}" onclick="mSwitchSellTab('artifacts',this)" id="mSellTab-artifacts">⚔️ 神器</button>
+            <button class="tab-btn ${mSellTab==='equipment'?'active':''}" onclick="mSwitchSellTab('equipment',this)" id="mSellTab-equipment">🗡️ 装备</button>
+          </div>
+          <div id="mSellItemsList" style="max-height:220px;overflow-y:auto;margin-bottom:12px"></div>
+          <div id="mItemDetail" style="display:none;background:rgba(0,0,0,0.4);border:1px solid rgba(150,100,200,0.3);border-radius:10px;padding:12px;margin-bottom:12px;text-align:center"></div>
+          <div id="mQtyRow" style="display:none;margin-bottom:10px;text-align:center">
+            <span style="color:#da70d6;font-size:13px">数量：</span>
+            <button onclick="mChangeQty(-1)" style="background:rgba(150,100,200,0.3);border:1px solid rgba(150,100,200,0.5);color:#da70d6;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer">-</button>
+            <input type="number" id="mQtyInput" value="1" min="1" style="width:60px;text-align:center;padding:6px;background:rgba(0,0,0,0.4);border:1px solid rgba(150,100,200,0.3);border-radius:8px;color:#ffd700;font-size:14px;outline:none" oninput="mQtyChanged()">
+            <button onclick="mChangeQty(1)" style="background:rgba(150,100,200,0.3);border:1px solid rgba(150,100,200,0.5);color:#da70d6;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer">+</button>
+            <span id="mQtyMax" style="color:rgba(218,112,214,0.6);font-size:12px;margin-left:8px"></span>
+          </div>
+          <input type="number" id="mPriceInput" placeholder="输入售价（金贝）" min="1" style="width:100%;padding:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(150,100,200,0.3);border-radius:8px;color:#ffd700;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:10px">
+          <button class="buy-btn" id="mListBtn" disabled onclick="mListItem()">📤 上架出售</button>
+        </div>
+      `;
+      mRenderSellItems();
+    }
+
+    function mSwitchSellTab(tab, el) {
+      mSellTab = tab;
+      mSelectedItem = null;
+      document.querySelectorAll('[id^=mSellTab]').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('mItemDetail').style.display = 'none';
+      document.getElementById('mQtyRow').style.display = 'none';
+      mRenderSellItems();
+      document.getElementById('mListBtn').disabled = true;
+    }
+
+    function mRenderSellItems() {
+      const container = document.getElementById('mSellItemsList');
+      if (mSellTab === 'items') {
+        if (!inventory.length) { container.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(218,112,214,0.5)">背包空空～</div>'; return; }
+        let h = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">';
+        inventory.forEach(item => {
+          const name = item.name || item.item_id;
+          const icon = item.icon || '📦';
+          const typeLabel = item.item_type === 'consumable' ? '消耗品' : item.item_type === 'permanent' ? '永久' : item.item_type === 'accessory' ? '配饰' : '其他';
+          const desc = item.description || '';
+          const price = item.price || 0;
+          const data = {type:'item',key:item.item_id,name,icon,quantity:item.quantity,rarity:null,desc,typeLabel,price};
+          const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+          h += `<div class="auction-item" style="cursor:pointer;padding:10px;" data-p="${encoded}" onclick="mSelectFromData(this)">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:28px">${icon}</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;color:#da70d6;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+                <div style="font-size:10px;color:rgba(255,200,100,0.7)">x${item.quantity} | ${typeLabel}</div>
+              </div>
+            </div>
+          </div>`;
+        });
+        h += '</div>';
+        container.innerHTML = h;
+      } else if (mSellTab === 'artifacts') {
+        if (!playerArtifacts.length) { container.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(218,112,214,0.5)">还没有神器～</div>'; return; }
+        let h = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">';
+        playerArtifacts.forEach(art => {
+          const typeLabel = art.rarity + (art.main_attribute ? ' | ' + art.main_attribute + '+' + art.main_value : '');
+          const artIcon = ARTIFACT_ICONS[art.artifact_key] || '🏆';
+          const data = {type:'artifact',key:art.artifact_key,name:art.name,icon:artIcon,quantity:1,rarity:art.rarity,desc:art.description||art.effect||'',typeLabel,price:art.main_value||0};
+          const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+          h += `<div class="auction-item ${mRarityClass(art.rarity)}" style="cursor:pointer;padding:10px;" data-p="${encoded}" onclick="mSelectFromData(this)">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:32px">${artIcon}</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;color:#da70d6;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${art.name}</div>
+                <div style="font-size:10px" class="item-rarity ${art.rarity}">${art.rarity}</div>
+                ${art.main_attribute ? `<div style="font-size:10px;color:rgba(255,200,100,0.6);margin-top:2px">${art.main_attribute} +${art.main_value}</div>` : ''}
+              </div>
+            </div>
+          </div>`;
+        });
+        h += '</div>';
+        container.innerHTML = h;
+      } else if (mSellTab === 'equipment') {
+        const tierColors = ['#aaa','#ff4444','#ff8800','#44ccff','#44ff88','#ffee44','#ff44ff','#ff8844','#88ff44','#44ffff','#ff44aa','#aa44ff','#44ff44','#ffaa44','#ff6644','#aa44aa','#44aaff'];
+        const slotNames = {weapon:'🗡️武器',helmet:'🪖头盔',armor:'🛡️盔甲',greaves:'🦵护胫骨',amulet:'📿护身符',ring:'💍戒指'};
+        const slotIcons = {weapon:'🗡️',helmet:'🪖',armor:'🛡️',greaves:'🦵',amulet:'📿',ring:'💍'};
+        if (!playerEquipment.length) { container.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(218,112,214,0.5)">没有可出售的装备～</div>'; return; }
+        let h = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">';
+        playerEquipment.forEach(eq => {
+          const color = tierColors[Math.min((eq.tier||1)-1, tierColors.length-1)];
+          const setIcon = eq.set_type === 'wealth' ? '💛' : '💚';
+          const setLabel = eq.set_type === 'wealth' ? '财富套装' : '兴盛套装';
+          const enh = eq.enhance_level || 0;
+          const eqCrit = (eq.base_luck || 0) + enh * 2;
+          const eqIcon = slotIcons[eq.slot] || '🗡️';
+          const itemDesc = eq.description || `来自深海的${eq.tier_name}级装备，蕴含${setLabel}的力量。`;
+          const statsDesc = `${slotNames[eq.slot]||eq.slot} | ${eq.tier_name} | ${setIcon}${setLabel}\n⚔️攻击+${eq.base_power} 🛡️防御+${eq.base_defense} ❤️生命+${eq.base_hp} 💥暴击+${eqCrit}%\n强化+${enh}`;
+          const data = {type:'equipment',key:eq.id,name:eq.name,icon:eqIcon,quantity:1,rarity:null,desc:itemDesc + '\n---\n' + statsDesc,typeLabel:`${eq.tier_name}·${slotNames[eq.slot]||eq.slot}`,price:0};
+          const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+          h += `<div class="auction-item" style="cursor:pointer;padding:10px;border-color:${color}" data-p="${encoded}" onclick="mSelectFromData(this)">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:28px;color:${color}">${eqIcon}</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:11px;color:${color};font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${eq.tier_name}·${slotNames[eq.slot]||''}</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.5)">${setIcon}${setLabel} | 强化+${enh} | 💥暴击+${eqCrit}%</div>
+                <div style="font-size:10px;color:rgba(255,200,100,0.6)">⚔️攻击+${eq.base_power} 🛡️防御+${eq.base_defense} ❤️生命+${eq.base_hp}</div>
+              </div>
+            </div>
+          </div>`;
+        });
+        h += '</div>';
+        container.innerHTML = h;
+      }
+    }
+
+    function mChangeQty(delta) {
+      const input = document.getElementById('mQtyInput');
+      const max = parseInt(input.max) || 1;
+      let v = parseInt(input.value) + delta;
+      if (v < 1) v = 1;
+      if (v > max) v = max;
+      input.value = v;
+    }
+
+    function mQtyChanged() {
+      const input = document.getElementById('mQtyInput');
+      const max = parseInt(input.max) || 1;
+      let v = parseInt(input.value) || 1;
+      if (v < 1) v = 1;
+      if (v > max) v = max;
+      input.value = v;
+    }
+
+    function mSelectFromData(el) {
+      try {
+        const raw = el.getAttribute('data-p');
+        const item = JSON.parse(decodeURIComponent(atob(raw)));
+        mSelectItem(item.type, item.key, item.name, item.icon, item.quantity, item.rarity, el, item.desc || '', item.typeLabel || '', item.price || 0);
+      } catch(e) { console.error(e); }
+    }
+
+    function mSelectItem(type, key, name, icon, quantity, rarity, el, desc, typeLabel, price) {
+      document.querySelectorAll('.auction-item').forEach(i => i.style.borderColor = '');
+      if (el) el.style.borderColor = '#da70d6';
+      mSelectedItem = { type, key, name, icon, quantity, rarity };
+      document.getElementById('mListBtn').disabled = false;
+
+      const detailEl = document.getElementById('mItemDetail');
+      const qtyRow = document.getElementById('mQtyRow');
+      const qtyInput = document.getElementById('mQtyInput');
+      const qtyMax = document.getElementById('mQtyMax');
+      if (!detailEl) return;
+
+      detailEl.style.display = 'block';
+      if (type === 'item') {
+        detailEl.innerHTML = `
+          <div style="font-size:22px;margin-bottom:6px">${icon} ${name}</div>
+          <div style="font-size:11px;color:rgba(255,200,100,0.7);margin-bottom:6px">${typeLabel}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.85);margin-bottom:6px">${desc || '无描述'}</div>
+          <div style="font-size:13px;color:#ffd700">💰 市场估价：${price} 金贝</div>
+        `;
+        qtyRow.style.display = quantity > 1 ? 'flex' : 'none';
+        qtyInput.value = 1;
+        qtyInput.max = quantity;
+        qtyMax.textContent = `/ ${quantity}`;
+      } else {
+        detailEl.innerHTML = `
+          <div style="font-size:22px;margin-bottom:6px">${icon} ${name}</div>
+          <div style="font-size:11px" class="item-rarity ${rarity}">${rarity}</div>
+          ${typeLabel ? `<div style="font-size:12px;color:#ffd700;margin:4px 0">${typeLabel}</div>` : ''}
+          <div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:4px">${desc || '无描述'}</div>
+        `;
+        qtyRow.style.display = 'none';
+      }
+    }
+
+    async function mListItem() {
+      if (!mSelectedItem) return;
+      const qtyInput = document.getElementById('mQtyInput');
+      const priceInput = document.getElementById('mPriceInput');
+      const quantity = parseInt(qtyInput ? qtyInput.value : mSelectedItem.quantity);
+      const price = parseInt(priceInput.value);
+      if (!price || price < 1) { showToast('请输入有效价格', 'error'); return; }
+      if (!confirm(`确认上架 ${mSelectedItem.name} x${quantity}，售价 ${price} 金贝？`)) return;
+      try {
+        const r = await fetch(`${API_BASE}/market/list`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({
+            item_type: mSelectedItem.type,
+            item_key: mSelectedItem.key,
+            quantity: quantity,
+            price: price,
+            item_name: mSelectedItem.name,
+            item_icon: mSelectedItem.icon,
+            rarity: mSelectedItem.rarity
+          })
+        });
+        const d = await r.json();
+        if (d.success) {
+          showToast(d.message, 'success');
+          mSelectedItem = null;
+          priceInput.value = '';
+          document.getElementById('mListBtn').disabled = true;
+          await mLoadAll();
+          mRenderSell();
+        } else {
+          showToast(d.reason || '上架失败', 'error');
+        }
+      } catch(e) { showToast('网络错误', 'error'); }
+    }
+
+    // 自动加载市集数据
+    (async () => {
+      await mLoadAll();
+      if (document.getElementById('section-market').classList.contains('active')) {
+        mRenderBrowse();
+      }
+    })();
+  </script>
+</body>
+</html>

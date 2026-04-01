@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🏪 市集 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body {
+      padding-top: 0;
+      background: linear-gradient(180deg, #1a0a00 0%, #2d1500 30%, #1a0a00 100%);
+      min-height: 100vh;
+    }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(20,8,0,0.95); border-bottom: 1px solid rgba(255,150,0,0.4); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #ffa500; flex: 1; text-shadow: 0 0 8px rgba(255,150,0,0.4); }
+    .back-btn { background: none; border: none; color: #ffa500; font-size: 20px; cursor: pointer; padding: 8px; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 8px; padding: 60px 12px 8px; background: rgba(20,8,0,0.9); }
+    .tab { flex: 1; padding: 10px; background: rgba(255,150,0,0.1); border: 1px solid rgba(255,150,0,0.3); border-radius: 10px; color: #ffa500; font-size: 13px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .tab.active { background: rgba(255,150,0,0.25); border-color: #ffa500; font-weight: bold; }
+
+    .content { padding: 12px; }
+    .gold-bar { background: rgba(20,8,0,0.85); border: 1px solid rgba(255,150,0,0.4); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .gold-label { font-size: 13px; color: #ffa500; }
+    .gold-value { font-size: 16px; color: #ffd700; font-weight: bold; }
+
+    /* Filter bar */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 12px; background: rgba(255,150,0,0.1); border: 1px solid rgba(255,150,0,0.3); border-radius: 20px; color: #ffa500; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+    .filter-btn.active { background: rgba(255,150,0,0.3); border-color: #ffa500; }
+
+    /* Listings grid */
+    .listings-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .listing-card { background: rgba(30,12,0,0.85); border: 1px solid rgba(255,150,0,0.4); border-radius: 12px; padding: 12px; position: relative; }
+    .listing-card.sold { opacity: 0.5; }
+    .listing-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .listing-icon { font-size: 28px; }
+    .listing-info { flex: 1; }
+    .listing-name { font-size: 13px; color: #ffa500; font-weight: bold; }
+    .listing-seller { font-size: 10px; color: rgba(255,150,0,0.6); }
+    .listing-qty { font-size: 11px; color: rgba(255,200,100,0.8); }
+    .listing-price { text-align: center; padding: 6px; background: rgba(255,150,0,0.15); border-radius: 8px; margin-bottom: 6px; }
+    .price-value { font-size: 14px; color: #ffd700; font-weight: bold; }
+    .buy-btn { width: 100%; padding: 8px; background: linear-gradient(135deg, #ff8c00, #ff6600); border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: bold; cursor: pointer; }
+    .buy-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Rarity border colors */
+    .listing-card.rarity-common { border-color: rgba(180,180,180,0.5); }
+    .listing-card.rarity-rare { border-color: rgba(0,150,255,0.6); }
+    .listing-card.rarity-epic { border-color: rgba(150,0,255,0.6); }
+    .listing-card.rarity-legendary { border-color: rgba(255,150,0,0.7); box-shadow: 0 0 10px rgba(255,150,0,0.2); }
+    .listing-card.rarity-mythic { border-color: rgba(255,0,100,0.7); box-shadow: 0 0 12px rgba(255,0,100,0.3); }
+
+    /* My listings */
+    .my-listing { background: rgba(30,12,0,0.85); border: 1px solid rgba(255,150,0,0.4); border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+    .my-listing-icon { font-size: 28px; }
+    .my-listing-info { flex: 1; }
+    .my-listing-name { font-size: 13px; color: #ffa500; }
+    .my-listing-price { font-size: 12px; color: #ffd700; }
+    .cancel-btn { padding: 6px 12px; background: rgba(255,80,80,0.2); border: 1px solid rgba(255,80,80,0.5); border-radius: 8px; color: #ff6060; font-size: 12px; cursor: pointer; }
+
+    /* Sell section */
+    .sell-section { background: rgba(30,12,0,0.85); border: 1px solid rgba(255,150,0,0.4); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+    .sell-title { font-size: 14px; color: #ffa500; margin-bottom: 12px; text-align: center; }
+    .sell-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .sell-tab { flex: 1; padding: 8px; background: rgba(255,150,0,0.1); border: 1px solid rgba(255,150,0,0.3); border-radius: 8px; color: #ffa500; font-size: 12px; text-align: center; cursor: pointer; }
+    .sell-tab.active { background: rgba(255,150,0,0.25); border-color: #ffa500; }
+    .sell-item { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,150,0,0.2); border-radius: 10px; padding: 10px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s; }
+    .sell-item:hover { border-color: rgba(255,150,0,0.6); background: rgba(255,150,0,0.1); }
+    .sell-item.selected { border-color: #ffa500; background: rgba(255,150,0,0.15); }
+    .sell-item-icon { font-size: 24px; }
+    .sell-item-name { font-size: 13px; color: #ffa500; flex: 1; }
+    .sell-item-qty { font-size: 11px; color: rgba(255,200,100,0.7); }
+    .price-input { width: 100%; padding: 10px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,150,0,0.3); border-radius: 8px; color: #ffd700; font-size: 14px; outline: none; box-sizing: border-box; margin-bottom: 10px; }
+    .price-input:focus { border-color: #ffa500; }
+    .list-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #ff8c00, #ff6600); border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: bold; cursor: pointer; }
+    .list-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Inventory list for selling */
+    .inv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 300px; overflow-y: auto; }
+    .inv-item { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,150,0,0.2); border-radius: 10px; padding: 10px 6px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .inv-item:hover { border-color: rgba(255,150,0,0.6); background: rgba(255,150,0,0.1); }
+    .inv-item.selected { border-color: #ffa500; background: rgba(255,150,0,0.15); }
+    .inv-item-icon { font-size: 24px; margin-bottom: 4px; }
+    .inv-item-name { font-size: 10px; color: #ffa500; }
+    .inv-item-qty { font-size: 10px; color: rgba(255,200,100,0.7); }
+
+    /* Artifacts list */
+    .art-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 300px; overflow-y: auto; }
+    .art-item { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,150,0,0.2); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .art-item:hover { border-color: rgba(255,150,0,0.6); background: rgba(255,150,0,0.1); }
+    .art-item.selected { border-color: #ffa500; background: rgba(255,150,0,0.15); }
+    .art-item-icon { font-size: 32px; margin-bottom: 6px; }
+    .art-item-name { font-size: 12px; color: #ffa500; }
+    .art-item-rarity { font-size: 10px; margin-top: 4px; }
+    .rarity-common { color: #aaa; }
+    .rarity-rare { color: #00aaff; }
+    .rarity-epic { color: #aa00ff; }
+    .rarity-legendary { color: #ffa500; }
+    .rarity-mythic { color: #ff0066; }
+
+    .empty { text-align: center; padding: 40px; color: rgba(255,150,0,0.5); font-size: 14px; }
+
+    .toast {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      padding: 12px 24px; border-radius: 10px; font-size: 14px; z-index: 1000;
+      animation: toastIn 0.3s ease; pointer-events: none;
+    }
+    .toast.success { background: rgba(0,200,100,0.9); color: #fff; }
+    .toast.error { background: rgba(255,60,60,0.9); color: #fff; }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>🏪 市集</h1>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('browse')">🔍 浏览</div>
+    <div class="tab" onclick="switchTab('my')">📦 我的上架</div>
+    <div class="tab" onclick="switchTab('sell')">💰 出售</div>
+  </div>
+
+  <div class="content" id="content">
+    <!-- Dynamic content -->
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/shared.js"></script>
+  <script>
+    const API_BASE = '/api';
+    let currentTab = 'browse';
+    let marketListings = [];
+    let myListings = [];
+    let inventory = [];
+    let playerArtifacts = [];
+    let selectedItem = null; // { type, key, name, icon, quantity, rarity }
+    let playerGold = 0;
+
+    function getAuthHeader() {
+      const token = localStorage.getItem('auth_token');
+      const agentId = localStorage.getItem('agent_id');
+      if (!token || !agentId) { location.href = '/login.html'; return {}; }
+      return { 'Authorization': `Bearer ${agentId}` };
+    }
+
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast ${type}`;
+      t.style.display = 'block';
+      setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      if (tab === 'browse') renderBrowse();
+      else if (tab === 'my') renderMyListings();
+      else if (tab === 'sell') renderSell();
+    }
+
+    async function loadPlayerGold() {
+      try {
+        const res = await fetch(`${API_BASE}/player/profile`, { headers: getAuthHeader() });
+        const data = await res.json();
+        if (data.player) playerGold = data.player.gold;
+      } catch (e) {}
+    }
+
+    async function loadMarket() {
+      const res = await fetch(`${API_BASE}/market`, { headers: getAuthHeader() });
+      const data = await res.json();
+      marketListings = data.listings || [];
+    }
+
+    async function loadMyListings() {
+      const res = await fetch(`${API_BASE}/market/my`, { headers: getAuthHeader() });
+      const data = await res.json();
+      myListings = data.listings || [];
+    }
+
+    async function loadInventory() {
+      const res = await fetch(`${API_BASE}/inventory`, { headers: getAuthHeader() });
+      const data = await res.json();
+      inventory = data.inventory || [];
+    }
+
+    async function loadArtifacts() {
+      const res = await fetch(`${API_BASE}/artifacts/my`, { headers: getAuthHeader() });
+      const data = await res.json();
+      playerArtifacts = data.artifacts || [];
+    }
+
+    // 神器图标映射
+    const ARTIFACT_ICONS = {
+      'skull_key': '🗝️', 'cursed_blade': '⚔️', 'undead_fang': '🦷',
+      'skull_crown': '💀', 'ghost_eye': '👁️', 'shadow_cloak': '🧥',
+      'pearl_shell': '🪸', 'starfish_pendant': '⭐', 'coral_bracelet': '📿',
+      'deep_sea_beast_egg': '🥚', 'anchors_of_poseidon': '⚓',
+      'pearl_dragon_orb': '🐉', 'trident_abyss': '🔱', 'crown_of_depths': '👑',
+      'eternal_diamond': '💎', 'stardust': '✨', 'egypt_vase': '🏺',
+      'salt_crystal': '🧂', 'spice_jar': '🫙', 'yarn_ball': '🧶',
+      'skill_molting_palace': '🔮', 'skill_deep_abyss': '🌊',
+      'beast_deep_abyss': '🐙', 'beast_iron_claw': '🦀', 'beast_shadow_whisker': '🐙',
+      'beast_tide_clan': '🦑', 'beast_molting_palace': '🦞',
+      'weapon_iron_claw': '🦷', 'skill_shadow_whisker': '👻',
+      'skill_tide_clan': '🌊', 'armor_mystic_shell': '🛡️'
+    };
+
+    function rarityClass(r) {
+      if (!r) return '';
+      return `rarity-${r}`;
+    }
+
+    function renderBrowse() {
+      let html = `
+        <div class="gold-bar">
+          <span class="gold-label">💰 我的金贝</span>
+          <span class="gold-value">${playerGold.toLocaleString()}</span>
+        </div>
+        <div class="filter-bar">
+          <div class="filter-btn active" onclick="filterBrowse('all', this)">全部</div>
+          <div class="filter-btn" onclick="filterBrowse('item', this)">物品</div>
+          <div class="filter-btn" onclick="filterBrowse('artifact', this)">神器</div>
+        </div>
+      `;
+
+      if (marketListings.length === 0) {
+        html += '<div class="empty">暂无商品，去上架吧～</div>';
+      } else {
+        html += '<div class="listings-grid">';
+        marketListings.forEach(item => {
+          const canBuy = playerGold >= item.price;
+          html += `
+            <div class="listing-card ${rarityClass(item.rarity)}">
+              <div class="listing-header">
+                <span class="listing-icon">${item.item_icon}</span>
+                <div class="listing-info">
+                  <div class="listing-name">${item.item_name}</div>
+                  <div class="listing-seller">卖家: ${item.seller_name || '??'}</div>
+                  <div class="listing-qty">x${item.quantity}</div>
+                </div>
+              </div>
+              <div class="listing-price">
+                <span class="price-value">💰 ${item.price.toLocaleString()}</span>
+              </div>
+              <button class="buy-btn" ${canBuy ? '' : 'disabled'} onclick="buyItem('${item.listing_id || item.id}')">${canBuy ? '购买' : '金贝不足'}</button>
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+      document.getElementById('content').innerHTML = html;
+    }
+
+    let currentFilter = 'all';
+    function filterBrowse(type, el) {
+      currentFilter = type;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+
+      let html = `
+        <div class="gold-bar">
+          <span class="gold-label">💰 我的金贝</span>
+          <span class="gold-value">${playerGold.toLocaleString()}</span>
+        </div>
+        <div class="filter-bar">
+          <div class="filter-btn ${type==='all'?'active':''}" onclick="filterBrowse('all', this)">全部</div>
+          <div class="filter-btn ${type==='item'?'active':''}" onclick="filterBrowse('item', this)">物品</div>
+          <div class="filter-btn ${type==='artifact'?'active':''}" onclick="filterBrowse('artifact', this)">神器</div>
+        </div>
+      `;
+
+      const filtered = type === 'all' ? marketListings : marketListings.filter(l => l.item_type === type);
+      if (filtered.length === 0) {
+        html += '<div class="empty">暂无商品～</div>';
+      } else {
+        html += '<div class="listings-grid">';
+        filtered.forEach(item => {
+          const canBuy = playerGold >= item.price;
+          html += `
+            <div class="listing-card ${rarityClass(item.rarity)}">
+              <div class="listing-header">
+                <span class="listing-icon">${item.item_icon}</span>
+                <div class="listing-info">
+                  <div class="listing-name">${item.item_name}</div>
+                  <div class="listing-seller">卖家: ${item.seller_name || '??'}</div>
+                  <div class="listing-qty">x${item.quantity}</div>
+                </div>
+              </div>
+              <div class="listing-price">
+                <span class="price-value">💰 ${item.price.toLocaleString()}</span>
+              </div>
+              <button class="buy-btn" ${canBuy ? '' : 'disabled'} onclick="buyItem('${item.listing_id || item.id}')">${canBuy ? '购买' : '金贝不足'}</button>
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+      document.getElementById('content').innerHTML = html;
+    }
+
+    async function buyItem(listingId) {
+      if (!confirm('确认购买？')) return;
+      try {
+        const res = await fetch(`${API_BASE}/market/buy`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ listing_id: listingId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message, 'success');
+          await loadMarket();
+          await loadPlayerGold();
+          renderBrowse();
+        } else {
+          showToast(data.reason || '购买失败', 'error');
+        }
+      } catch (e) {
+        showToast('网络错误', 'error');
+      }
+    }
+
+    async function renderMyListings() {
+      await loadMyListings();
+      let html = '<div class="gold-bar"><span class="gold-label">💰 我的金贝</span><span class="gold-value">' + playerGold.toLocaleString() + '</span></div>';
+
+      if (myListings.length === 0) {
+        html += '<div class="empty">你还没有上架任何物品</div>';
+      } else {
+        myListings.forEach(item => {
+          const statusLabel = item.status === 'active' ? '🔵 出售中' : item.status === 'sold' ? '✅ 已售出' : '❌ 已取消';
+          html += `
+            <div class="my-listing">
+              <span class="my-listing-icon">${item.item_icon}</span>
+              <div class="my-listing-info">
+                <div class="my-listing-name">${item.item_name} x${item.quantity}</div>
+                <div class="my-listing-price">💰 ${item.price.toLocaleString()} | ${statusLabel}</div>
+              </div>
+              ${item.status === 'active' ? `<button class="cancel-btn" onclick="cancelListing('${item.listing_id || item.id}')">下架</button>` : ''}
+            </div>
+          `;
+        });
+      }
+      document.getElementById('content').innerHTML = html;
+    }
+
+    async function cancelListing(listingId) {
+      if (!confirm('确认下架？')) return;
+      try {
+        const res = await fetch(`${API_BASE}/market/cancel`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ listing_id: listingId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message, 'success');
+          await loadMyListings();
+          renderMyListings();
+        } else {
+          showToast(data.reason || '下架失败', 'error');
+        }
+      } catch (e) {
+        showToast('网络错误', 'error');
+      }
+    }
+
+    let sellTab = 'items';
+    async function renderSell() {
+      await Promise.all([loadInventory(), loadArtifacts()]);
+      selectedItem = null;
+
+      let html = `
+        <div class="gold-bar">
+          <span class="gold-label">💰 我的金贝</span>
+          <span class="gold-value">${playerGold.toLocaleString()}</span>
+        </div>
+        <div class="sell-section">
+          <div class="sell-title">选择要出售的物品</div>
+          <div class="sell-tabs">
+            <div class="sell-tab ${sellTab==='items'?'active':''}" onclick="switchSellTab('items', this)">🎒 背包物品</div>
+            <div class="sell-tab ${sellTab==='artifacts'?'active':''}" onclick="switchSellTab('artifacts', this)">⚔️ 我的神器</div>
+          </div>
+          <div id="sellItemsList"></div>
+          <input type="number" class="price-input" id="priceInput" placeholder="输入售价（金贝）" min="1" oninput="updateListBtn()">
+          <button class="list-btn" id="listBtn" disabled onclick="listItem()">📤 上架出售</button>
+        </div>
+      `;
+      document.getElementById('content').innerHTML = html;
+      renderSellItems();
+    }
+
+    function switchSellTab(tab, el) {
+      sellTab = tab;
+      selectedItem = null;
+      document.querySelectorAll('.sell-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      renderSellItems();
+      updateListBtn();
+    }
+
+    function renderSellItems() {
+      const container = document.getElementById('sellItemsList');
+      if (sellTab === 'items') {
+        if (inventory.length === 0) {
+          container.innerHTML = '<div class="empty">背包空空～</div>';
+          return;
+        }
+        let html = '<div class="inv-grid">';
+        inventory.forEach(item => {
+          const itemInfo = window.ITEMS ? window.ITEMS[item.item_id] : null;
+          html += `
+            <div class="inv-item" onclick="selectSellItem('item', '${item.item_id}', '${itemInfo ? itemInfo.name : item.item_id}', '${itemInfo ? itemInfo.icon : '📦'}', ${item.quantity}, null, this)">
+              <div class="inv-item-icon">${itemInfo ? itemInfo.icon : '📦'}</div>
+              <div class="inv-item-name">${itemInfo ? itemInfo.name : item.item_id}</div>
+              <div class="inv-item-qty">x${item.quantity}</div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+      } else {
+        if (playerArtifacts.length === 0) {
+          container.innerHTML = '<div class="empty">还没有神器～</div>';
+          return;
+        }
+        let html = '<div class="art-grid">';
+        playerArtifacts.forEach(art => {
+          const icon = ARTIFACT_ICONS[art.artifact_key] || '🏆';
+          html += `
+            <div class="art-item ${rarityClass(art.rarity)}" onclick="selectSellItem('artifact', '${art.artifact_key}', '${art.name}', '${icon}', 1, '${art.rarity}', this)">
+              <div class="art-item-icon">${icon}</div>
+              <div class="art-item-name">${art.name}</div>
+              <div class="art-item-rarity rarity-${art.rarity}">${art.rarity}</div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+      }
+    }
+
+    function selectSellItem(type, key, name, icon, quantity, rarity, el) {
+      document.querySelectorAll('.inv-item, .art-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedItem = { type, key, name, icon, quantity, rarity };
+      updateListBtn();
+    }
+
+    function updateListBtn() {
+      const priceInput = document.getElementById('priceInput');
+      const listBtn = document.getElementById('listBtn');
+      const price = parseInt(priceInput.value);
+      listBtn.disabled = !selectedItem || !price || price < 1;
+    }
+
+    async function listItem() {
+      if (!selectedItem) return;
+      const priceInput = document.getElementById('priceInput');
+      const price = parseInt(priceInput.value);
+      if (!price || price < 1) {
+        showToast('请输入有效的价格', 'error');
+        return;
+      }
+      if (!confirm(`确认上架 ${selectedItem.name} x${selectedItem.quantity}，售价 ${price} 金贝？`)) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/market/list`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({
+            item_type: selectedItem.type,
+            item_key: selectedItem.key,
+            quantity: selectedItem.quantity,
+            price: price,
+            item_name: selectedItem.name,
+            item_icon: selectedItem.icon,
+            rarity: selectedItem.rarity
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message, 'success');
+          selectedItem = null;
+          document.getElementById('priceInput').value = '';
+          await Promise.all([loadInventory(), loadArtifacts()]);
+          renderSellItems();
+          updateListBtn();
+        } else {
+          showToast(data.reason || '上架失败', 'error');
+        }
+      } catch (e) {
+        showToast('网络错误', 'error');
+      }
+    }
+
+    // Load ITEMS from server
+    async function loadItemsData() {
+      try {
+        const res = await fetch('/api/items');
+        const data = await res.json();
+        window.ITEMS = {};
+        if (data.items) {
+          data.items.forEach(item => { window.ITEMS[item.id] = item; });
+        }
+      } catch (e) {}
+    }
+
+    // Init
+    async function init() {
+      await loadPlayerGold();
+      await loadMarket();
+      await loadItemsData();
+      renderBrowse();
+    }
+    init();
+  </script>
+</body>
+</html>

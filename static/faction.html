@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🏯 宗门 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { padding-top: 0; }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(20,10,40,0.97); border-bottom: 1px solid rgba(150,100,255,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #c9a0ff; flex: 1; }
+    .back-btn { background: none; border: none; color: #c9a0ff; font-size: 20px; cursor: pointer; padding: 8px; }
+    .tab-bar { position: fixed; top: 50px; left: 0; right: 0; background: rgba(15,8,30,0.97); display: flex; border-bottom: 1px solid rgba(150,100,255,0.2); z-index: 99; }
+    .tab { flex: 1; padding: 12px 8px; text-align: center; font-size: 13px; color: rgba(200,160,255,0.5); cursor: pointer; transition: all 0.3s; border-bottom: 2px solid transparent; }
+    .tab.active { color: #c9a0ff; border-bottom-color: #c9a0ff; }
+
+    .content { margin-top: 110px; padding: 12px; }
+
+    /* My Faction Hero Card */
+    .faction-hero {
+      background: linear-gradient(135deg, rgba(100,50,180,0.4) 0%, rgba(50,20,100,0.6) 100%);
+      border: 2px solid rgba(150,100,255,0.4);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .faction-hero::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(150,100,255,0.1) 0%, transparent 60%);
+      animation: pulse 4s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    .faction-hero-icon { font-size: 56px; margin-bottom: 8px; position: relative; }
+    .faction-hero-name { font-size: 22px; color: #fff; font-weight: bold; margin-bottom: 4px; position: relative; }
+    .faction-hero-level { font-size: 11px; color: #c9a0ff; background: rgba(150,100,255,0.2); padding: 2px 10px; border-radius: 10px; display: inline-block; margin-bottom: 10px; position: relative; }
+    .faction-hero-bonus { font-size: 13px; color: #ffd700; margin-bottom: 12px; position: relative; }
+    .faction-hero-glow { font-size: 28px; margin-bottom: 6px; }
+    .faction-hero-glow-name { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 4px; }
+    .faction-hero-glow-artifact { font-size: 13px; color: #c9a0ff; }
+
+    /* Action buttons in hero */
+    .faction-hero-actions { display: flex; gap: 8px; justify-content: center; margin-top: 12px; position: relative; }
+    .btn-primary { background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff; border: none; padding: 10px 20px; border-radius: 10px; font-size: 13px; cursor: pointer; flex: 1; }
+    .btn-danger { background: rgba(255,80,80,0.2); color: #ff6b6b; border: 1px solid rgba(255,80,80,0.5); padding: 10px 16px; border-radius: 10px; font-size: 12px; cursor: pointer; }
+
+    /* No faction state */
+    .no-faction-card {
+      background: rgba(30,20,60,0.8);
+      border: 2px dashed rgba(150,100,255,0.3);
+      border-radius: 20px;
+      padding: 30px 20px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .no-faction-icon { font-size: 50px; margin-bottom: 12px; }
+    .no-faction-title { font-size: 16px; color: #fff; margin-bottom: 6px; }
+    .no-faction-desc { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.5; }
+
+    /* Section title */
+    .section-title { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; margin-top: 8px; }
+    .section-title-icon { font-size: 16px; }
+    .section-title-text { font-size: 14px; color: #c9a0ff; font-weight: bold; }
+
+    /* Faction card grid */
+    .faction-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .faction-card {
+      background: rgba(30,20,60,0.85);
+      border: 1px solid rgba(150,100,255,0.25);
+      border-radius: 16px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .faction-card:hover, .faction-card:active { transform: translateY(-2px); border-color: rgba(150,100,255,0.5); }
+    .faction-card-icon { font-size: 36px; text-align: center; margin-bottom: 6px; }
+    .faction-card-name { font-size: 14px; color: #fff; text-align: center; font-weight: bold; margin-bottom: 4px; }
+    .faction-card-bonus { font-size: 11px; color: #ffd700; text-align: center; }
+    .faction-card-desc { font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; margin-top: 4px; line-height: 1.4; }
+
+    /* Territory tab content */
+    .territory-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .territory-card {
+      background: rgba(30,20,60,0.85);
+      border: 1px solid rgba(150,100,255,0.25);
+      border-radius: 16px;
+      padding: 14px;
+      text-align: center;
+    }
+    .territory-card-icon { font-size: 32px; margin-bottom: 6px; }
+    .territory-card-name { font-size: 13px; color: #fff; font-weight: bold; margin-bottom: 4px; }
+    .territory-card-level { font-size: 10px; color: #c9a0ff; margin-bottom: 4px; }
+    .territory-card-reward { font-size: 10px; color: #ffd700; }
+    .territory-card.locked { opacity: 0.5; }
+    .territory-card-header { font-size: 11px; color: #c9a0ff; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(150,100,255,0.2); }
+
+    /* Detail modal */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal-card { background: linear-gradient(135deg, rgba(40,20,80,0.98) 0%, rgba(20,10,40,0.98) 100%); border: 2px solid rgba(150,100,255,0.4); border-radius: 20px; padding: 24px 16px; max-width: 340px; width: 90%; max-height: 85vh; overflow-y: auto; position: relative; }
+    .modal-close { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.6); font-size: 18px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; }
+    .modal-faction-icon { font-size: 64px; text-align: center; margin-bottom: 12px; }
+    .modal-faction-name { font-size: 22px; color: #fff; text-align: center; font-weight: bold; margin-bottom: 4px; }
+    .modal-faction-level { text-align: center; font-size: 11px; color: #c9a0ff; background: rgba(150,100,255,0.2); padding: 2px 12px; border-radius: 10px; display: inline-block; margin: 0 auto 12px; }
+    .modal-section { background: rgba(0,0,0,0.3); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+    .modal-section-title { font-size: 12px; color: #c9a0ff; margin-bottom: 8px; font-weight: bold; }
+    .modal-section-content { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.6; }
+    .modal-join-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff; border: none; border-radius: 12px; font-size: 15px; cursor: pointer; margin-top: 8px; }
+    .modal-join-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .guardian-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .guardian-icon { font-size: 24px; }
+    .guardian-info { flex: 1; }
+    .guardian-name { font-size: 12px; color: #fff; }
+    .guardian-type { font-size: 10px; color: rgba(255,255,255,0.4); }
+
+    .loading { text-align: center; padding: 40px; color: rgba(200,160,255,0.5); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>🏯 宗门系统</h1>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab active" id="tabMy" onclick="switchTab('my')">
+      <span>🏯</span><br>我的宗门
+    </div>
+    <div class="tab" id="tabList" onclick="switchTab('list')">
+      <span>🏛️</span><br>宗门列表
+    </div>
+    <div class="tab" id="tabTerritory" onclick="switchTab('territory')">
+      <span>🗺️</span><br>领地
+    </div>
+  </div>
+
+  <div class="content" id="content-my">
+    <div id="myFactionContent"><div class="loading">加载中...</div></div>
+  </div>
+
+  <div class="content" id="content-list" style="display:none">
+    <div class="section-title">
+      <span class="section-title-icon">🏛️</span>
+      <span class="section-title-text">六大门派</span>
+    </div>
+    <div class="faction-grid" id="factionGrid"><div class="loading">加载中...</div></div>
+  </div>
+
+  <div class="content" id="content-territory" style="display:none">
+    <div id="territoryContent"><div class="loading">加载中...</div></div>
+  </div>
+
+  <div class="modal-overlay" id="factionModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-faction-icon" id="modalIcon">🏯</div>
+      <div class="modal-faction-name" id="modalName">宗门名称</div>
+      <div class="modal-faction-level" id="modalLevel">宗门等级 Lv.1</div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">📜 宗门介绍</div>
+        <div class="modal-section-content" id="modalDesc">宗门描述...</div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">⚔️ 宗门加成</div>
+        <div class="modal-section-content" id="modalBonus">加成效果</div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">🛡️ 宗门守护</div>
+        <div class="guardian-row">
+          <span class="guardian-icon" id="modalBeast">🦀</span>
+          <div class="guardian-info">
+            <div class="guardian-name" id="modalBeastName">守护神兽</div>
+            <div class="guardian-type">守护神兽</div>
+          </div>
+        </div>
+        <div class="guardian-row">
+          <span class="guardian-icon" id="modalArtifact">⚔️</span>
+          <div class="guardian-info">
+            <div class="guardian-name" id="modalArtifactName">守护神器</div>
+            <div class="guardian-type">守护神器</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">🗺️ 宗门领地</div>
+        <div id="modalTerritory" style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.6"></div>
+      </div>
+
+      <button class="modal-join-btn" id="modalJoinBtn" onclick="joinFactionFromModal()">加入宗门</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/shared.js"></script>
+  <script>
+    var currentFactionId = null;
+    var allFactions = [];
+    var myFactionData = null;
+
+    function switchTab(tab) {
+      ['my','list','territory'].forEach(t => {
+        document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t === tab);
+        document.getElementById('content-'+t).style.display = t === tab ? 'block' : 'none';
+      });
+      if (tab === 'my') loadMyFaction();
+      if (tab === 'list') loadFactionList();
+      if (tab === 'territory') loadTerritory();
+    }
+
+    function getFactionIcon(id) {
+      const map = { iron_claw: '⚔️', mystic_shield: '🛡️', shadow_whisker: '🌊', tide_clan: '🔱', molting_palace: '✨', deep_abyss: '🌑' };
+      return map[id] || '🏯';
+    }
+
+    // ========== My Faction ==========
+    async function loadMyFaction() {
+      const el = document.getElementById('myFactionContent');
+      try {
+        const res = await fetch(`${API_BASE}/factions`, { headers: getAuthHeader() });
+        const data = await res.json();
+        allFactions = data.factions || [];
+        myFactionData = data.my_faction;
+
+        if (myFactionData) {
+          const f = myFactionData;
+          const level = f.level || 1;
+          const funds = f.funds || 0;
+          const upgradeNeed = level * 10000;
+          const progress = Math.min(100, Math.floor(funds / upgradeNeed * 100));
+          el.innerHTML = `
+            <div class="faction-hero">
+              <div class="faction-hero-icon">${getFactionIcon(f.faction_id)}</div>
+              <div class="faction-hero-name">${f.name}</div>
+              <div class="faction-hero-level">宗门等级 Lv.${level}</div>
+              <div class="faction-hero-bonus">⚔️ ${f.bonus_effect || '无'}</div>
+              <div class="faction-hero-glow">${f.guardian_artifact?.split(' ')[0] || '⚔️'}</div>
+              <div class="faction-hero-glow-name">守护神器</div>
+              <div class="faction-hero-glow-artifact">${f.guardian_artifact || ''}</div>
+              <div class="faction-hero-actions">
+                <button class="btn-primary" onclick="switchTab('territory')">🏯 进入领地</button>
+                <button class="btn-danger" onclick="leaveFaction()">退出</button>
+              </div>
+            </div>
+
+            <div class="section-title">
+              <span class="section-title-icon">💰</span>
+              <span class="section-title-text">银贝捐献</span>
+            </div>
+            <div style="background:rgba(30,20,60,0.85);border:1px solid rgba(150,100,255,0.25);border-radius:16px;padding:16px;margin-bottom:16px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <span style="font-size:12px;color:#c9a0ff">宗门资金</span>
+                <span style="font-size:13px;color:#ffd700;font-weight:bold" id="factionFunds">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                <span style="font-size:12px;color:#c9a0ff">升级所需</span>
+                <span style="font-size:13px;color:#fff" id="upgradeNeed">—</span>
+              </div>
+              <div style="margin-bottom:14px">
+                <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden">
+                  <div id="upgradeProgress" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#a855f7);border-radius:3px;transition:width 0.5s"></div>
+                </div>
+              </div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:12px">每次捐献 100 / 500 / 1000 / 5000 银贝</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
+                <button class="donate-btn" data-amount="100" onclick="donateFaction(100)" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.4);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.2s">
+                  <div style="font-size:16px;color:#ffd700;font-weight:bold">100</div>
+                  <div style="font-size:9px;color:rgba(255,255,255,0.4)">银贝</div>
+                </button>
+                <button class="donate-btn" data-amount="500" onclick="donateFaction(500)" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.4);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.2s">
+                  <div style="font-size:16px;color:#ffd700;font-weight:bold">500</div>
+                  <div style="font-size:9px;color:rgba(255,255,255,0.4)">银贝</div>
+                </button>
+                <button class="donate-btn" data-amount="1000" onclick="donateFaction(1000)" style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.5);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.2s">
+                  <div style="font-size:16px;color:#ffd700;font-weight:bold">1000</div>
+                  <div style="font-size:9px;color:rgba(255,255,255,0.4)">银贝</div>
+                </button>
+                <button class="donate-btn" data-amount="5000" onclick="donateFaction(5000)" style="background:rgba(255,215,0,0.2);border:1px solid rgba(255,215,0,0.6);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.2s">
+                  <div style="font-size:16px;color:#ffd700;font-weight:bold">5000</div>
+                  <div style="font-size:9px;color:rgba(255,255,255,0.4)">银贝</div>
+                </button>
+              </div>
+              <div id="donateResult" style="margin-top:10px;text-align:center;font-size:12px;color:#c9a0ff;display:none"></div>
+            </div>
+            <div class="section-title">
+              <span class="section-title-icon">🛡️</span>
+              <span class="section-title-text">宗门守护</span>
+            </div>
+            <div class="faction-grid" style="margin-bottom:16px">
+              <div class="faction-card" style="text-align:center">
+                <div style="font-size:32px;margin-bottom:6px">${f.guardian_beast?.split(' ')[0] || '🦀'}</div>
+                <div style="font-size:12px;color:#fff;margin-bottom:2px">${f.guardian_beast?.split(' ').slice(1).join(' ') || '守护神兽'}</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.4)">守护神兽</div>
+              </div>
+              <div class="faction-card" style="text-align:center">
+                <div style="font-size:32px;margin-bottom:6px">${f.guardian_artifact?.split(' ')[0] || '⚔️'}</div>
+                <div style="font-size:12px;color:#fff;margin-bottom:2px">${f.guardian_artifact?.split(' ').slice(1).join(' ') || '守护神器'}</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.4)">守护神器</div>
+              </div>
+            </div>
+          `;
+        } else {
+          el.innerHTML = `
+            <div class="no-faction-card">
+              <div class="no-faction-icon">🏯</div>
+              <div class="no-faction-title">尚未加入宗门</div>
+              <div class="no-faction-desc">加入宗门可获得专属宗门加成<br>解锁宗门领地和专属研究</div>
+              <button class="btn-primary" style="margin-top:16px;width:100%" onclick="switchTab('list')">浏览宗门</button>
+            </div>
+          `;
+        }
+      } catch(e) { el.innerHTML = '<div class="loading">加载失败</div>'; }
+    }
+
+    // ========== Faction List ==========
+    async function loadFactionList() {
+      const el = document.getElementById('factionGrid');
+      if (!allFactions.length) {
+        try {
+          const res = await fetch(`${API_BASE}/factions`, { headers: getAuthHeader() });
+          const data = await res.json();
+          allFactions = data.factions || [];
+        } catch(e) { allFactions = []; }
+      }
+      if (!allFactions.length) { el.innerHTML = '<div class="loading">暂无宗门</div>'; return; }
+      el.innerHTML = allFactions.map(f => `
+        <div class="faction-card" onclick="openFactionModal('${f.faction_id}')">
+          <div class="faction-card-icon">${getFactionIcon(f.faction_id)}</div>
+          <div class="faction-card-name">${f.name}</div>
+          <div class="faction-card-bonus">${f.bonus_effect}</div>
+          <div class="faction-card-desc">${(f.description || '').substring(0, 20)}...</div>
+        </div>
+      `).join('');
+    }
+
+    // ========== Faction Detail Modal ==========
+    async function openFactionModal(factionId) {
+      const f = allFactions.find(x => x.faction_id === factionId);
+      if (!f) return;
+      currentFactionId = factionId;
+
+      document.getElementById('modalIcon').textContent = getFactionIcon(f.faction_id);
+      document.getElementById('modalName').textContent = f.name;
+      document.getElementById('modalLevel').textContent = `宗门等级 Lv.${f.level || 1}`;
+      document.getElementById('modalDesc').textContent = f.description || '暂无介绍';
+      document.getElementById('modalBonus').textContent = '⚔️ ' + (f.bonus_effect || '无');
+      document.getElementById('modalBeast').textContent = f.guardian_beast?.split(' ')[0] || '🦀';
+      document.getElementById('modalBeastName').textContent = f.guardian_beast?.split(' ').slice(1).join(' ') || '守护神兽';
+      document.getElementById('modalArtifact').textContent = f.guardian_artifact?.split(' ')[0] || '⚔️';
+      document.getElementById('modalArtifactName').textContent = f.guardian_artifact?.split(' ').slice(1).join(' ') || '守护神器';
+
+      // Territory info for this faction
+      const territoryInfo = getTerritoryDesc(f.faction_id);
+      document.getElementById('modalTerritory').innerHTML = territoryInfo;
+
+      const btn = document.getElementById('modalJoinBtn');
+      if (myFactionData) {
+        btn.textContent = myFactionData.faction_id === factionId ? '已是宗门成员' : '已加入其他宗门';
+        btn.disabled = true;
+      } else {
+        btn.textContent = '加入宗门';
+        btn.disabled = false;
+      }
+
+      document.getElementById('factionModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('factionModal').classList.remove('show');
+    }
+
+    function getTerritoryDesc(factionId) {
+      const map = {
+        iron_claw: '⚔️ 铁螯研究所 · 钳力强化<br>🦀 铁螯蟹巢穴 · 野外狩猎',
+        mystic_shield: '🛡️ 玄甲铸造坊 · 防御研究<br>🐢 玄甲龟息池 · 生命恢复',
+        shadow_whisker: '🌊 影须潜行区 · 闪避修炼<br>🦑 影须迷宫 · 探索奖励',
+        tide_clan: '💧 潮汐疗养院 · MP恢复<br>🐙 潮汐漩涡 · 经验加成',
+        molting_palace: '✨ 蜕壳祭坛 · 复活概率<br>🦞 蜕壳圣池 · 属性成长',
+        deep_abyss: '🌑 深渊研究台 · 稀有掉落<br>🦈 深渊领主巢穴 · 挑战奖励'
+      };
+      return map[factionId] || '暂无领地信息';
+    }
+
+    async function joinFactionFromModal() {
+      if (!currentFactionId || (myFactionData)) return;
+      try {
+        const res = await fetch(`${API_BASE}/factions/join`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ faction_id: currentFactionId })
+        });
+        const data = await res.json();
+        if (data.success || data.code === 0) {
+          showToast('加入成功！');
+          closeModal();
+          loadMyFaction();
+        } else {
+          showToast(data.message || '加入失败', 'error');
+        }
+      } catch(e) { showToast('网络错误', 'error'); }
+    }
+
+    async function leaveFaction() {
+      if (!confirm('确定要退出门派吗？退出后需等待15分钟才能加入其他宗门')) return;
+      try {
+        const res = await fetch(`${API_BASE}/factions/leave`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeader() } });
+        const data = await res.json();
+        if (data.success || data.code === 0) {
+          showToast('已退出门派');
+          myFactionData = null;
+          loadMyFaction();
+        } else { showToast(data.message || '退出失败', 'error'); }
+      } catch(e) { showToast('网络错误', 'error'); }
+    }
+
+    async function donateFaction(amount) {
+      const btn = document.querySelector(`.donate-btn[data-amount="${amount}"]`);
+      if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+      const resultEl = document.getElementById('donateResult');
+      resultEl.style.display = 'none';
+      try {
+        const res = await fetch(`${API_BASE}/factions/donate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ silver: amount })
+        });
+        const data = await res.json();
+        if (data.success || data.code === 0) {
+          showToast('捐献成功！' + data.message);
+          resultEl.textContent = '✅ ' + data.message;
+          resultEl.style.color = '#00e5a0';
+          resultEl.style.display = 'block';
+          if (data.faction) {
+            const f = data.faction;
+            const level = f.level || 1;
+            const funds = f.funds || 0;
+            const upgradeNeed = level * 10000;
+            const progress = Math.min(100, Math.floor(funds / upgradeNeed * 100));
+            document.getElementById('factionFunds').textContent = funds.toLocaleString() + ' 银贝';
+            document.getElementById('upgradeNeed').textContent = (upgradeNeed - funds).toLocaleString() + ' / ' + upgradeNeed.toLocaleString();
+            document.getElementById('upgradeProgress').style.width = progress + '%';
+          }
+        } else {
+          showToast(data.reason || '捐献失败', 'error');
+          resultEl.textContent = '❌ ' + (data.reason || '捐献失败');
+          resultEl.style.color = '#ff6b6b';
+          resultEl.style.display = 'block';
+        }
+      } catch(e) { showToast('网络错误', 'error'); }
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    }
+
+    // ========== Territory ==========
+    async function loadTerritory() {
+      const el = document.getElementById('territoryContent');
+      if (!myFactionData) {
+        el.innerHTML = `
+          <div class="no-faction-card">
+            <div class="no-faction-icon">🗺️</div>
+            <div class="no-faction-title">暂无领地</div>
+            <div class="no-faction-desc">加入宗门后解锁专属领地<br>领地包含研究秘境、神兽巢穴等</div>
+            <button class="btn-primary" style="margin-top:16px;width:100%" onclick="switchTab('list')">加入宗门</button>
+          </div>
+        `;
+        return;
+      }
+
+      const fid = myFactionData.faction_id;
+      const factionName = myFactionData.name;
+
+      el.innerHTML = `
+        <div class="faction-hero" style="margin-bottom:16px">
+          <div class="faction-hero-icon">${getFactionIcon(fid)}</div>
+          <div class="faction-hero-name">${factionName} · 领地</div>
+          <div class="faction-hero-bonus">⚔️ ${myFactionData.bonus_effect}</div>
+        </div>
+
+        <div class="section-title">
+          <span class="section-title-icon">🔬</span>
+          <span class="section-title-text">领地研究</span>
+        </div>
+        <div class="territory-grid" style="margin-bottom:16px">
+          ${getResearchCards(fid)}
+        </div>
+
+        <div class="section-title">
+          <span class="section-title-icon">🌀</span>
+          <span class="section-title-text">专属秘境</span>
+        </div>
+        <div class="territory-grid" style="margin-bottom:16px">
+          ${getRealmCards(fid)}
+        </div>
+
+        <div class="section-title">
+          <span class="section-title-icon">⚔️</span>
+          <span class="section-title-text">宗门副本</span>
+        </div>
+        <div class="territory-grid" style="margin-bottom:16px">
+          ${getDungeonCards(fid)}
+        </div>
+      `;
+    }
+
+    function getResearchCards(factionId) {
+      const researches = [
+        { icon: '⚔️', name: '基础力量', level: 'Lv.1', reward: '战力+10', locked: false },
+        { icon: '🛡️', name: '基础防御', level: 'Lv.1', reward: '防御+10', locked: false },
+        { icon: '🌊', name: '基础身法', level: 'Lv.1', reward: '闪避+5', locked: false },
+        { icon: '💧', name: '高级力量', level: 'Lv.5', reward: '战力+25', locked: true },
+        { icon: '✨', name: '高级防御', level: 'Lv.5', reward: '防御+25', locked: true },
+        { icon: '⭐', name: '宗师研究', level: 'Lv.10', reward: '战力+50', locked: true },
+      ];
+      return researches.map(r => `
+        <div class="territory-card ${r.locked ? 'locked' : ''}">
+          <div style="font-size:28px;margin-bottom:4px">${r.icon}</div>
+          <div style="font-size:12px;color:#fff;margin-bottom:2px">${r.name}</div>
+          <div style="font-size:10px;color:#c9a0ff;margin-bottom:4px">${r.level}</div>
+          <div style="font-size:10px;color:#ffd700">${r.reward}</div>
+          ${r.locked ? '<div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px">🔒 需加入宗门解锁</div>' : ''}
+        </div>
+      `).join('');
+    }
+
+    function getRealmCards(factionId) {
+      const realms = [
+        { icon: '💰', name: '财富秘境', level: 'Lv.5', fee: '100金贝', reward: '金贝掉落x2', locked: false },
+        { icon: '🔮', name: '魔法秘境', level: 'Lv.10', fee: '200金贝', reward: '天赋点+1', locked: false },
+        { icon: '🐉', name: '幻兽秘境', level: 'Lv.15', fee: '500金贝', reward: '幻兽碎片', locked: true },
+        { icon: '⚡', name: '雷霆秘境', level: 'Lv.20', fee: '1000金贝', reward: '暴击率+5%', locked: true },
+      ];
+      return realms.map(r => `
+        <div class="territory-card ${r.locked ? 'locked' : ''}">
+          <div style="font-size:28px;margin-bottom:4px">${r.icon}</div>
+          <div style="font-size:12px;color:#fff;margin-bottom:2px">${r.name}</div>
+          <div style="font-size:10px;color:#c9a0ff;margin-bottom:2px">${r.level}</div>
+          <div style="font-size:10px;color:#ffd700">${r.reward}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">入门: ${r.fee}</div>
+        </div>
+      `).join('');
+    }
+
+    function getDungeonCards(factionId) {
+      const dungeons = [
+        { icon: '🏴', name: '铁螯蟹巢穴', level: 'Lv.3', reward: '经验+500', icon2: '🦀' },
+        { icon: '🏝️', name: '玄甲龟息池', level: 'Lv.5', reward: 'HP上限+100', icon2: '🐢' },
+        { icon: '🌫️', name: '影须迷宫', level: 'Lv.8', reward: '闪避+3%', icon2: '🦑' },
+        { icon: '🌀', name: '潮汐漩涡', level: 'Lv.10', reward: 'MP上限+50', icon2: '🐙' },
+      ];
+      return dungeons.map(d => `
+        <div class="territory-card">
+          <div style="font-size:28px;margin-bottom:4px">${d.icon2}</div>
+          <div style="font-size:12px;color:#fff;margin-bottom:2px">${d.name}</div>
+          <div style="font-size:10px;color:#c9a0ff;margin-bottom:4px">${d.level}</div>
+          <div style="font-size:10px;color:#ffd700">${d.reward}</div>
+        </div>
+      `).join('');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('factionModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    // Init
+    loadMyFaction();
+  </script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🗺️ 世界地图 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { padding-top: 0; background: linear-gradient(180deg, #000428 0%, #001e3c 30%, #003366 50%, #001e3c 70%, #000428 100%); min-height: 100vh; overflow-x: hidden; }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(0,30,60,0.95); border-bottom: 1px solid rgba(0,150,200,0.4); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #00bfff; flex: 1; }
+    .back-btn { background: none; border: none; color: #00bfff; font-size: 20px; cursor: pointer; padding: 8px; }
+    .header-btn { background: none; border: none; color: #00bfff; font-size: 14px; cursor: pointer; padding: 6px 10px; }
+    .ocean-floor { position: fixed; bottom: 0; left: 0; right: 0; height: 25%; background: linear-gradient(180deg, transparent 0%, rgba(0,30,60,0.5) 30%, rgba(0,20,40,0.8) 100%); pointer-events: none; }
+    .particles { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; overflow: hidden; z-index: 2; }
+    .particle { position: absolute; width: 3px; height: 3px; background: rgba(255,255,255,0.3); border-radius: 50%; animation: floatUp linear infinite; }
+    @keyframes floatUp { 0%{transform:translateY(100vh) scale(1);opacity:0} 10%{opacity:0.5} 90%{opacity:0.5} 100%{transform:translateY(-100px) scale(0.5);opacity:0} }
+    .content { margin-top: 60px; padding: 16px; position: relative; z-index: 10; padding-bottom: 70px; }
+    .map-container { background: rgba(0,30,60,0.7); border: 2px solid rgba(0,150,200,0.5); border-radius: 20px; padding: 16px; margin-bottom: 16px; }
+
+    /* Country cards grid */
+    .country-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .country-card {
+      background: linear-gradient(135deg, rgba(0,50,80,0.8) 0%, rgba(0,30,60,0.9) 100%);
+      border: 2px solid rgba(0,150,200,0.4);
+      border-radius: 18px;
+      padding: 20px 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .country-card:active { transform: scale(0.97); }
+    .country-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 2px 2px 0 0; }
+    .country-card.usa::before { background: linear-gradient(90deg, #3c3cbc, #ff3333); }
+    .country-card.usa { border-color: rgba(80,80,200,0.5); }
+    .country-card.uk::before { background: linear-gradient(90deg, #fff, #c8102e, #fff); }
+    .country-card.uk { border-color: rgba(220,220,220,0.4); }
+    .country-card.ru::before { background: linear-gradient(90deg, #fff, #0039a6, #d52b1e); }
+    .country-card.ru { border-color: rgba(80,100,200,0.5); }
+    .country-card.fr::before { background: linear-gradient(90deg, #002395, #fff, #ed2939); }
+    .country-card.fr { border-color: rgba(60,60,160,0.5); }
+    .country-card.cn::before { background: linear-gradient(90deg, #de2910, #ffde00, #de2910); }
+    .country-card.cn { border-color: rgba(222,41,16,0.5); }
+    .country-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,191,255,0.3); }
+
+    .country-flag { font-size: 48px; margin-bottom: 8px; }
+    .country-name { font-size: 16px; font-weight: bold; color: #fff; margin-bottom: 4px; }
+    .country-slogan { font-size: 11px; color: rgba(0,191,255,0.7); margin-bottom: 10px; font-style: italic; }
+    .country-enter { font-size: 10px; color: rgba(0,191,255,0.4); }
+
+    /* Area cards grid */
+    .area-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .area-card {
+      background: linear-gradient(135deg, rgba(0,50,80,0.8) 0%, rgba(0,30,60,0.9) 100%);
+      border: 2px solid rgba(0,150,200,0.35);
+      border-radius: 18px;
+      padding: 20px 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .area-card:active { transform: scale(0.97); }
+    .area-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,191,255,0.3); border-color: rgba(0,191,255,0.6); }
+    .area-icon { font-size: 44px; margin-bottom: 8px; }
+    .area-name { font-size: 15px; font-weight: bold; color: #fff; margin-bottom: 5px; }
+    .area-desc { font-size: 11px; color: rgba(0,191,255,0.65); }
+
+    /* Difficulty badge colors */
+    .badge-normal { background:rgba(80,200,80,0.25);color:#90ee90;border:1px solid rgba(80,200,80,0.5); }
+    .badge-hard { background:rgba(255,165,0,0.25);color:#ffa500;border:1px solid rgba(255,165,0,0.5); }
+    .badge-hell { background:rgba(255,50,50,0.25);color:#ff6b6b;border:1px solid rgba(255,50,50,0.5); }
+    .badge-warrior { background:rgba(138,43,226,0.25);color:#da70d6;border:1px solid rgba(138,43,226,0.5); }
+    .badge-legend { background:rgba(255,215,0,0.25);color:#ffd700;border:1px solid rgba(255,215,0,0.5); }
+    .badge-epic { background:rgba(147,112,219,0.25);color:#da70d6;border:1px solid rgba(147,112,219,0.5); }
+    .badge-epic-plus { background:rgba(147,0,219,0.25);color:#da3dff;border:1px solid rgba(147,0,219,0.5); }
+    .badge-epic-plusplus { background:rgba(200,0,150,0.25);color:#ff44aa;border:1px solid rgba(200,0,150,0.5); }
+    .badge-nightmare { background:rgba(139,0,0,0.3);color:#ff4444;border:1px solid rgba(200,0,0,0.5); }
+    .badge-nightmare-plus { background:rgba(100,0,0,0.3);color:#ff2222;border:1px solid rgba(180,0,0,0.5); }
+    .badge-myth { background:rgba(0,100,0,0.3);color:#00ff88;border:1px solid rgba(0,200,100,0.5); }
+    .badge-myth-plus { background:rgba(0,150,100,0.3);color:#00ffaa;border:1px solid rgba(0,200,150,0.5); }
+    .badge-void { background:rgba(80,0,120,0.3);color:#cc88ff;border:1px solid rgba(150,0,200,0.5); }
+    .badge-void-plus { background:rgba(60,0,100,0.3);color:#dd99ff;border:1px solid rgba(130,0,180,0.5); }
+    .badge-final { background:rgba(150,0,0,0.3);color:#ff6666;border:1px solid rgba(200,50,50,0.5); }
+    .badge-final-plus { background:rgba(180,0,0,0.3);color:#ff8888;border:1px solid rgba(220,80,80,0.5); }
+    .badge-cosmos { background:rgba(0,100,150,0.3);color:#88ddff;border:1px solid rgba(0,180,220,0.5); }
+    .badge-cosmos-plus { background:rgba(0,80,130,0.3);color:#66ccff;border:1px solid rgba(0,150,200,0.5); }
+    .badge-death { background:rgba(60,0,0,0.3);color:#ff3333;border:1px solid rgba(200,0,0,0.5); }
+    .badge-infinite { background:rgba(30,0,60,0.3);color:#cc99ff;border:1px solid rgba(150,50,255,0.5); }
+    .badge-infinite-plus { background:rgba(20,0,50,0.3);color:#dd88ff;border:1px solid rgba(130,30,220,0.5); }
+    .badge-legacy { background:rgba(255,150,0,0.25);color:#ffcc44;border:1px solid rgba(255,180,0,0.5); }
+    .badge-other { background:rgba(0,80,80,0.3);color:#88dddd;border:1px solid rgba(0,150,150,0.5); }
+
+    /* Compass */
+    .compass { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: rgba(0,30,60,0.8); border: 2px solid rgba(0,150,200,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; z-index: 50; animation: compassSpin 12s linear infinite; }
+    @keyframes compassSpin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+    .coords { position: fixed; bottom: 20px; left: 16px; background: rgba(0,20,40,0.85); border: 1px solid rgba(0,150,200,0.4); border-radius: 8px; padding: 6px 12px; font-family: monospace; font-size: 11px; color: #00bfff; z-index: 50; }
+    .coords-label { color: rgba(0,191,255,0.5); font-size: 9px; }
+    .light-rays { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+    .ray { position: absolute; top: -20%; width: 80px; background: linear-gradient(180deg, rgba(100,200,255,0.12), transparent); transform-origin: top center; animation: rayShimmer 6s ease-in-out infinite; }
+    @keyframes rayShimmer { 0%,100%{opacity:0.3} 50%{opacity:0.6} }
+  </style>
+</head>
+<body>
+  <div class="ocean-floor"></div>
+  <div class="particles" id="particles"></div>
+  <div class="light-rays" id="lightRays"></div>
+
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>🗺️ 世界地图</h1>
+    <div style="width:50px"></div>
+  </div>
+
+  <div class="content">
+    <div class="map-container">
+      <div class="area-grid" id="mainGrid">
+        <div class="area-card" onclick="location.href='/pirate.html'">
+          <div class="area-icon">🏴‍☠️</div>
+          <div class="area-name">海盗岛</div>
+          <div class="area-desc">危险海域</div>
+        </div>
+        <div class="area-card" onclick="location.href='/pearl.html'">
+          <div class="area-icon">🐚</div>
+          <div class="area-name">珍珠湾</div>
+          <div class="area-desc">财富之湾</div>
+        </div>
+        <div class="area-card" onclick="location.href='/volcano.html'">
+          <div class="area-icon">🌋</div>
+          <div class="area-name">火山海域</div>
+          <div class="area-desc">熔岩禁区</div>
+        </div>
+        <div class="area-card" onclick="location.href='/ice.html'">
+          <div class="area-icon">🧊</div>
+          <div class="area-name">冰封海峡</div>
+          <div class="area-desc">极寒之地</div>
+        </div>
+        <div class="area-card" onclick="location.href='/ghost.html'">
+          <div class="area-icon">👻</div>
+          <div class="area-name">幽灵船队</div>
+          <div class="area-desc">亡灵海域</div>
+        </div>
+        <div class="area-card" onclick="location.href='/snow.html'">
+          <div class="area-icon">❄️</div>
+          <div class="area-name">雪原商路</div>
+          <div class="area-desc">贸易通道</div>
+        </div>
+        <div class="area-card" onclick="location.href='/winter.html'">
+          <div class="area-icon">🌨️</div>
+          <div class="area-name">凛冬将至</div>
+          <div class="area-desc">王者试炼</div>
+        </div>
+        <div class="area-card" onclick="location.href='/troll.html'">
+          <div class="area-icon">🧌</div>
+          <div class="area-name">巨魔领域</div>
+          <div class="area-desc">森林深处</div>
+        </div>
+        <div class="area-card" onclick="location.href='/abyss.html'">
+          <div class="area-icon">🌀</div>
+          <div class="area-name">深海漩涡</div>
+          <div class="area-desc">禁忌领域</div>
+        </div>
+        <div class="area-card" onclick="location.href='/deepabyss.html'">
+          <div class="area-icon">🌊</div>
+          <div class="area-name">海底深渊</div>
+          <div class="area-desc">未知的恐惧等着你</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="compass">🧭</div>
+  <div class="coords">
+    <div class="coords-label">📍 坐标</div>
+    <div id="coordValue">LAT 28.4°N LNG 122.2°E</div>
+  </div>
+
+  <script src="/shared.js"></script>
+  <script>
+    // All 22 China difficulties
+    var DIFFICULTIES = [
+      { name:'长城守望', badge:'普通难度', badgeClass:'badge-normal', icon:'🏰', level:1 },
+      { name:'血色长城', badge:'困难难度', badgeClass:'badge-hard', icon:'🩸', level:2 },
+      { name:'大秦遗愿', badge:'地狱难度', badgeClass:'badge-hell', icon:'⚔️', level:3 },
+      { name:'薪火相传', badge:'勇士难度', badgeClass:'badge-warrior', icon:'🔥', level:4 },
+      { name:'炎黄部落', badge:'传奇难度', badgeClass:'badge-legend', icon:'🐉', level:5 },
+      { name:'逐鹿中原', badge:'史诗难度', badgeClass:'badge-epic', icon:'⚔️', level:6 },
+      { name:'全民皆兵', badge:'史诗+难度', badgeClass:'badge-epic-plus', icon:'🛡️', level:7 },
+      { name:'不屈死战', badge:'史诗++难度', badgeClass:'badge-epic-plusplus', icon:'💀', level:8 },
+      { name:'赤壁残梦', badge:'梦魇难度', badgeClass:'badge-nightmare', icon:'🌙', level:9 },
+      { name:'玉石同焚', badge:'梦魇+难度', badgeClass:'badge-nightmare-plus', icon:'🔥', level:10 },
+      { name:'永生战魂·无尽之战', badge:'神话难度', badgeClass:'badge-myth', icon:'⚡', level:11 },
+      { name:'龙脉归墟', badge:'至臻/神话难度', badgeClass:'badge-myth-plus', icon:'🐉', level:12 },
+      { name:'心猿枷锁', badge:'虚无难度', badgeClass:'badge-void', icon:'⛓️', level:13 },
+      { name:'洪荒重启', badge:'创世/虚无难度', badgeClass:'badge-void-plus', icon:'🌌', level:14 },
+      { name:'神话临尘', badge:'终焉难度', badgeClass:'badge-final', icon:'🌟', level:15 },
+      { name:'诸神黄昏', badge:'终焉+难度', badgeClass:'badge-final-plus', icon:'⚡', level:16 },
+      { name:'星际之门', badge:'寰宇难度', badgeClass:'badge-cosmos', icon:'🌌', level:17 },
+      { name:'血色冲锋号', badge:'终焉++难度', badgeClass:'badge-cosmos-plus', icon:'🩸', level:18 },
+      { name:'天地同寿', badge:'赴死难度', badgeClass:'badge-death', icon:'💀', level:19 },
+      { name:'永劫悖论', badge:'终焉终极难度', badgeClass:'badge-infinite', icon:'♾️', level:20 },
+      { name:'新的世界', badge:'传承/新生难度', badgeClass:'badge-legacy', icon:'🌍', level:21 },
+      { name:'重启纪元', badge:'创世/彼岸难度', badgeClass:'badge-other', icon:'🔄', level:22 },
+    ];
+
+    // Single difficulty countries
+    var SINGLE_COUNTRIES = {
+      usa: { name:'美国', flag:'🇺🇸', slogan:'怒海狂涛', badge:'普通难度', badgeClass:'badge-normal', icon:'🌊', level:1 },
+      uk:  { name:'英国', flag:'🇬🇧', slogan:'日不落帝国', badge:'困难难度', badgeClass:'badge-hard', icon:'👑', level:2 },
+      ru:  { name:'俄罗斯', flag:'🇷🇺', slogan:'凛冬将至', badge:'地狱难度', badgeClass:'badge-hell', icon:'❄️', level:3 },
+      fr:  { name:'法国', flag:'🇫🇷', slogan:'铁塔尚在', badge:'勇士难度', badgeClass:'badge-warrior', icon:'🗼', level:4 },
+    };
+
+    // 12 region cards
+    var REGIONS = [
+      { name:'海盗岛', icon:'🏴‍☠️', status:'危险海域', url:'/pirate.html' },
+      { name:'珍珠湾', icon:'🐚', status:'财富之湾', url:'/pearl.html' },
+      { name:'火山海域', icon:'🌋', status:'熔岩禁区', url:'/volcano.html' },
+      { name:'冰封海峡', icon:'🧊', status:'极寒之地', url:'/ice.html' },
+      { name:'幽灵船队', icon:'👻', status:'亡灵海域', url:'/ghost.html' },
+      { name:'雪原商路', icon:'❄️', status:'贸易通道', url:'/snow.html' },
+      { name:'凛冬将至', icon:'🌨️', status:'王者试炼', url:'/winter.html' },
+      { name:'巨魔领域', icon:'🧌', status:'森林深处', url:'/troll.html' },
+      { name:'深海漩涡', icon:'🌀', status:'禁忌领域', url:'/abyss.html' },
+      { name:'海底深渊', icon:'🌊', status:'未知的恐惧等着你', url:'/deepabyss.html' },
+    ];
+
+    function goCountry(code) {
+      if (code === 'cn') {
+        showDiffPage();
+      } else {
+        // Single difficulty country - go directly to region selection with that difficulty
+        var c = SINGLE_COUNTRIES[code];
+        showRegionPage(code, c.name, c.flag, c.icon, c.badge, c.badgeClass);
+      }
+    }
+
+    function showDiffPage() {
+      var content = document.querySelector('.content');
+      var html = '<div class="map-container" style="margin-bottom:16px">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">' +
+        '<button onclick="history.back()" style="background:linear-gradient(135deg,rgba(0,150,200,0.4),rgba(0,100,180,0.3));border:2px solid rgba(0,191,255,0.5);color:#00bfff;border-radius:10px;padding:8px 18px;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px rgba(0,191,255,0.2)">← 返回</button>' +
+        '<span style="font-size:15px;color:#00bfff;font-weight:bold">🇨🇳 中华篇章 · 选择难度</span>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+      DIFFICULTIES.forEach(function(d) {
+        html += '<div class="diff-card" onclick="showRegionPage(\'cn\', \'' + d.name.replace(/'/g,"\\'") + '\', \'🇨🇳\', \'' + d.icon + '\', \'' + d.badge + '\', \'' + d.badgeClass + '\', ' + d.level + ')" style="background:rgba(0,30,60,0.8);border:1px solid rgba(0,150,200,0.25);border-radius:14px;padding:14px 10px;text-align:center;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor=\'rgba(0,191,255,0.6)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.borderColor=\'rgba(0,150,200,0.25)\';this.style.transform=\'\'">' +
+          '<div style="font-size:26px;margin-bottom:4px">' + d.icon + '</div>' +
+          '<div style="font-size:11px;color:#fff;font-weight:bold;margin-bottom:4px;line-height:1.3">' + d.name + '</div>' +
+          '<div style="font-size:9px;padding:2px 8px;border-radius:8px;display:inline-block;margin-bottom:4px" class="' + d.badgeClass + '">' + d.badge + '</div>' +
+          '<div style="font-size:10px;color:rgba(0,191,255,0.4);margin-top:2px">第' + d.level + '阶段</div>' +
+        '</div>';
+      });
+      html += '</div></div>';
+      content.innerHTML = html;
+      window.scrollTo(0,0);
+    }
+
+    function showRegionPage(countryCode, countryName, flag, icon, badge, badgeClass, diffLevel) {
+      var diffInfo = '';
+      if (countryCode === 'cn') {
+        diffInfo = '<div style="font-size:10px;padding:2px 10px;border-radius:8px;display:inline-block;margin-bottom:8px" class="' + badgeClass + '">' + badge + ' · 第' + diffLevel + '阶段</div>';
+      }
+      var content = document.querySelector('.content');
+      var html = '<div class="map-container" style="margin-bottom:16px">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">' +
+        '<button onclick="history.back()" style="background:linear-gradient(135deg,rgba(0,150,200,0.4),rgba(0,100,180,0.3));border:2px solid rgba(0,191,255,0.5);color:#00bfff;border-radius:10px;padding:8px 18px;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px rgba(0,191,255,0.2)">← 返回</button>' +
+        '<span style="font-size:15px;color:#00bfff;font-weight:bold">' + flag + ' ' + countryName + ' · 选择区域</span>' +
+        '</div>' +
+        diffInfo +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+      REGIONS.forEach(function(r) {
+        var isLocked = r.status === '筹备中';
+        html += '<div onclick="location.href=\'' + r.url + '\'" style="background:rgba(0,30,60,0.8);border:1px solid rgba(0,150,200,0.25);border-radius:14px;padding:16px 10px;text-align:center;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor=\'rgba(0,191,255,0.6)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.borderColor=\'rgba(0,150,200,0.25)\';this.style.transform=\'\'">' +
+          '<div style="font-size:34px;margin-bottom:6px">' + r.icon + '</div>' +
+          '<div style="font-size:12px;color:#fff;font-weight:bold;margin-bottom:4px">' + r.name + '</div>' +
+          '<div style="font-size:10px;color:' + (isLocked ? '#ffd700' : 'rgba(0,191,255,0.5)') + '">' + r.status + '</div>' +
+        '</div>';
+      });
+      html += '</div></div>';
+      content.innerHTML = html;
+      window.scrollTo(0,0);
+    }
+
+    function showMainPage() {
+      location.href = '/worldmap.html';
+    }
+
+    function showPreparing(name) {
+      var toast = document.getElementById('toast') || document.createElement('div');
+      toast.id = 'toast';
+      toast.className = 'toast';
+      toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,30,60,0.97);border:2px solid rgba(255,215,0,0.5);border-radius:16px;padding:24px 32px;text-align:center;z-index:300;font-size:14px;color:#ffd700;box-shadow:0 0 30px rgba(255,215,0,0.3);max-width:280px';
+      toast.innerHTML = '<div style="font-size:48px;margin-bottom:12px">🚧</div><div style="font-size:15px;font-weight:bold;color:#fff;margin-bottom:6px">' + name + '</div><div style="color:rgba(255,215,0,0.8);font-size:13px">正在紧急筹备中...</div><div style="color:rgba(255,255,255,0.4);font-size:11px;margin-top:8px">敬请期待</div>';
+      toast.onclick = function() { toast.style.display = 'none'; };
+      document.body.appendChild(toast);
+      setTimeout(function() { toast.style.display = 'none'; }, 2500);
+    }
+
+    // Particles
+    var pc = document.getElementById('particles');
+    for (var i = 0; i < 20; i++) {
+      var p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (Math.random() * 10 + 10) + 's';
+      p.style.animationDelay = (Math.random() * 10) + 's';
+      pc.appendChild(p);
+    }
+
+    // Light rays
+    var rc = document.getElementById('lightRays');
+    for (var i = 0; i < 6; i++) {
+      var ray = document.createElement('div');
+      ray.className = 'ray';
+      ray.style.left = (10 + i * 16) + '%';
+      ray.style.height = '70%';
+      ray.style.transform = 'rotate(' + ((i - 2) * 8) + 'deg)';
+      ray.style.animationDuration = (5 + i * 0.5) + 's';
+      ray.style.animationDelay = (i * 0.8) + 's';
+      rc.appendChild(ray);
+    }
+
+    // Compass
+    var compassEl = document.querySelector('.compass');
+    var spinDir = 1;
+    setInterval(function() { spinDir *= -1; compassEl.style.animationDirection = spinDir > 0 ? 'normal' : 'reverse'; }, 8000);
+
+    // Random coords
+    setInterval(function() {
+      var lat = (28 + Math.random() * 10).toFixed(1) + '°N';
+      var lng = (110 + Math.random() * 30).toFixed(1) + '°E';
+      document.getElementById('coordValue').textContent = 'LAT ' + lat + ' LNG ' + lng;
+    }, 3000);
+  </script>
+</body>
+</html>

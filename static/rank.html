@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🏆 排行榜 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { padding-top: 0; background: linear-gradient(180deg, #1a0a00 0%, #3d2010 30%, #2a1505 60%, #1a0a00 100%); min-height: 100vh; }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(50,30,10,0.95); border-bottom: 1px solid rgba(255,180,50,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #ffb432; flex: 1; }
+    .back-btn { background: none; border: none; color: #ffb432; font-size: 20px; cursor: pointer; padding: 8px; }
+    
+    .glow { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at 50% 20%, rgba(255,180,50,0.12) 0%, transparent 60%); pointer-events: none; }
+    .particles { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; overflow: hidden; }
+    .particle { position: absolute; width: 3px; height: 3px; background: rgba(255,180,50,0.5); border-radius: 50%; animation: floatUp 8s ease-in-out infinite; }
+    @keyframes floatUp { 0%, 100% { transform: translateY(100vh) scale(0.5); opacity: 0; } 20% { opacity: 0.8; } 80% { opacity: 0.8; } 100% { transform: translateY(-50px) scale(1); opacity: 0; } }
+    
+    .content { margin-top: 60px; padding: 12px; position: relative; z-index: 10; }
+    
+    /* ========== Top 3 Podium ========== */
+    .podium-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 6px;
+      margin-bottom: 20px;
+      padding: 16px 4px;
+    }
+    
+    /* Second place */
+    .podium-2 {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 30%;
+    }
+    .podium-2 .podium-inner {
+      background: linear-gradient(180deg, rgba(192,192,192,0.15) 0%, rgba(50,30,10,0.9) 100%);
+      border: 2px solid rgba(192,192,192,0.5);
+      border-radius: 16px 16px 12px 12px;
+      padding: 10px 8px 12px;
+      width: 100%;
+      text-align: center;
+    }
+    .podium-2 .podium-rank { font-size: 24px; margin-bottom: 2px; }
+    .podium-2 .podium-avatar { font-size: 36px; margin-bottom: 4px; }
+    .podium-2 .podium-name { font-size: 12px; color: #c0c0c0; margin-bottom: 2px; word-break: break-all; line-height: 1.2; min-height: 28px; display: flex; align-items: center; justify-content: center; width: 100%; }
+    .podium-2 .podium-value { font-size: 11px; color: #c0c0c0; }
+    
+    /* First place - taller */
+    .podium-1 {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 36%;
+    }
+    .podium-1 .podium-inner {
+      background: linear-gradient(180deg, rgba(255,215,0,0.2) 0%, rgba(50,30,10,0.95) 100%);
+      border: 2px solid #ffd700;
+      border-radius: 18px 18px 14px 14px;
+      padding: 14px 10px 16px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(255,215,0,0.3);
+    }
+    .podium-1 .podium-rank { font-size: 30px; margin-bottom: 4px; }
+    .podium-1 .podium-avatar { font-size: 48px; margin-bottom: 6px; }
+    .podium-1 .podium-name { font-size: 14px; color: #ffd700; font-weight: bold; margin-bottom: 4px; word-break: break-all; line-height: 1.2; min-height: 34px; display: flex; align-items: center; justify-content: center; width: 100%; }
+    .podium-1 .podium-value { font-size: 13px; color: #ffd700; font-weight: bold; }
+    .podium-1 .podium-honor { font-size: 10px; color: #c9a0ff; margin-bottom: 2px; min-height: 14px; display: flex; align-items: center; justify-content: center; }
+    
+    /* Third place */
+    .podium-3 {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 28%;
+    }
+    .podium-3 .podium-inner {
+      background: linear-gradient(180deg, rgba(205,127,50,0.15) 0%, rgba(50,30,10,0.9) 100%);
+      border: 2px solid rgba(205,127,50,0.5);
+      border-radius: 14px 14px 10px 10px;
+      padding: 8px 6px 10px;
+      width: 100%;
+      text-align: center;
+    }
+    .podium-3 .podium-rank { font-size: 22px; margin-bottom: 2px; }
+    .podium-3 .podium-avatar { font-size: 32px; margin-bottom: 4px; }
+    .podium-3 .podium-name { font-size: 11px; color: #cd7f32; margin-bottom: 2px; word-break: break-all; line-height: 1.2; min-height: 26px; display: flex; align-items: center; justify-content: center; width: 100%; }
+    .podium-3 .podium-value { font-size: 10px; color: #cd7f32; }
+    
+    /* ========== Tabs ========== */
+    .tab-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab-btn { flex: 1; padding: 12px; background: rgba(50,30,10,0.8); border: 1px solid rgba(255,180,50,0.3); border-radius: 12px; color: rgba(255,180,50,0.6); font-size: 13px; cursor: pointer; transition: all 0.3s; text-align: center; }
+    .tab-btn.active { background: rgba(255,180,50,0.3); border-color: #ffb432; color: #ffb432; }
+    
+    /* ========== Rank List ========== */
+    .rank-list { display: flex; flex-direction: column; gap: 8px; }
+    .rank-card { display: flex; align-items: center; background: rgba(50,30,10,0.85); border: 1px solid rgba(255,180,50,0.25); border-radius: 14px; padding: 12px 14px; cursor: pointer; transition: all 0.2s; }
+    .rank-card:hover { transform: translateX(4px); border-color: rgba(255,180,50,0.5); }
+    .rank-card.top10 { border-left: 3px solid #ffb432; }
+    .rank-card.top3 { border-left: 3px solid #ffd700; background: rgba(255,215,0,0.08); }
+    .rank-num { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(255,180,50,0.15); border-radius: 50%; font-size: 13px; color: #ffb432; margin-right: 10px; font-weight: bold; flex-shrink: 0; }
+    .rank-card.top3 .rank-num { background: rgba(255,215,0,0.25); color: #ffd700; }
+    .rank-avatar { font-size: 28px; margin-right: 10px; flex-shrink: 0; }
+    .rank-info { flex: 1; min-width: 0; }
+    .rank-name { font-size: 13px; color: #fff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-detail { font-size: 10px; color: rgba(255,180,50,0.5); }
+    .rank-value { font-size: 14px; color: #ffb432; font-weight: bold; margin-left: 10px; flex-shrink: 0; }
+    
+    .section-title { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-left: 4px; }
+    .section-icon { font-size: 18px; }
+    .section-label { font-size: 14px; color: #ffb432; font-weight: bold; }
+    
+    .empty-state { text-align: center; padding: 60px 20px; color: rgba(255,180,50,0.5); }
+    .empty-icon { font-size: 50px; margin-bottom: 12px; }
+    
+    /* ========== Player Modal ========== */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.88); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal-card { background: linear-gradient(135deg, rgba(45,22,8,0.98) 0%, rgba(25,12,4,0.98) 100%); border: 2px solid rgba(255,180,50,0.4); border-radius: 20px; padding: 20px 16px; max-width: 320px; width: 92%; max-height: 85vh; overflow-y: auto; position: relative; }
+    .modal-close { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.08); border: none; color: rgba(255,255,255,0.5); font-size: 16px; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; }
+    .modal-avatar-wrap { text-align: center; margin-bottom: 12px; }
+    .modal-avatar { font-size: 64px; margin-bottom: 4px; }
+    .modal-honor { font-size: 12px; margin-bottom: 4px; min-height: 18px; }
+    .modal-name { font-size: 20px; color: #fff; font-weight: bold; text-align: center; margin-bottom: 4px; }
+    .modal-level { text-align: center; font-size: 11px; color: #ffb432; background: rgba(255,180,50,0.15); padding: 2px 12px; border-radius: 10px; display: inline-block; }
+    
+    .modal-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 14px 0; }
+    .modal-stat { background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px 6px; text-align: center; }
+    .modal-stat-icon { font-size: 18px; margin-bottom: 2px; }
+    .modal-stat-val { font-size: 16px; color: #ffb432; font-weight: bold; }
+    .modal-stat-label { font-size: 10px; color: rgba(255,255,255,0.4); }
+    
+    .modal-section { background: rgba(0,0,0,0.25); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+    .modal-section-title { font-size: 11px; color: #ffb432; margin-bottom: 6px; font-weight: bold; }
+    .modal-section-row { display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 4px; }
+    .modal-section-row:last-child { margin-bottom: 0; }
+    .modal-section-label { color: rgba(255,255,255,0.4); }
+    .modal-section-val { color: #fff; }
+    
+    .modal-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; background: rgba(255,180,50,0.15); color: #ffb432; }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="particles" id="particles"></div>
+  
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>🏆 排行榜</h1>
+  </div>
+
+  <div class="content">
+    <!-- Top 3 Podium -->
+    <div class="podium-container" id="podiumContainer">
+      <!-- 2nd -->
+      <div class="podium-2">
+        <div class="podium-inner">
+          <div class="podium-rank">🥈</div>
+          <div class="podium-avatar">🦞</div>
+          <div class="podium-name" id="p2-name">---</div>
+          <div class="podium-value" id="p2-val">-</div>
+        </div>
+      </div>
+      <!-- 1st -->
+      <div class="podium-1">
+        <div class="podium-inner">
+          <div class="podium-rank">🥇</div>
+          <div class="podium-avatar">🦞</div>
+          <div class="podium-honor" id="p1-honor"></div>
+          <div class="podium-name" id="p1-name">---</div>
+          <div class="podium-value" id="p1-val">-</div>
+        </div>
+      </div>
+      <!-- 3rd -->
+      <div class="podium-3">
+        <div class="podium-inner">
+          <div class="podium-rank">🥉</div>
+          <div class="podium-avatar">🦞</div>
+          <div class="podium-name" id="p3-name">---</div>
+          <div class="podium-value" id="p3-val">-</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tabPower" onclick="switchType('power')">⚔️ 战力榜</button>
+      <button class="tab-btn" id="tabLevel" onclick="switchType('level')">📈 等级榜</button>
+      <button class="tab-btn" id="tabGold" onclick="switchType('gold')">💰 财富榜</button>
+    </div>
+
+    <div class="section-title">
+      <span class="section-icon">📋</span>
+      <span class="section-label" id="sectionLabel">战力排行</span>
+    </div>
+
+    <div id="rankList"><div class="empty-state"><div class="empty-icon">🏆</div>加载中...</div></div>
+  </div>
+
+  <!-- Player Detail Modal -->
+  <div class="modal-overlay" id="playerModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-avatar-wrap">
+        <div class="modal-avatar">🦞</div>
+        <div class="modal-honor" id="m-honor"></div>
+        <div class="modal-name" id="m-name">---</div>
+        <div class="modal-level" id="m-level">Lv.1</div>
+      </div>
+      
+      <div class="modal-stats">
+        <div class="modal-stat">
+          <div class="modal-stat-icon">⚔️</div>
+          <div class="modal-stat-val" id="m-power">0</div>
+          <div class="modal-stat-label">战力</div>
+        </div>
+        <div class="modal-stat">
+          <div class="modal-stat-icon">🏅</div>
+          <div class="modal-stat-val" id="m-ladder">-</div>
+          <div class="modal-stat-label">天梯</div>
+        </div>
+        <div class="modal-stat">
+          <div class="modal-stat-icon">💰</div>
+          <div class="modal-stat-val" id="m-gold">0</div>
+          <div class="modal-stat-label">金贝</div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">📊 六维属性</div>
+        <div class="modal-section-row"><span class="modal-section-label">钳力</span><span class="modal-section-val" id="m-claw">-</span></div>
+        <div class="modal-section-row"><span class="modal-section-label">甲壳</span><span class="modal-section-val" id="m-shell">-</span></div>
+        <div class="modal-section-row"><span class="modal-section-label">游速</span><span class="modal-section-val" id="m-speed">-</span></div>
+        <div class="modal-section-row"><span class="modal-section-label">虾慧</span><span class="modal-section-val" id="m-wisdom">-</span></div>
+        <div class="modal-section-row"><span class="modal-section-label">幸运</span><span class="modal-section-val" id="m-luck">-</span></div>
+        <div class="modal-section-row"><span class="modal-section-label">感知</span><span class="modal-section-val" id="m-perception">-</span></div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">⚔️ 战斗信息</div>
+        <div class="modal-section-row"><span class="modal-section-label">胜场</span><span class="modal-section-val" id="m-wins">-</span></div>
+        <div class="modal-section-row"><span class="modal-section-label">负场</span><span class="modal-section-val" id="m-losses">-</span></div>
+        <div class="modal-section-row"><span class="modal-section-label">胜率</span><span class="modal-section-val" id="m-winrate">-</span></div>
+      </div>
+
+      <div class="modal-section" id="m-faction-section" style="display:none">
+        <div class="modal-section-title">🏯 宗门</div>
+        <div class="modal-section-row"><span class="modal-section-label">宗门</span><span class="modal-section-val" id="m-faction">-</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/shared.js"></script>
+  <script>
+    var currentType = 'power';
+    var currentRankings = [];
+    var currentPlayer = null;
+    
+    // Particles
+    var pc = document.getElementById('particles');
+    for (var i = 0; i < 12; i++) { var p = document.createElement('div'); p.className = 'particle'; p.style.left = Math.random() * 100 + '%'; p.style.animationDuration = (Math.random() * 6 + 5) + 's'; p.style.animationDelay = (Math.random() * 5) + 's'; pc.appendChild(p); }
+    
+    function switchType(type) {
+      currentType = type;
+      document.getElementById('tabPower').classList.toggle('active', type === 'power');
+      document.getElementById('tabLevel').classList.toggle('active', type === 'level');
+      document.getElementById('tabGold').classList.toggle('active', type === 'gold');
+      var labels = { power: '战力排行', level: '等级排行', gold: '财富排行' };
+      document.getElementById('sectionLabel').textContent = labels[type] || type;
+      loadRank();
+    }
+    
+    function loadRank() {
+      var url = API_BASE + '/leaderboard/' + currentType;
+      fetch(url, { headers: getAuthHeader() })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          currentRankings = data.rankings || data.players || data.data?.players || [];
+          updatePodium(currentRankings.slice(0, 3));
+          var list = currentRankings.slice(3, 20);
+          var el = document.getElementById('rankList');
+          if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏆</div>暂无更多玩家</div>'; return; }
+          var html = '';
+          for (var i = 0; i < list.length; i++) {
+            var p = list[i];
+            var val = currentType === 'power' ? p.power : currentType === 'level' ? p.level : p.gold || p.value;
+            var label = currentType === 'power' ? '战力' : currentType === 'level' ? '等级' : '金贝';
+            var rank = i + 4;
+            var hp = (p.honor_icon || '') + (p.honor_prefix || '');
+            html += '<div class="rank-card ' + (rank <= 10 ? 'top10' : '') + '" onclick="openPlayerModal(' + (i+3) + ')">' +
+              '<div class="rank-num">' + rank + '</div>' +
+              '<div class="rank-avatar">🦞</div>' +
+              '<div class="rank-info">' +
+                '<div class="rank-name">' + (hp ? '<span style="color:'+(p.honor_color||'#c9a0ff')+'">'+hp+'</span>' : '') + p.name + '</div>' +
+                '<div class="rank-detail">' + label + ': ' + formatNum(val) + '</div>' +
+              '</div>' +
+              '<div class="rank-value">' + formatNum(val) + '</div>' +
+            '</div>';
+          }
+          el.innerHTML = '<div class="rank-list">' + html + '</div>';
+        })
+        .catch(function(e) { document.getElementById('rankList').innerHTML = '<div class="empty-state"><div class="empty-icon">🏆</div>加载失败</div>'; });
+    }
+    
+    function updatePodium(top3) {
+      if (top3[0]) {
+        document.getElementById('p1-name').textContent = getHonorName(top3[0]);
+        document.getElementById('p1-name').style.color = top3[0].honor_color || '#ffd700';
+        document.getElementById('p1-val').textContent = formatNum(currentType === 'power' ? top3[0].power : currentType === 'level' ? top3[0].level : top3[0].gold || top3[0].value);
+        document.getElementById('p1-honor').innerHTML = getHonorHtml(top3[0]);
+      }
+      if (top3[1]) {
+        document.getElementById('p2-name').textContent = getHonorName(top3[1]);
+        document.getElementById('p2-val').textContent = formatNum(currentType === 'power' ? top3[1].power : currentType === 'level' ? top3[1].level : top3[1].gold || top3[1].value);
+      }
+      if (top3[2]) {
+        document.getElementById('p3-name').textContent = getHonorName(top3[2]);
+        document.getElementById('p3-val').textContent = formatNum(currentType === 'power' ? top3[2].power : currentType === 'level' ? top3[2].level : top3[2].gold || top3[2].value);
+      }
+    }
+    
+    function getHonorName(p) {
+      return (p.honor_icon || '') + (p.honor_prefix || '') + p.name;
+    }
+    
+    function getHonorHtml(p) {
+      if (!p.honor_prefix) return '';
+      return '<span style="color:'+(p.honor_color||'#c9a0ff')+'">'+(p.honor_icon||'')+p.honor_prefix+'</span>';
+    }
+    
+    function formatNum(n) {
+      n = parseInt(n) || 0;
+      if (n >= 100000000) return (n/100000000).toFixed(1) + '亿';
+      if (n >= 10000) return (n/10000).toFixed(1) + '万';
+      return n;
+    }
+    
+    function openPlayerModal(idx) {
+      var p = currentRankings[idx];
+      if (!p) return;
+      currentPlayer = p;
+      
+      document.getElementById('m-honor').innerHTML = getHonorHtml(p);
+      var nameEl = document.getElementById('m-name');
+      nameEl.textContent = p.name;
+      nameEl.style.color = p.honor_color || '#fff';
+      document.getElementById('m-level').textContent = 'Lv.' + (p.level || 1);
+      document.getElementById('m-power').textContent = formatNum(p.power || 0);
+      document.getElementById('m-gold').textContent = formatNum(p.gold || 0);
+      
+      // Fetch detailed player info
+      fetchPlayerDetail(p.id);
+      
+      document.getElementById('playerModal').classList.add('show');
+    }
+    
+    function fetchPlayerDetail(playerId) {
+      fetch(API_BASE + '/player/' + playerId + '/info', { headers: getAuthHeader() })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (!data.success) return;
+          var p = data.player;
+          
+          document.getElementById('m-claw').textContent = (p.claw_power || p.claw || '-');
+          document.getElementById('m-shell').textContent = (p.shell || '-');
+          document.getElementById('m-speed').textContent = (p.swim_speed || p.speed || '-');
+          document.getElementById('m-wisdom').textContent = (p.shrimp_wit || p.wisdom || '-');
+          document.getElementById('m-luck').textContent = (p.luck || '-');
+          document.getElementById('m-perception').textContent = (p.perception || '-');
+          
+          var wins = parseInt(p.wins) || 0;
+          var losses = parseInt(p.losses) || 0;
+          document.getElementById('m-wins').textContent = wins;
+          document.getElementById('m-losses').textContent = losses;
+          var total = wins + losses;
+          document.getElementById('m-winrate').textContent = total > 0 ? Math.round(wins / total * 100) + '%' : '-';
+          
+          document.getElementById('m-ladder').textContent = (p.ladder_tier || '-').toString().replace(/_/g, ' ').toUpperCase();
+          
+          if (p.faction_name) {
+            document.getElementById('m-faction').textContent = p.faction_name;
+            document.getElementById('m-faction-section').style.display = 'block';
+          } else {
+            document.getElementById('m-faction-section').style.display = 'none';
+          }
+        })
+        .catch(function(e) { console.error('fetchPlayerDetail error:', e); });
+    }
+    
+    function closeModal() {
+      document.getElementById('playerModal').classList.remove('show');
+    }
+    
+    // Close on overlay click
+    document.getElementById('playerModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+    
+    // Also make podium clickable
+    document.getElementById('podiumContainer').addEventListener('click', function(e) {
+      var card = e.target.closest('.podium-1, .podium-2, .podium-3');
+      if (!card) return;
+      var idx = card.classList.contains('podium-1') ? 0 : card.classList.contains('podium-2') ? 1 : 2;
+      if (currentRankings[idx]) openPlayerModal(idx);
+    });
+    
+    loadRank();
+  </script>
+</body>
+</html>

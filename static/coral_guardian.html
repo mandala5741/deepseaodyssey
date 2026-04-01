@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🪸 珊瑚守护者 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      padding-top: 50px;
+      background: #000f1a;
+      min-height: 100vh;
+      font-family: -apple-system, sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(0,15,30,0.95); border-bottom: 1px solid rgba(0,200,150,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 200; }
+    .header h1 { font-size: 15px; color: #00e5a0; flex: 1; }
+    .back-btn { background: none; border: none; color: #00e5a0; font-size: 20px; cursor: pointer; padding: 6px; }
+
+    /* HUD */
+    #hud {
+      position: fixed; top: 50px; left: 0; right: 0; z-index: 150;
+      padding: 8px 14px;
+      background: rgba(0,15,30,0.85);
+      border-bottom: 1px solid rgba(0,180,130,0.2);
+      color: #fff; font-size: 13px;
+      display: none; justify-content: space-between; align-items: center;
+    }
+    .hud-item { display: flex; align-items: center; gap: 5px; }
+    .hud-label { color: rgba(255,255,255,0.5); font-size: 11px; }
+    .hud-val { color: #00e5a0; font-weight: bold; }
+    .hud-gold { color: #ffd700; font-weight: bold; }
+    .hud-bar-wrap { width: 80px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+    .hud-bar { height: 100%; background: linear-gradient(90deg, #00a060, #00e5a0); border-radius: 4px; transition: width 0.3s; }
+
+    /* Game Area */
+    #gameCanvas {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      cursor: crosshair;
+    }
+
+    /* Start Screen */
+    #startScreen {
+      position: fixed; inset: 0; z-index: 300;
+      background: radial-gradient(ellipse at 50% 30%, #001a2a 0%, #000d18 60%, #000508 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .start-icon { font-size: 80px; margin-bottom: 16px; animation: floatCoral 2.5s ease-in-out infinite alternate; }
+    .start-title { font-size: 24px; color: #00e5a0; font-weight: bold; margin-bottom: 8px; text-shadow: 0 0 20px rgba(0,229,160,0.5); }
+    .start-sub { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 28px; text-align: center; line-height: 1.6; }
+    .start-btn {
+      background: linear-gradient(135deg, #00886a, #00b880);
+      border: none; border-radius: 25px;
+      color: #fff; font-size: 16px; font-weight: bold;
+      padding: 14px 40px; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,180,130,0.4);
+      transition: transform 0.15s;
+    }
+    .start-btn:active { transform: scale(0.96); }
+    .start-tips {
+      margin-top: 28px; text-align: center;
+      background: rgba(0,60,50,0.4);
+      border: 1px solid rgba(0,200,150,0.25);
+      border-radius: 14px; padding: 16px 20px; max-width: 320px;
+    }
+    .start-tips-title { color: #00e5a0; font-size: 13px; margin-bottom: 10px; font-weight: bold; }
+    .tip-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; color: rgba(255,255,255,0.65); font-size: 12px; }
+    .tip-icon { font-size: 18px; }
+
+    /* Game Over */
+    #gameOver {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,5,15,0.92);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .go-icon { font-size: 64px; margin-bottom: 16px; }
+    .go-title { font-size: 24px; color: #00e5a0; font-weight: bold; margin-bottom: 6px; }
+    .go-score { font-size: 16px; color: #ffd700; margin-bottom: 6px; }
+    .go-best { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 28px; }
+    .go-btn {
+      background: linear-gradient(135deg, #00886a, #00b880);
+      border: none; border-radius: 25px;
+      color: #fff; font-size: 15px; font-weight: bold;
+      padding: 13px 36px; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,180,130,0.4);
+      margin: 6px; transition: transform 0.15s;
+    }
+    .go-btn:active { transform: scale(0.96); }
+    .go-btn-secondary {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(0,200,150,0.3);
+      border-radius: 25px;
+      color: rgba(255,255,255,0.7); font-size: 14px;
+      padding: 12px 30px; cursor: pointer;
+    }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+    /* Level Complete */
+    #levelUp {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,5,15,0.88);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .lu-icon { font-size: 60px; margin-bottom: 14px; animation: celebratePop 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+    .lu-title { font-size: 22px; color: #ffd700; font-weight: bold; margin-bottom: 6px; }
+    .lu-sub { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 24px; text-align: center; }
+    .lu-btn {
+      background: linear-gradient(135deg, #00886a, #00b880);
+      border: none; border-radius: 25px;
+      color: #fff; font-size: 15px; font-weight: bold;
+      padding: 13px 36px; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,180,130,0.4);
+    }
+
+    /* Progress bar for coral health */
+    #coralBar {
+      position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 150; display: none;
+      background: rgba(0,15,30,0.85);
+      border: 1px solid rgba(0,200,150,0.3);
+      border-radius: 20px; padding: 10px 20px; min-width: 260px;
+      text-align: center;
+    }
+    .coral-bar-title { font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
+    .coral-bar-track { height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+    .coral-bar-fill { height: 100%; background: linear-gradient(90deg, #ff6060, #ffaa00, #00e5a0); border-radius: 5px; transition: width 0.5s; }
+
+    @keyframes floatCoral {
+      0% { transform: translateY(0) rotate(-3deg); }
+      100% { transform: translateY(-12px) rotate(3deg); }
+    }
+    @keyframes celebratePop {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Start Screen -->
+<div id="startScreen">
+  <div class="start-icon">🪸</div>
+  <div class="start-title">珊瑚守护者</div>
+  <div class="start-sub">清洁污染物、修复珊瑚礁<br>引导共生伙伴恢复生态平衡</div>
+  <button class="start-btn" onclick="startGame()">开始守护</button>
+  <div class="start-tips">
+    <div class="start-tips-title">🎮 任务目标</div>
+    <div class="tip-row"><span class="tip-icon">🌀</span><span>拖动清洁虾吸走污染物</span></div>
+    <div class="tip-row"><span class="tip-icon">🐠</span><span>将小丑鱼引回海葵（配对）</span></div>
+    <div class="tip-row"><span class="tip-icon">🪤</span><span>清除缠住珊瑚的废弃渔网</span></div>
+    <div class="tip-row"><span class="tip-icon">🪸</span><span>修复所有珊瑚礁完成关卡</span></div>
+  </div>
+</div>
+
+<!-- Game Over -->
+<div id="gameOver">
+  <div class="go-icon">🐚</div>
+  <div class="go-title">珊瑚守护完成！</div>
+  <div class="go-score" id="goScore">清洁评分：0分</div>
+  <div class="go-best" id="goBest">历史最佳：0分</div>
+  <div class="btn-row">
+    <button class="go-btn" onclick="startGame()">再次挑战</button>
+    <button class="go-btn-secondary" onclick="location.href='/seas.html'">返回海域</button>
+  </div>
+</div>
+
+<!-- Level Up -->
+<div id="levelUp">
+  <div class="lu-icon">🎉</div>
+  <div class="lu-title">第 <span id="luLevel">1</span> 关完成！</div>
+  <div class="lu-sub" id="luSub">珊瑚礁已修复！</div>
+  <button class="lu-btn" onclick="nextLevel()">下一关 ➜</button>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-item">
+    <span>🏆</span><span class="hud-label">关卡</span>
+    <span class="hud-val" id="hudLevel">1</span>
+  </div>
+  <div class="hud-item">
+    <span>⭐</span><span class="hud-label">得分</span>
+    <span class="hud-gold" id="hudScore">0</span>
+  </div>
+  <div class="hud-item">
+    <span>🌀</span><span class="hud-label">污染物</span>
+    <span class="hud-val" id="hudPollutant">0</span>
+  </div>
+</div>
+
+<!-- Coral Health Bar -->
+<div id="coralBar">
+  <div class="coral-bar-title">🪸 珊瑚礁健康度</div>
+  <div class="coral-bar-track">
+    <div class="coral-bar-fill" id="coralFill" style="width:30%"></div>
+  </div>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script src="/shared.js"></script>
+<script>
+// ─── Game Setup ───
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+// ─── State ───
+let state = 'start'; // start | playing | levelup | gameover
+let level = 1;
+let score = 0;
+let bestScore = parseInt(localStorage.getItem('coralBest') || '0');
+let lastTime;
+
+// Player (cleaner shrimp)
+let shrimp;
+let dragTarget = null;
+
+// Coral reefs
+let corals = [];
+
+// Pollutants (oil spots, plastic, sediment)
+let pollutants = [];
+
+//共生 partners
+let clownfish = []; // need to return to anemone
+let anemones = [];
+
+// Fishing nets
+let nets = [];
+
+// Particles
+let particles = [];
+
+// ─── Init Level ───
+function initLevel() {
+  particles = [];
+  pollutants = [];
+  clownfish = [];
+  anemones = [];
+  nets = [];
+
+  // Coral reefs at bottom
+  corals = [];
+  const numCorals = 3 + Math.min(level, 3);
+  for (let i = 0; i < numCorals; i++) {
+    corals.push({
+      x: (W / (numCorals + 1)) * (i + 1),
+      y: H - 120 - (i % 2) * 40,
+      w: 80 + Math.random() * 60,
+      h: 60 + Math.random() * 40,
+      health: 0.3 + Math.random() * 0.2, // start damaged
+      type: Math.floor(Math.random() * 3),
+      sway: Math.random() * Math.PI * 2,
+      hue: [340, 180, 280, 200, 20][Math.floor(Math.random() * 5)]
+    });
+  }
+
+  // Anemones near corals
+  for (const c of corals) {
+    anemones.push({
+      x: c.x + (Math.random() - 0.5) * c.w,
+      y: c.y + 20,
+      r: 20 + Math.random() * 10,
+      pulse: Math.random() * Math.PI * 2,
+      tentacles: 7 + Math.floor(Math.random() * 4)
+    });
+  }
+
+  // Clownfish - start scattered
+  const numFish = 2 + Math.min(level, 4);
+  for (let i = 0; i < numFish; i++) {
+    clownfish.push({
+      x: Math.random() * (W - 100) + 50,
+      y: Math.random() * (H * 0.4) + 80,
+      targetAnemone: null,
+      vx: 0, vy: 0,
+      angle: Math.random() * Math.PI * 2,
+      found: false,
+      bob: Math.random() * Math.PI * 2
+    });
+  }
+
+  // Pollutants
+  const numPollutants = 8 + level * 3;
+  for (let i = 0; i < numPollutants; i++) {
+    pollutants.push(spawnPollutant());
+  }
+
+  // Fishing nets
+  const numNets = 1 + Math.min(Math.floor(level / 2), 3);
+  for (let i = 0; i < numNets; i++) {
+    nets.push(spawnNet());
+  }
+
+  // Reset shrimp
+  shrimp = {
+    x: W / 2,
+    y: H / 2,
+    vx: 0, vy: 0,
+    r: 14,
+    angle: 0,
+    suction: 0, // suction active when dragging pollutant
+    trail: []
+  };
+}
+
+function spawnPollutant() {
+  const types = ['oil', 'plastic', 'sediment'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  return {
+    x: Math.random() * (W - 80) + 40,
+    y: Math.random() * (H - 250) + 80,
+    r: 12 + Math.random() * 12,
+    type,
+    vx: (Math.random() - 0.5) * 0.5,
+    vy: (Math.random() - 0.5) * 0.3,
+    rot: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.02,
+    alpha: 0.7 + Math.random() * 0.3,
+    attached: null, // attached to coral
+    dragged: false
+  };
+}
+
+function spawnNet() {
+  // Find a coral to attach to
+  const cIdx = Math.floor(Math.random() * corals.length);
+  const c = corals[cIdx];
+  return {
+    x: c.x + (Math.random() - 0.5) * c.w * 0.8,
+    y: c.y + (Math.random() - 0.5) * c.h * 0.5,
+    w: 50 + Math.random() * 40,
+    h: 50 + Math.random() * 40,
+    coralIdx: cIdx,
+    cleared: false,
+    tangle: []
+  };
+}
+
+// ─── Start Game ───
+function startGame() {
+  state = 'playing';
+  level = 1;
+  score = 0;
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('gameOver').style.display = 'none';
+  document.getElementById('levelUp').style.display = 'none';
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('coralBar').style.display = 'block';
+  initLevel();
+  lastTime = performance.now();
+  requestAnimationFrame(loop);
+}
+
+// ─── Next Level ───
+function nextLevel() {
+  level++;
+  document.getElementById('levelUp').style.display = 'none';
+  initLevel();
+  state = 'playing';
+  lastTime = performance.now();
+  requestAnimationFrame(loop);
+}
+
+// ─── Level Complete Check ───
+function checkLevelComplete() {
+  const allCoralHealthy = corals.every(c => c.health >= 1.0);
+  const allFishHome = clownfish.every(f => f.found);
+  const allNetsCleared = nets.every(n => n.cleared);
+  if (allCoralHealthy && allFishHome && allNetsCleared) {
+    state = 'levelup';
+    const bonus = level * 50;
+    score += bonus;
+    document.getElementById('luLevel').textContent = level;
+    document.getElementById('luSub').textContent = `珊瑚礁已完全修复！+${bonus}分`;
+    document.getElementById('levelUp').style.display = 'flex';
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('coralBar').style.display = 'none';
+  }
+}
+
+// ─── Input ───
+function getEventPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  if (e.touches) {
+    return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+  }
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+canvas.addEventListener('mousedown', onDown);
+canvas.addEventListener('mousemove', onMove);
+canvas.addEventListener('mouseup', onUp);
+canvas.addEventListener('touchstart', onDown, { passive: false });
+canvas.addEventListener('touchmove', onMove, { passive: false });
+canvas.addEventListener('touchend', onUp);
+
+function onDown(e) {
+  e.preventDefault();
+  if (state !== 'playing') return;
+  const pos = getEventPos(e);
+  // Check if clicking on a pollutant
+  for (const p of pollutants) {
+    if (p.attached !== null) continue;
+    const d = Math.hypot(pos.x - p.x, pos.y - p.y);
+    if (d < p.r + 10) {
+      dragTarget = p;
+      p.dragged = true;
+      return;
+    }
+  }
+}
+
+function onMove(e) {
+  e.preventDefault();
+  if (state !== 'playing' || !dragTarget) return;
+  const pos = getEventPos(e);
+  dragTarget.x = pos.x;
+  dragTarget.y = pos.y;
+}
+
+function onUp(e) {
+  if (!dragTarget) return;
+  // Check if dropped on a damaged coral
+  let cleaned = false;
+  for (const c of corals) {
+    const d = Math.hypot(dragTarget.x - c.x, dragTarget.y - c.y);
+    if (d < c.w / 2 + dragTarget.r) {
+      // Deposit pollutant on coral - cleans pollutant, heals coral
+      cleaned = true;
+      const heal = 0.12 + Math.random() * 0.08;
+      c.health = Math.min(1.0, c.health + heal);
+      score += 15;
+      // Heal particles
+      for (let i = 0; i < 10; i++) {
+        particles.push({
+          x: dragTarget.x, y: dragTarget.y,
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 0.5) * 4 - 2,
+          r: 4 + Math.random() * 4,
+          color: `hsla(${c.hue},70%,60%,`,
+          life: 1
+        });
+      }
+      break;
+    }
+  }
+  if (!cleaned) {
+    // Put back where it was
+    dragTarget.dragged = false;
+  }
+  dragTarget = null;
+}
+
+// ─── Update ───
+function update(dt) {
+  const t = performance.now() / 1000;
+
+  // ── Shrimp movement (auto-follow cursor/touch slowly) ──
+  if (dragTarget) {
+    // Move toward dragged item
+    const dx = dragTarget.x - shrimp.x;
+    const dy = dragTarget.y - shrimp.y;
+    const d = Math.hypot(dx, dy);
+    if (d > 5) {
+      shrimp.vx += (dx / d) * 3;
+      shrimp.vy += (dy / d) * 3;
+    }
+    shrimp.angle = Math.atan2(dy, dx);
+  }
+  shrimp.vx *= 0.88;
+  shrimp.vy *= 0.88;
+  shrimp.x += shrimp.vx;
+  shrimp.y += shrimp.vy;
+  shrimp.x = Math.max(shrimp.r, Math.min(W - shrimp.r, shrimp.x));
+  shrimp.y = Math.max(shrimp.r, Math.min(H - shrimp.r, shrimp.y));
+
+  // Trail
+  shrimp.trail.push({ x: shrimp.x, y: shrimp.y, a: 0.5 });
+  if (shrimp.trail.length > 12) shrimp.trail.shift();
+  shrimp.trail.forEach(tr => tr.a *= 0.9);
+
+  // ── Pollutants ──
+  for (const p of pollutants) {
+    if (p.attached !== null || p.dragged) continue;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.rot += p.rotSpeed;
+    // Bounce
+    if (p.x < p.r || p.x > W - p.r) p.vx *= -1;
+    if (p.y < p.r || p.y > H - p.r) p.vy *= -1;
+    p.x = Math.max(p.r, Math.min(W - p.r, p.x));
+    p.y = Math.max(p.r, Math.min(H - p.r, p.y));
+    // Slowly attach to corals if not cleaned
+    for (const c of corals) {
+      if (c.health < 0.8 && Math.random() < 0.001) {
+        const d = Math.hypot(p.x - c.x, p.y - c.y);
+        if (d < c.w / 2 + p.r + 20) {
+          p.attached = corals.indexOf(c);
+        }
+      }
+    }
+  }
+  // Remove deposited pollutants
+  pollutants = pollutants.filter(p => p.attached === null);
+
+  // ── Clownfish AI ──
+  for (const f of clownfish) {
+    if (f.found) continue;
+    f.bob += 0.05;
+    // Find nearest anemone that's healthy
+    let nearestAnemone = null;
+    let nearestDist = Infinity;
+    for (const a of anemones) {
+      const d = Math.hypot(f.x - a.x, f.y - a.y);
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearestAnemone = a;
+      }
+    }
+    if (nearestAnemone && nearestDist > 30) {
+      // Swim toward anemone
+      const dx = nearestAnemone.x - f.x;
+      const dy = nearestAnemone.y - f.y;
+      f.vx += (dx / nearestDist) * 0.15;
+      f.vy += (dy / nearestDist) * 0.15;
+      f.angle = Math.atan2(dy, dx);
+    } else if (nearestDist < 30) {
+      // Home!
+      f.found = true;
+      f.x = nearestAnemone.x;
+      f.y = nearestAnemone.y;
+      score += 30;
+      // Celebration particles
+      for (let i = 0; i < 15; i++) {
+        particles.push({
+          x: f.x, y: f.y,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          r: 4 + Math.random() * 4,
+          color: 'hsla(30,90%,60%,',
+          life: 1
+        });
+      }
+    }
+    f.vx *= 0.95;
+    f.vy *= 0.95;
+    // Wandering when no target
+    if (Math.random() < 0.02) f.vx += (Math.random() - 0.5) * 0.5;
+    if (Math.random() < 0.02) f.vy += (Math.random() - 0.5) * 0.5;
+    f.x += f.vx + Math.sin(f.bob) * 0.3;
+    f.y += f.vy + Math.cos(f.bob) * 0.2;
+    f.x = Math.max(20, Math.min(W - 20, f.x));
+    f.y = Math.max(20, Math.min(H - 20, f.y));
+  }
+
+  // ── Anemone pulsing ──
+  for (const a of anemones) {
+    a.pulse += 0.04;
+  }
+
+  // ── Coral slow regeneration ──
+  for (const c of corals) {
+    c.sway += 0.012;
+    if (c.health < 1.0 && Math.random() < 0.005) {
+      c.health = Math.min(1.0, c.health + 0.01);
+    }
+  }
+
+  // ── Nets interaction ──
+  // Shrimp auto-clears nets when touching
+  for (const n of nets) {
+    if (n.cleared) continue;
+    const d = Math.hypot(shrimp.x - n.x, shrimp.y - n.y);
+    if (d < n.w / 2 + shrimp.r + 5) {
+      n.cleared = true;
+      score += 50;
+      // Net break particles
+      for (let i = 0; i < 20; i++) {
+        particles.push({
+          x: n.x + (Math.random() - 0.5) * n.w,
+          y: n.y + (Math.random() - 0.5) * n.h,
+          vx: (Math.random() - 0.5) * 5,
+          vy: (Math.random() - 0.5) * 5,
+          r: 3 + Math.random() * 4,
+          color: 'hsla(40,60%,50%,',
+          life: 1
+        });
+      }
+    }
+  }
+
+  // ── Particles ──
+  for (const p of particles) {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.02; // slight gravity
+    p.vx *= 0.97;
+    p.vy *= 0.97;
+    p.life -= 0.025;
+  }
+  particles = particles.filter(p => p.life > 0);
+
+  // ── Ambient bubbles ──
+  if (Math.random() < 0.04) {
+    particles.push({
+      x: Math.random() * W,
+      y: H + 5,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: -0.4 - Math.random() * 0.8,
+      r: 2 + Math.random() * 4,
+      color: 'hsla(180,70%,80%,',
+      life: 1
+    });
+  }
+
+  // ── HUD ──
+  const totalHealth = corals.reduce((s, c) => s + c.health, 0) / corals.length;
+  document.getElementById('coralFill').style.width = (totalHealth * 100) + '%';
+  document.getElementById('hudScore').textContent = score;
+  document.getElementById('hudLevel').textContent = level;
+  document.getElementById('hudPollutant').textContent = pollutants.length;
+
+  // ── Level Complete ──
+  checkLevelComplete();
+}
+
+// ─── Render ───
+function render() {
+  const t = performance.now() / 1000;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#000f1a');
+  bgGrad.addColorStop(0.6, '#001828');
+  bgGrad.addColorStop(1, '#001015');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Light rays
+  ctx.save();
+  for (let i = 0; i < 4; i++) {
+    const rx = W * 0.2 + i * W * 0.2;
+    const rayGrad = ctx.createLinearGradient(rx, 0, rx + 60, H * 0.5);
+    rayGrad.addColorStop(0, 'rgba(0,120,80,0.05)');
+    rayGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = rayGrad;
+    ctx.beginPath();
+    ctx.moveTo(rx, 0);
+    ctx.lineTo(rx + 60, H * 0.5);
+    ctx.lineTo(rx - 20, H * 0.5);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // ── Sandy Bottom ──
+  const sandGrad = ctx.createLinearGradient(0, H - 80, 0, H);
+  sandGrad.addColorStop(0, '#1a2a1a');
+  sandGrad.addColorStop(1, '#0d1a0d');
+  ctx.fillStyle = sandGrad;
+  ctx.fillRect(0, H - 80, W, 80);
+
+  // ── Corals ──
+  for (const c of corals) {
+    const swayX = Math.sin(c.sway) * 4;
+    ctx.save();
+    ctx.translate(c.x + swayX, c.y);
+
+    // Coral health color
+    const healthy = c.health;
+    const r = Math.floor(lerp(120, c.hue === 340 ? 255 : 80, healthy));
+    const g = Math.floor(lerp(40, c.hue === 340 ? 100 : 200, healthy));
+    const b = Math.floor(lerp(60, 160, healthy));
+
+    // Draw coral branches
+    for (let bIdx = 0; bIdx < 3 + c.type; bIdx++) {
+      const bx = (bIdx - 1) * c.w * 0.25;
+      const bh = c.h * (0.7 + bIdx * 0.15);
+      ctx.save();
+      ctx.rotate(Math.sin(c.sway + bIdx) * 0.08);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.strokeStyle = `rgb(${Math.min(255,r+30)},${Math.min(255,g+20)},${Math.min(255,b+20)})`;
+      ctx.lineWidth = 1.5;
+      // Main branch
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(bx * 0.5 + swayX, -bh * 0.5, bx + swayX, -bh);
+      ctx.lineWidth = 10 - bIdx;
+      ctx.stroke();
+      ctx.lineWidth = 1.5;
+      // Tips
+      for (let tip = 0; tip < 3; tip++) {
+        const tx = bx + swayX + Math.sin(c.sway + tip) * 8;
+        const ty = -bh + tip * 8;
+        ctx.beginPath();
+        ctx.arc(tx, ty, 4 + tip, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // Pollutants attached to this coral
+    for (const p of pollutants) {
+      if (p.attached !== corals.indexOf(c)) continue;
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.translate(p.x - c.x - swayX, p.y - c.y);
+      ctx.rotate(p.rot);
+      if (p.type === 'oil') {
+        ctx.fillStyle = 'rgba(30,20,10,0.8)';
+        ctx.beginPath();
+        ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.type === 'plastic') {
+        ctx.fillStyle = 'rgba(100,150,200,0.6)';
+        ctx.fillRect(-p.r, -p.r * 0.5, p.r * 2, p.r);
+      } else {
+        ctx.fillStyle = 'rgba(80,60,40,0.7)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.r, p.r * 0.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // ── Anemones ──
+  for (const a of anemones) {
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    const pulse = Math.sin(a.pulse) * 3;
+    // Base
+    ctx.fillStyle = '#4a1a4a';
+    ctx.beginPath();
+    ctx.ellipse(0, 10, a.r * 0.7, a.r * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Tentacles
+    for (let i = 0; i < a.tentacles; i++) {
+      const ang = (i / a.tentacles) * Math.PI * 2;
+      const tx = Math.cos(ang) * (a.r + pulse);
+      const ty = Math.sin(ang) * (a.r + pulse) * 0.6 - 5;
+      const hue = 280 + i * 10;
+      ctx.strokeStyle = `hsla(${hue},60%,55%,0.8)`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(tx * 0.5, ty * 0.5 + pulse, tx, ty);
+      ctx.stroke();
+      ctx.fillStyle = `hsla(${hue},70%,65%,0.9)`;
+      ctx.beginPath();
+      ctx.arc(tx, ty, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ── Clownfish ──
+  for (const f of clownfish) {
+    if (f.found) {
+      ctx.save();
+      ctx.globalAlpha = 0.8;
+      ctx.translate(f.x, f.y);
+      ctx.rotate(f.angle);
+      // Glow
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#ff8040';
+      ctx.beginPath();
+      ctx.arc(0, 0, f.r + 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.save();
+    ctx.translate(f.x, f.y);
+    ctx.rotate(f.angle);
+    // Body
+    ctx.fillStyle = '#ff6020';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, f.r, f.r * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Stripes
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(-f.r * 0.1, -f.r * 0.6, f.r * 0.2, f.r * 1.2);
+    ctx.fillRect(f.r * 0.4, -f.r * 0.5, f.r * 0.15, f.r);
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(f.r * 0.3, -f.r * 0.1, f.r * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    // Tail
+    ctx.fillStyle = '#ff6020';
+    ctx.beginPath();
+    ctx.moveTo(-f.r * 0.6, 0);
+    ctx.lineTo(-f.r * 1.2, -f.r * 0.5);
+    ctx.lineTo(-f.r * 1.2, f.r * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Fishing Nets ──
+  for (const n of nets) {
+    if (n.cleared) continue;
+    ctx.save();
+    ctx.translate(n.x, n.y);
+    ctx.globalAlpha = 0.7;
+    ctx.strokeStyle = '#8a7050';
+    ctx.lineWidth = 1.5;
+    // Net mesh
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 6; col++) {
+        const nx = (col - 2.5) * n.w / 5;
+        const ny = (row - 2) * n.h / 4;
+        ctx.beginPath();
+        ctx.arc(nx, ny, 4, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+    // Net outline
+    ctx.strokeStyle = '#6a5040';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-n.w / 2, -n.h / 2, n.w, n.h);
+    // Tangle lines
+    ctx.strokeStyle = 'rgba(100,70,40,0.5)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 8; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-n.w / 2 + Math.random() * n.w, -n.h / 2);
+      ctx.lineTo(-n.w / 2 + Math.random() * n.w, n.h / 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // ── Pollutants ──
+  for (const p of pollutants) {
+    if (p.attached !== null) continue;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.globalAlpha = p.alpha;
+    if (p.type === 'oil') {
+      const oilGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.r);
+      oilGrad.addColorStop(0, 'rgba(20,15,10,0.9)');
+      oilGrad.addColorStop(1, 'rgba(40,30,15,0.6)');
+      ctx.fillStyle = oilGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(60,40,20,0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    } else if (p.type === 'plastic') {
+      ctx.fillStyle = 'rgba(100,160,200,0.7)';
+      ctx.fillRect(-p.r, -p.r * 0.4, p.r * 2, p.r * 0.8);
+      ctx.fillStyle = 'rgba(80,140,180,0.5)';
+      ctx.fillRect(-p.r * 0.5, -p.r * 0.6, p.r, p.r * 0.3);
+    } else {
+      ctx.fillStyle = 'rgba(70,55,35,0.7)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.r, p.r * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ── Particles ──
+  for (const p of particles) {
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color + p.life + ')';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Cleaner Shrimp Trail ──
+  for (const tr of shrimp.trail) {
+    ctx.save();
+    ctx.globalAlpha = tr.a * 0.4;
+    ctx.fillStyle = 'rgba(255,120,80,0.5)';
+    ctx.beginPath();
+    ctx.arc(tr.x, tr.y, shrimp.r * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Cleaner Shrimp ──
+  ctx.save();
+  ctx.translate(shrimp.x, shrimp.y);
+  ctx.rotate(shrimp.angle);
+  // Body
+  const shrimpGrad = ctx.createLinearGradient(-shrimp.r, 0, shrimp.r, 0);
+  shrimpGrad.addColorStop(0, '#ff9060');
+  shrimpGrad.addColorStop(0.5, '#ffb080');
+  shrimpGrad.addColorStop(1, '#ff7040');
+  ctx.fillStyle = shrimpGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, shrimp.r, shrimp.r * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Stripes
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(-shrimp.r * 0.1, -shrimp.r * 0.55, shrimp.r * 0.15, shrimp.r * 1.1);
+  ctx.fillRect(shrimp.r * 0.3, -shrimp.r * 0.45, shrimp.r * 0.12, shrimp.r * 0.9);
+  ctx.fillRect(shrimp.r * 0.6, -shrimp.r * 0.35, shrimp.r * 0.1, shrimp.r * 0.7);
+  // Antennae
+  ctx.strokeStyle = '#ff9060';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(shrimp.r * 0.5, -shrimp.r * 0.3);
+  ctx.quadraticCurveTo(shrimp.r * 0.8, -shrimp.r * 0.8, shrimp.r * 0.7, -shrimp.r * 1.1);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(shrimp.r * 0.5, shrimp.r * 0.3);
+  ctx.quadraticCurveTo(shrimp.r * 0.8, shrimp.r * 0.8, shrimp.r * 0.7, shrimp.r * 1.1);
+  ctx.stroke();
+  // Eyes
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(shrimp.r * 0.3, -shrimp.r * 0.15, 2.5, 0, Math.PI * 2);
+  ctx.arc(shrimp.r * 0.3, shrimp.r * 0.15, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Suction indicator when dragging
+  if (dragTarget) {
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    ctx.strokeStyle = '#ff8040';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.arc(shrimp.x, shrimp.y, shrimp.r + 8 + Math.sin(t * 8) * 3, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+}
+
+// ─── Loop ───
+function loop(ts) {
+  if (state !== 'playing') return;
+  const dt = Math.min((ts - lastTime) / 1000, 0.05);
+  lastTime = ts;
+  update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+// ─── Idle ───
+function idleRender() {
+  if (state !== 'start') return;
+  ctx.clearRect(0, 0, W, H);
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#000f1a');
+  bgGrad.addColorStop(1, '#000508');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+  requestAnimationFrame(idleRender);
+}
+idleRender();
+</script>
+</body>
+</html>

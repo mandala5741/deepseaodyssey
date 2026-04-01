@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🦞 角色 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { 
+      padding-top: 0; 
+      background: linear-gradient(180deg, #001428 0%, #003366 30%, #006699 50%, #003366 70%, #001428 100%);
+      min-height: 100vh;
+    }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(0,30,60,0.95); border-bottom: 1px solid rgba(0,200,255,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #00bfff; flex: 1; }
+    .back-btn { background: none; border: none; color: #00bfff; font-size: 20px; cursor: pointer; padding: 8px; }
+    
+    .tab-bar {
+      position: fixed;
+      top: 50px;
+      left: 0;
+      right: 0;
+      background: rgba(0,30,60,0.95);
+      display: flex;
+      border-bottom: 1px solid rgba(0,200,255,0.2);
+      z-index: 99;
+    }
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+      color: rgba(0,200,255,0.6);
+      cursor: pointer;
+      transition: all 0.3s;
+      border-bottom: 2px solid transparent;
+    }
+    .tab.active {
+      color: #00bfff;
+      border-bottom-color: #00bfff;
+      background: rgba(0,100,150,0.3);
+    }
+    
+    .content { 
+      margin-top: 110px; 
+      padding: 12px; 
+      position: relative;
+      z-index: 10;
+    }
+    
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    .card {
+      background: rgba(0,30,60,0.85);
+      border: 1px solid rgba(0,200,255,0.3);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    
+    .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+    .stat-item { background: rgba(0,20,50,0.8); border: 1px solid rgba(0,200,255,0.2); border-radius: 12px; padding: 16px; text-align: center; }
+    .stat-name { font-size: 12px; color: rgba(0,200,255,0.6); margin-bottom: 4px; }
+    .stat-value { font-size: 24px; font-weight: bold; color: #00bfff; }
+    .stat-value.hp { color: #ff6b6b; }
+    .stat-value.mp { color: #9370db; }
+    .stat-value.energy { color: #ffd700; }
+    .stat-value.exp { color: #ffd700; }
+    .progress-bar { height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; margin-top: 8px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; }
+    .progress-fill.hp { background: #ff6b6b; }
+    .progress-fill.mp { background: #9370db; }
+    .progress-fill.energy { background: #ffd700; }
+    .progress-fill.exp { background: #ffd700; }
+    
+    .card-title { font-size: 14px; color: #00bfff; margin-bottom: 12px; padding-left: 4px; border-left: 3px solid #00bfff; }
+    
+    /* Artifacts tab */
+    .artifacts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    
+    .artifact-card {
+      background: rgba(0,20,50,0.8);
+      border: 2px solid rgba(100,100,150,0.3);
+      border-radius: 14px;
+      padding: 14px 10px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .artifact-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+    .artifact-card.legendary::before { background: linear-gradient(90deg, #ffd700, #ff8c00, #ffd700); }
+    .artifact-card.epic::before { background: linear-gradient(90deg, #9370db, #da70d6, #9370db); }
+    .artifact-card.rare::before { background: linear-gradient(90deg, #4169e1, #6495ed, #4169e1); }
+    
+    .artifact-icon { font-size: 40px; margin-bottom: 8px; }
+    .artifact-name { font-size: 13px; color: #fff; margin-bottom: 4px; }
+    .artifact-rarity {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+    .artifact-rarity.legendary { background: rgba(255,215,0,0.2); color: #ffd700; }
+    .artifact-rarity.epic { background: rgba(218,112,214,0.2); color: #da70d6; }
+    .artifact-rarity.rare { background: rgba(65,105,225,0.2); color: #6495ed; }
+    
+    .artifact-effect { font-size: 11px; color: #00bfff; margin-top: 4px; }
+    
+    .empty-artifacts {
+      text-align: center;
+      padding: 40px;
+      color: rgba(0,200,255,0.5);
+    }
+    .empty-icon { font-size: 60px; margin-bottom: 12px; }
+    
+    .owned-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0,200,100,0.8);
+      color: #fff;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+
+    /* Boss Cards */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 4px 0;
+    }
+    .boss-card-item {
+      background: rgba(0,20,40,0.8);
+      border: 2px solid rgba(0,200,255,0.3);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+      position: relative;
+      transition: all 0.3s;
+    }
+    .boss-card-item.owned {
+      border-color: rgba(0,200,100,0.5);
+    }
+    .boss-card-item.locked {
+      opacity: 0.4;
+      filter: grayscale(1);
+    }
+    .boss-card-item.legend { border-color: rgba(255,150,0,0.6); }
+    .boss-card-item.epic { border-color: rgba(160,50,255,0.6); }
+    .boss-card-item.rare { border-color: rgba(0,150,255,0.6); }
+    .boss-card-item.normal { border-color: rgba(100,100,100,0.4); }
+    .boss-card-icon { font-size: 32px; margin-bottom: 6px; }
+    .boss-card-name { font-size: 11px; color: #00bfff; font-weight: bold; line-height: 1.2; }
+    .boss-card-rarity { font-size: 9px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+    .rarity-legend { color: #ffa500; }
+    .rarity-epic { color: #c060ff; }
+    .rarity-rare { color: #00bfff; }
+    .rarity-normal { color: #aaa; }
+    .boss-card-stats { font-size: 10px; color: rgba(255,200,100,0.6); margin-top: 4px; }
+    .boss-card-desc { font-size: 9px; color: rgba(255,255,255,0.35); margin-top: 4px; line-height: 1.3; }
+    .lock-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 24px; opacity: 0.5; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>角色</h1>
+  </div>
+  
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('role')">
+      <span>🦞</span><br>角色
+    </div>
+    <div class="tab" onclick="switchTab('equipment')">
+      <span>🗡️</span><br>装备
+    </div>
+    <div class="tab" onclick="switchTab('artifacts')">
+      <span>⚔️</span><br>神器
+    </div>
+    <div class="tab" onclick="switchTab('cards')">
+      <span>🎴</span><br>收集卡
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- 角色页 -->
+    <div class="tab-content active" id="content-role">
+      <div class="card">
+        <div class="card-title">💗 生命值</div>
+        <div class="stat-item">
+          <div class="stat-name">HP</div>
+          <div class="stat-value hp" id="hpValue">0 / 0</div>
+          <div class="progress-bar"><div class="progress-fill hp" id="hpBar" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔮 魔法值</div>
+        <div class="stat-item">
+          <div class="stat-name">MP</div>
+          <div class="stat-value mp" id="mpValue">0 / 0</div>
+          <div class="progress-bar"><div class="progress-fill mp" id="mpBar" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚡ 体力</div>
+        <div class="stat-item">
+          <div class="stat-name">体力</div>
+          <div class="stat-value energy" id="energyValue">0 / 0</div>
+          <div class="progress-bar"><div class="progress-fill energy" id="energyBar" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📈 经验</div>
+        <div class="stat-item">
+          <div class="stat-name">EXP</div>
+          <div class="stat-value exp" id="expValue">0 / 0</div>
+          <div class="progress-bar"><div class="progress-fill exp" id="expBar" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📊 六维属性</div>
+        <div class="stat-grid">
+          <div class="stat-item">
+            <div class="stat-name">钳力</div>
+            <div class="stat-value" id="clawValue">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-name">甲壳</div>
+            <div class="stat-value" id="shellValue">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-name">游速</div>
+            <div class="stat-value" id="speedValue">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-name">虾慧</div>
+            <div class="stat-value" id="wisdomValue">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-name">幸运</div>
+            <div class="stat-value" id="luckValue">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-name">感知</div>
+            <div class="stat-value" id="perceptionValue">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚔️ 战斗属性</div>
+        <div class="stat-grid">
+          <div class="stat-item">
+            <div class="stat-name">战力</div>
+            <div class="stat-value" id="powerValue">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-name">等级</div>
+            <div class="stat-value" id="levelValue">1</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-name">VIP</div>
+            <div class="stat-value" id="vipValue">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-name">天赋点</div>
+            <div class="stat-value" id="talentValue">0</div>
+          </div>
+        </div>
+        <div id="equipStats" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,150,200,0.15)"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🏅 名誉称号</div>
+        <div class="honor-display" id="honorDisplay" style="text-align:center;padding:8px 0;font-size:16px;">
+          <span id="currentHonor">加载中...</span>
+        </div>
+        <div class="honor-list" id="honorList" style="display:none;max-height:200px;overflow-y:auto;margin-top:8px;"></div>
+        <button class="btn" id="honorBtn" onclick="toggleHonorList()" style="width:100%;margin-top:8px;padding:10px;font-size:13px;">选择称号</button>
+      </div>
+    </div>
+    
+    <!-- 神器页 -->
+    <div class="tab-content" id="content-artifacts">
+      <div class="card">
+        <div class="card-title">⚔️ 我的神器</div>
+        <div id="artifactsContainer">
+          <div class="empty-artifacts">
+            <div class="empty-icon">🔮</div>
+            <div>暂无神器</div>
+            <div style="font-size:12px;margin-top:8px">通过武道大会等活动获取神器</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 装备页 -->
+    <div class="tab-content" id="content-equipment">
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title">🗡️ 穿戴装备</div>
+        <div id="equippedSlots" style="text-align:center;padding:20px;color:rgba(0,200,255,0.5)">加载中...</div>
+      </div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title">💎 我的碎片</div>
+        <div id="fragmentInfo" style="display:flex;gap:12px;justify-content:center;padding:12px 0"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🎒 背包装备</div>
+        <div id="ownedEquipment" style="padding:8px 0"></div>
+      </div>
+    </div>
+
+    <!-- 收集卡页 -->
+    <div class="tab-content" id="content-cards">
+      <div class="card">
+        <div class="card-title">🎴 BOSS收集卡图鉴</div>
+        <div id="cardsContainer" style="text-align:center;padding:20px;color:rgba(0,200,255,0.5)">加载中...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  
+  <script src="/shared.js"></script>
+  <script>
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+      if (tab === 'role') {
+        document.querySelector('.tab:nth-child(1)').classList.add('active');
+        document.getElementById('content-role').classList.add('active');
+      } else if (tab === 'equipment') {
+        document.querySelector('.tab:nth-child(2)').classList.add('active');
+        document.getElementById('content-equipment').classList.add('active');
+        loadEquipment();
+      } else if (tab === 'artifacts') {
+        document.querySelector('.tab:nth-child(3)').classList.add('active');
+        document.getElementById('content-artifacts').classList.add('active');
+      } else if (tab === 'cards') {
+        document.querySelector('.tab:nth-child(4)').classList.add('active');
+        document.getElementById('content-cards').classList.add('active');
+        loadBossCards();
+      }
+    }
+    
+    async function loadProfile() {
+      try {
+        const res = await fetch(`${API_BASE}/player/profile`, { headers: getAuthHeader() });
+        const data = await res.json();
+        if (data.player) {
+          const p = data.player;
+          document.getElementById('hpValue').textContent = `${p.hp || 0} / ${p.max_hp || 0}`;
+          document.getElementById('hpBar').style.width = `${Math.min(100, ((p.hp || 0) / (p.max_hp || 1)) * 100)}%`;
+          
+          document.getElementById('mpValue').textContent = `${p.mp || 0} / ${p.max_mp || 0}`;
+          document.getElementById('mpBar').style.width = `${Math.min(100, ((p.mp || 0) / (p.max_mp || 1)) * 100)}%`;
+          
+          document.getElementById('energyValue').textContent = `${p.energy || 0} / ${p.max_energy || 0}`;
+          document.getElementById('energyBar').style.width = `${Math.min(100, ((p.energy || 0) / (p.max_energy || 1)) * 100)}%`;
+          
+          document.getElementById('clawValue').textContent = p.claw_power || 0;
+          document.getElementById('shellValue').textContent = p.shell || 0;
+          document.getElementById('speedValue').textContent = p.swim_speed || 0;
+          document.getElementById('wisdomValue').textContent = p.shrimp_wit || 0;
+          document.getElementById('luckValue').textContent = p.luck || 0;
+          document.getElementById('perceptionValue').textContent = p.perception || 0;
+          
+          document.getElementById('powerValue').textContent = p.power || 0;
+          document.getElementById('levelValue').textContent = p.level || 1;
+          const exp = p.exp || 0;
+          const level = p.level || 1;
+          const maxExp = level * level * 100;
+          document.getElementById('expValue').textContent = `${exp} / ${maxExp}`;
+          document.getElementById('expBar').style.width = `${Math.min(100, (exp / maxExp) * 100)}%`;
+          document.getElementById('vipValue').textContent = p.vip_level || 0;
+          document.getElementById('talentValue').textContent = p.talent_points || 0;
+
+          // Equipment stats - card style
+          const ep = p.equip_power || 0;
+          const ed = p.equip_defense || 0;
+          const eh = p.equip_hp || 0;
+          const ec = p.equip_crit || 0;
+          let equipHtml = '<div style="font-size:11px;color:#c9a0ff;margin-bottom:8px">🗡️ 装备属性</div>';
+          equipHtml += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+          equipHtml += `<div style="background:rgba(255,100,100,0.1);border:1px solid rgba(255,100,100,0.2);border-radius:10px;padding:8px 10px;text-align:center">
+            <div style="font-size:18px">⚔️</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.4)">攻击</div>
+            <div style="font-size:14px;color:#ff6666;font-weight:bold">+${ep}</div>
+          </div>`;
+          equipHtml += `<div style="background:rgba(100,150,255,0.1);border:1px solid rgba(100,150,255,0.2);border-radius:10px;padding:8px 10px;text-align:center">
+            <div style="font-size:18px">🛡️</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.4)">防御</div>
+            <div style="font-size:14px;color:#6699ff;font-weight:bold">+${ed}</div>
+          </div>`;
+          equipHtml += `<div style="background:rgba(100,200,150,0.1);border:1px solid rgba(100,200,150,0.2);border-radius:10px;padding:8px 10px;text-align:center">
+            <div style="font-size:18px">❤️</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.4)">生命</div>
+            <div style="font-size:14px;color:#66cc88;font-weight:bold">+${eh}</div>
+          </div>`;
+          equipHtml += `<div style="background:rgba(255,150,200,0.1);border:1px solid rgba(255,150,200,0.2);border-radius:10px;padding:8px 10px;text-align:center">
+            <div style="font-size:18px">💥</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.4)">暴击</div>
+            <div style="font-size:14px;color:#ff88bb;font-weight:bold">+${ec}%</div>
+          </div>`;
+          equipHtml += '</div>';
+          document.getElementById('equipStats').innerHTML = equipHtml;
+        }
+      } catch (e) { showToast('加载失败', 'error'); }
+    }
+    
+    var allHonorTitles = [];
+    var allOwnedEquipment = [];
+    
+    async function loadHonor() {
+      try {
+        const res = await fetch(`${API_BASE}/player/honor`, { headers: getAuthHeader() });
+        const data = await res.json();
+        if (data.success) {
+          const h = data.honor;
+          const prefix = (h.icon || '') + (h.prefix || '');
+          const display = prefix ? prefix + ' 掠夺者' : '暂无称号';
+          document.getElementById('currentHonor').innerHTML = prefix ? `<span style="color:${h.color}">${prefix}</span> 掠夺者` : '暂无称号';
+        }
+        
+        // Load all available titles
+        const tres = await fetch(`${API_BASE}/player/honor_titles`, { headers: getAuthHeader() });
+        const tdata = await tres.json();
+        if (tdata.success) {
+          allHonorTitles = tdata.titles || [];
+        }
+      } catch (e) { console.error('loadHonor error:', e); }
+    }
+    
+    function toggleHonorList() {
+      const list = document.getElementById('honorList');
+      if (list.style.display === 'none') {
+        renderHonorList();
+        list.style.display = 'block';
+        document.getElementById('honorBtn').textContent = '收起称号';
+      } else {
+        list.style.display = 'none';
+        document.getElementById('honorBtn').textContent = '选择称号';
+      }
+    }
+    
+    function renderHonorList() {
+      const list = document.getElementById('honorList');
+      if (!allHonorTitles.length) {
+        list.innerHTML = '<div style="text-align:center;color:#888;font-size:12px;padding:12px;">加载中...</div>';
+        return;
+      }
+      const html = allHonorTitles.map(t => `
+        <div class="honor-item" onclick="selectHonor(${t.honor_id})" style="
+          display:flex;align-items:center;gap:8px;padding:10px 8px;
+          border-bottom:1px solid rgba(255,255,255,0.1);cursor:pointer;
+          transition:background 0.2s;
+        " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:20px">${t.icon}</span>
+          <span style="flex:1;font-size:13px;color:${t.color}">${t.prefix}</span>
+          <span style="font-size:11px;color:#888">${t.name}</span>
+        </div>
+      `).join('');
+      list.innerHTML = html;
+    }
+    
+    async function selectHonor(honorId) {
+      try {
+        const res = await fetch(`${API_BASE}/player/honor`, {
+          method: 'POST',
+          headers: { ...getAuthHeader(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ honor_id: honorId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message, 'success');
+          const h = data.honor;
+          document.getElementById('currentHonor').innerHTML = `<span style="color:${h.color}">${h.icon}${h.prefix}</span> 掠夺者`;
+          document.getElementById('honorList').style.display = 'none';
+          document.getElementById('honorBtn').textContent = '选择称号';
+        } else {
+          showToast(data.reason || '设置失败', 'error');
+        }
+      } catch (e) { showToast('设置失败', 'error'); }
+    }
+    
+    async function loadArtifacts() {
+      const ARTIFACT_ICONS = {
+        'skull_key': '🗝️', 'cursed_blade': '⚔️', 'undead_fang': '🦷',
+        'skull_crown': '💀', 'ghost_eye': '👁️', 'shadow_cloak': '🧥',
+        'pearl_shell': '🪸', 'starfish_pendant': '⭐', 'coral_bracelet': '📿',
+        'deep_sea_beast_egg': '🥚', 'anchors_of_poseidon': '⚓',
+        'pearl_dragon_orb': '🐉', 'trident_abyss': '🔱', 'crown_of_depths': '👑',
+        'eternal_diamond': '💎', 'stardust': '✨', 'egypt_vase': '🏺',
+        'salt_crystal': '🧂', 'spice_jar': '🫙', 'yarn_ball': '🧶',
+        'skill_molting_palace': '🔮', 'skill_deep_abyss': '🌊',
+        'beast_deep_abyss': '🐙', 'beast_iron_claw': '🦀', 'beast_shadow_whisker': '🐙',
+        'beast_tide_clan': '🦑', 'beast_molting_palace': '🦞',
+        'weapon_iron_claw': '🦷', 'skill_shadow_whisker': '👻',
+        'skill_tide_clan': '🌊', 'armor_mystic_shell': '🛡️'
+      };
+      try {
+        const res = await fetch(`${API_BASE}/player/artifacts`, { headers: getAuthHeader() });
+        const data = await res.json();
+        
+        // Enrich with icons
+        if (data.artifacts) {
+          data.artifacts.forEach(a => {
+            if (!a.icon) a.icon = ARTIFACT_ICONS[a.artifact_key] || '⚔️';
+          });
+        }
+        
+        // If no artifacts API, show empty state
+        if (!data.artifacts || data.artifacts.length === 0) {
+          document.getElementById('artifactsContainer').innerHTML = `
+            <div class="empty-artifacts">
+              <div class="empty-icon">🔮</div>
+              <div>暂无神器</div>
+              <div style="font-size:12px;margin-top:8px">通过武道大会等活动获取神器</div>
+            </div>
+          `;
+          return;
+        }
+        
+        renderArtifacts(data.artifacts);
+      } catch (e) {
+        // Show empty on error too
+        document.getElementById('artifactsContainer').innerHTML = `
+          <div class="empty-artifacts">
+            <div class="empty-icon">🔮</div>
+            <div>暂无神器</div>
+            <div style="font-size:12px;margin-top:8px">通过武道大会等活动获取神器</div>
+          </div>
+        `;
+      }
+    }
+    
+    function renderArtifacts(artifacts) {
+      if (!artifacts || artifacts.length === 0) {
+        document.getElementById('artifactsContainer').innerHTML = `
+          <div class="empty-artifacts">
+            <div class="empty-icon">🔮</div>
+            <div>暂无神器</div>
+            <div style="font-size:12px;margin-top:8px">通过武道大会等活动获取神器</div>
+          </div>
+        `;
+        return;
+      }
+      
+      const html = artifacts.map(a => {
+        // Parse effect if it's a string
+        let effectText = '';
+        if (a.effect) {
+          if (typeof a.effect === 'string') {
+            try {
+              const eff = JSON.parse(a.effect);
+              effectText = Object.entries(eff).map(([k, v]) => `${getAttrName(k)}+${v}`).join(' ');
+            } catch {
+              effectText = a.effect;
+            }
+          } else {
+            effectText = Object.entries(a.effect).map(([k, v]) => `${getAttrName(k)}+${v}`).join(' ');
+          }
+        } else if (a.main_attribute && a.main_value) {
+          // Faction artifacts use main_attribute/main_value
+          effectText = `${getAttrName(a.main_attribute)}+${a.main_value}`;
+        }
+        const safeName = (a.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const safeIcon = (a.icon || '⚔️').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `
+          <div class="artifact-card ${a.rarity || 'rare'}">
+            <div class="owned-badge">已拥有</div>
+            <div class="artifact-icon">${safeIcon}</div>
+            <div class="artifact-name">${safeName}</div>
+            <div class="artifact-rarity ${a.rarity}">${getRarityText(a.rarity)}</div>
+            <div class="artifact-effect">${effectText}</div>
+          </div>
+        `;
+      }).join('');
+      
+      document.getElementById('artifactsContainer').innerHTML = `<div class="artifacts-grid">${html}</div>`;
+    }
+    
+    function getAttrName(attr) {
+      const names = {
+        'power': '战力', 'attack': '攻击', 'defense': '防御', 'hp': '生命',
+        'exp_bonus': '经验', 'gold_bonus': '金贝', 'crit': '暴击',
+        'dodge': '闪避', 'luck': '幸运', 'perception': '感知',
+        'lifesteal': '吸血', 'charm': '魅力',
+        'claw': '钳力', 'shell': '甲壳', 'speed': '游速', 'wisdom': '虾慧',
+        'energy': '体力', 'mp': '魔法', 'claw_power': '钳力',
+        'swim_speed': '游速', 'shrimp_wit': '虾慧', 'shell_defense': '甲壳'
+      };
+      return names[attr] || attr;
+    }
+    
+    function getRarityText(rarity) {
+      const map = { legendary: '传说', epic: '史诗', rare: '稀有' };
+      return map[rarity] || '普通';
+    }
+    
+    loadProfile();
+    loadArtifacts();
+    loadHonor();
+
+    async function loadEquipment() {
+      try {
+        const res = await fetch(`${API_BASE}/equipment/my`, { headers: getAuthHeader() });
+        const data = await res.json();
+        if (!data.success) return;
+
+        const slotNames = data.slot_display || {'weapon':'武器','helmet':'头盔','armor':'盔甲','greaves':'护胫骨','amulet':'护身符','ring':'戒指'};
+        const slots = data.equipped || {};
+        const fragments = data.fragments || {};
+        const owned = data.owned || [];
+
+        // Render equipped slots
+        let slotsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">';
+        const slotIcons = {'weapon':'🗡️','helmet':'🪖','armor':'🛡️','greaves':'🦵','amulet':'📿','ring':'💍'};
+        const slotOrder = ['weapon','helmet','armor','greaves','amulet','ring'];
+        for (const slot of slotOrder) {
+          const item = slots[slot];
+          if (item) {
+            const tierColor = getTierColor(item.tier);
+            slotsHtml += `
+              <div style="background:rgba(0,30,60,0.8);border:1px solid ${tierColor};border-radius:12px;padding:12px;text-align:center;cursor:pointer"
+                   onclick="unequipSlot('${slot}')">
+                <div style="font-size:24px;margin-bottom:4px">${slotIcons[slot]}</div>
+                <div style="font-size:10px;color:${tierColor};font-weight:bold">${item.tier_name}</div>
+                <div style="font-size:11px;color:#fff;margin:2px 0">${slotNames[slot]}</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.4)">+${item.enhance_level || 0}</div>
+              </div>`;
+          } else {
+            slotsHtml += `
+              <div style="background:rgba(0,30,60,0.5);border:1px dashed rgba(0,150,200,0.3);border-radius:12px;padding:12px;text-align:center;cursor:pointer"
+                   onclick="selectEquipSlot('${slot}')">
+                <div style="font-size:24px;margin-bottom:4px;opacity:0.4">${slotIcons[slot]}</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.3)">${slotNames[slot]}</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.2);margin-top:2px">点击穿戴</div>
+              </div>`;
+          }
+        }
+        slotsHtml += '</div>';
+        document.getElementById('equippedSlots').innerHTML = slotsHtml;
+
+        // Render fragments
+        document.getElementById('fragmentInfo').innerHTML = `
+          <div style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);border-radius:10px;padding:10px 16px;text-align:center">
+            <div style="font-size:18px;color:#ffd700;font-weight:bold">${fragments.wealth || 0}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5)">财富碎片</div>
+          </div>
+          <div style="background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.3);border-radius:10px;padding:10px 16px;text-align:center">
+            <div style="font-size:18px;color:#00e564;font-weight:bold">${fragments.prosperity || 0}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5)">兴盛碎片</div>
+          </div>
+        `;
+
+        // Render owned equipment
+        if (owned.length === 0) {
+          document.getElementById('ownedEquipment').innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,200,255,0.3)">暂无装备，通过深渊boss或合成获取</div>';
+        } else {
+          allOwnedEquipment = owned;
+          let ownedHtml = '<div style="display:flex;flex-direction:column;gap:8px">';
+          const slotOrder2 = ['weapon','helmet','armor','greaves','amulet','ring'];
+          for (const slot of slotOrder2) {
+            const items = owned.filter(i => i.slot === slot);
+            if (items.length === 0) continue;
+            ownedHtml += `<div style="font-size:11px;color:#c9a0ff;margin-top:8px">${slotIcons[slot]} ${slotNames[slot]}</div>`;
+            for (const item of items) {
+              const tierColor = getTierColor(item.tier);
+              const enh = item.enhance_level || 0;
+              const epower = (item.base_power || 0) + enh * 1500;
+              const edef = (item.base_defense || 0) + enh * 1500;
+              const ehp = (item.base_hp || 0) + enh * 1500;
+              const itemCrit = (item.base_luck || 0) + enh * 0;
+              ownedHtml += `
+                <div onclick="showEquipDetail(${item.id})" style="display:flex;align-items:center;gap:10px;background:rgba(0,30,60,0.6);border:1px solid ${tierColor};border-radius:10px;padding:10px;cursor:pointer" title="点击查看详情">
+                  <div style="flex:1">
+                    <div style="font-size:12px;color:${tierColor};font-weight:bold">${item.tier_name}·${slotNames[item.slot]} ${enh > 0 ? '<span style="color:#ffd700">+' + enh + '</span>' : ''}</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,0.5)">⚔️攻击+${epower} 🛡️防御+${edef} ❤️生命+${ehp} 💥暴击+${itemCrit}%</div>
+                    <div style="font-size:10px;color:${item.set_type === 'wealth' ? '#ffd700' : '#00e564'}">${item.set_type === 'wealth' ? '💛财富套装' : '💚兴盛套装'} · 强化+${enh}</div>
+                  </div>
+                  <button onclick="event.stopPropagation();wearEquip(${item.id}, '${slot}')" style="background:linear-gradient(135deg,#0088bb,#00b4d4);border:none;border-radius:8px;color:#fff;padding:8px 14px;font-size:12px;cursor:pointer">穿戴</button>
+                  <button onclick="event.stopPropagation();enhanceEquip(${item.id})" style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);border-radius:8px;color:#ffd700;padding:8px 12px;font-size:11px;cursor:pointer">强化</button>
+                </div>`;
+            }
+          }
+          ownedHtml += '</div>';
+          document.getElementById('ownedEquipment').innerHTML = ownedHtml;
+        }
+      } catch(e) {
+        console.error('loadEquipment error:', e);
+        document.getElementById('equippedSlots').innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b">加载失败</div>';
+      }
+    }
+
+    function getTierColor(tier) {
+      const colors = ['#aaa','#ff4444','#ff8800','#44ccff','#44ff88','#ffee44','#ff44ff','#ff8844','#88ff44','#44ffff','#ff44aa','#aa44ff','#44ff44','#ffaa44','#ff6644','#aa44aa','#44aaff'];
+      return colors[Math.min(tier - 1, colors.length - 1)] || '#aaa';
+    }
+
+    async function unequipSlot(slot) {
+      try {
+        const res = await fetch(`${API_BASE}/equipment/wear`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ slot, equipment_id: null })
+        });
+        const data = await res.json();
+        if (data.success) { showToast('已卸下'); loadEquipment(); }
+        else showToast(data.reason || '操作失败', 'error');
+      } catch(e) { showToast('网络错误', 'error'); }
+    }
+
+    async function wearEquip(equipmentId, slot) {
+      try {
+        const res = await fetch(`${API_BASE}/equipment/wear`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ slot, equipment_id: equipmentId })
+        });
+        const data = await res.json();
+        if (data.success) { showToast('穿戴成功'); loadEquipment(); }
+        else showToast(data.reason || '穿戴失败', 'error');
+      } catch(e) { showToast('网络错误', 'error'); }
+    }
+
+    async function enhanceEquip(equipmentId) {
+      try {
+        // 获取装备信息显示确认
+        const res = await fetch(`${API_BASE}/equipment/my`, { headers: getAuthHeader() });
+        const data = await res.json();
+        const allOwned = data.owned || [];
+        const eq = allOwned.find(e => e.id === equipmentId);
+        if (!eq) { showToast('装备不存在', 'error'); return; }
+        
+        const currentLevel = eq.enhance_level || 0;
+        if (currentLevel >= 5) { showToast('强化等级已达上限+5', 'error'); return; }
+        
+        const nextLevel = currentLevel + 1;
+        const cost = 1000;
+        const powerAdd = 1500, defAdd = 1500, hpAdd = 1500;
+        const currentPower = (eq.base_power || 0) + currentLevel * 1500;
+        const currentDef = (eq.base_defense || 0) + currentLevel * 1500;
+        const currentHp = (eq.base_hp || 0) + currentLevel * 1500;
+        const newPower = currentPower + powerAdd;
+        const newDef = currentDef + defAdd;
+        const newHp = currentHp + hpAdd;
+        const slotName = {weapon:'武器',helmet:'头盔',armor:'盔甲',greaves:'护胫骨',amulet:'护身符',ring:'戒指'}[eq.slot] || eq.slot;
+        
+        if (!confirm(`⚡ 强化 ${eq.tier_name}·${slotName} 至 +${nextLevel}\n💰 消耗: ${cost} 银贝\n\n强化后:\n⚔️攻击 ${newPower} (+${powerAdd})\n🛡️防御 ${newDef} (+${defAdd})\n❤️生命 ${newHp} (+${hpAdd})`)) return;
+        
+        const res2 = await fetch(`${API_BASE}/equipment/enhance`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ equipment_id: equipmentId })
+        });
+        const data2 = await res2.json();
+        if (data2.success) { showToast(data2.message); loadEquipment(); }
+        else showToast(data2.reason || '强化失败', 'error');
+      } catch(e) { showToast('网络错误', 'error'); }
+    }
+
+    function showBigCard(card) {
+      const existing = document.getElementById('bigCardModal');
+      if (existing) existing.remove();
+
+      const rarityGrad = {
+        normal: ['#3a3a4a','#5a5a6a'],
+        rare: ['#1a3a5a','#2a5a8a'],
+        epic: ['#3a1a5a','#6a2a9a'],
+        legend: ['#4a1a1a','#8a2a2a'],
+        legendary: ['#4a1a1a','#8a2a2a']
+      };
+      const rc = card.rarity || 'normal';
+      const rarityColors = {
+        normal: {bg:'rgba(80,80,100,0.5)',color:'#aaa'},
+        rare: {bg:'linear-gradient(135deg,#1a3a6a,#2a6aaa)',color:'#87ceeb'},
+        epic: {bg:'linear-gradient(135deg,#4a1a6a,#8a2aaa)',color:'#da70d6'},
+        legend: {bg:'linear-gradient(135deg,#8a2a2a,#c44)',color:'#ffd700'},
+        legendary: {bg:'linear-gradient(135deg,#8a2a2a,#c44)',color:'#ffd700'}
+      };
+      const rStyle = rarityColors[rc] || rarityColors.normal;
+      const [grad1, grad2] = rarityGrad[rc] || rarityGrad.normal;
+
+      const killerInfo = card.killer_name
+        ? `<div style="text-align:center;margin-bottom:12px">
+            <div style="font-size:14px;color:#ffd700;font-weight:bold">击杀者：${card.killer_name}</div>
+            <div style="font-size:11px;color:rgba(255,200,100,0.6);margin-top:4px">${card.kill_time ? card.kill_time.split('.')[0].replace(' ', '&nbsp;') : ''}</div>
+            ${card.kill_serial ? `<div style="font-size:11px;color:rgba(255,200,0,0.7);margin-top:2px">编号&nbsp;No.${String(card.kill_serial).padStart(4,'0')}</div>` : ''}
+           </div>`
+        : `<div style="text-align:center;margin-bottom:12px;font-size:12px;color:rgba(255,255,255,0.3);font-style:italic">尚未击杀此BOSS</div>`;
+
+      const modal = document.createElement('div');
+      modal.id = 'bigCardModal';
+      modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);padding:20px;backdrop-filter:blur(8px)';
+      modal.innerHTML = `
+        <div style="
+          width:100%;max-width:360px;
+          background:linear-gradient(160deg,${grad1} 0%,${grad2} 100%);
+          border:2px solid rgba(255,255,255,0.2);
+          border-radius:24px;
+          padding:28px 20px 24px;
+          position:relative;
+          box-shadow:0 0 60px rgba(0,0,0,0.8),0 0 30px rgba(255,200,100,0.1);
+          animation:cardReveal 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+        ">
+          <style>
+            @keyframes cardReveal{0%{opacity:0;transform:scale(0.8) translateY(20px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+            @keyframes floatGlow{0%{filter:drop-shadow(0 0 8px rgba(255,200,100,0.4))}100%{filter:drop-shadow(0 0 20px rgba(255,200,100,0.8))}}
+            @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+          </style>
+          <div style="position:absolute;top:8px;left:10px;font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:0.5px;font-family:monospace">深海掠夺者®</div>
+
+          <div style="text-align:center;margin-bottom:16px;position:relative">
+            <div style="position:absolute;top:-5px;right:-5px;font-size:8px;color:rgba(255,200,100,0.3);writing-mode:vertical-rl;letter-spacing:1px">防伪${card.kill_serial ? String(card.kill_serial).padStart(6,'0') : '------'}</div>
+            <div style="display:inline-block;animation:floatGlow 2s ease-in-out infinite alternate">
+              <div style="font-size:90px;line-height:1">${card.icon}</div>
+            </div>
+          </div>
+
+          <div style="text-align:center;margin-bottom:10px">
+            <div style="
+              display:inline-block;
+              background:linear-gradient(90deg,transparent,rgba(255,200,100,0.3),transparent);
+              background-size:200% 100%;
+              animation:shimmer 3s linear infinite;
+              padding:4px 20px;border-radius:20px;
+              font-size:11px;color:rgba(255,200,100,0.8);letter-spacing:2px;
+            ">WORLD BOSS CARD</div>
+          </div>
+
+          <div style="text-align:center;margin-bottom:6px">
+            <div style="font-size:22px;color:#fff;font-weight:bold;letter-spacing:1px;text-shadow:0 2px 10px rgba(0,0,0,0.5)">${card.name}</div>
+          </div>
+
+          <div style="text-align:center;margin-bottom:16px">
+            <span style="display:inline-block;padding:3px 14px;border-radius:12px;font-size:11px;font-weight:bold;background:${rStyle.bg};color:${rStyle.color}">${rc === 'legend' || rc === 'legendary' ? '传奇' : rc === 'epic' ? '史诗' : rc === 'rare' ? '稀有' : '普通'}级BOSS</span>
+          </div>
+
+          <div style="
+            background:rgba(0,0,0,0.3);
+            border-radius:16px;
+            padding:14px 16px;
+            margin-bottom:16px;
+            border:1px solid rgba(255,255,255,0.08);
+          ">
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:8px;text-align:center">📜 BOSS档案</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+              <div>
+                <div style="font-size:16px;color:#ff6060;font-weight:bold">${card.hp || 0}</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.4)">生命值</div>
+              </div>
+              <div>
+                <div style="font-size:16px;color:#ffaa00;font-weight:bold">${card.attack || 0}</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.4)">攻击力</div>
+              </div>
+              <div>
+                <div style="font-size:16px;color:#00aaff;font-weight:bold">${card.defense || 0}</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.4)">防御力</div>
+              </div>
+            </div>
+          </div>
+
+          ${card.description ? `<div style="font-size:12px;color:rgba(255,255,255,0.55);text-align:center;margin-bottom:16px;line-height:1.7;font-style:italic">"${card.description}"</div>` : ''}
+
+          <div style="
+            background:rgba(0,0,0,0.3);
+            border-radius:16px;
+            padding:14px 16px;
+            margin-bottom:14px;
+            border:1px solid rgba(255,255,255,0.08);
+          ">
+            ${killerInfo}
+            ${card.kill_time ? `<div style="text-align:center;font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px">🕐 ${new Date(card.kill_time).toLocaleString('zh-CN')}</div>` : ''}
+          </div>
+
+          <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
+            <div style="background:rgba(255,80,80,0.15);border:1px solid rgba(255,80,80,0.3);border-radius:10px;padding:6px 12px;text-align:center">
+              <div style="font-size:14px">🩸</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.5)">血量 ${card.hp || 0}</div>
+            </div>
+            <div style="background:rgba(255,170,0,0.15);border:1px solid rgba(255,170,0,0.3);border-radius:10px;padding:6px 12px;text-align:center">
+              <div style="font-size:14px">⚔️</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.5)">攻击 ${card.attack || 0}</div>
+            </div>
+            <div style="background:rgba(0,170,255,0.15);border:1px solid rgba(0,170,255,0.3);border-radius:10px;padding:6px 12px;text-align:center">
+              <div style="font-size:14px">🛡️</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.5)">防御 ${card.defense || 0}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) modal.remove();
+      });
+    }
+
+    function showEquipDetail(equipId) {
+      const item = allOwnedEquipment.find(e => e.id === equipId);
+      if (!item) return;
+      const existing = document.getElementById('equipDetailModal');
+      if (existing) existing.remove();
+
+      const slotIcons = {weapon:'🗡️',helmet:'🪖',armor:'🛡️',greaves:'🦵',amulet:'📿',ring:'💍'};
+      const slotNames = {weapon:'武器',helmet:'头盔',armor:'盔甲',greaves:'护胫骨',amulet:'护身符',ring:'戒指'};
+      const tierColors = ['#aaa','#ff4444','#ff8800','#44ccff','#44ff88','#ffee44','#ff44ff','#ff8844','#88ff44','#44ffff','#ff44aa','#aa44ff','#44ff44','#ffaa44','#ff6644','#aa44aa','#44aaff'];
+      const tierRoms = ['零','Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ','Ⅵ','Ⅶ','Ⅷ','Ⅸ','Ⅹ','Ⅺ','Ⅻ','Ⅼ','Ⅽ','Ⅾ','Ⅿ'];
+      const color = tierColors[Math.min((item.tier||1)-1, tierColors.length-1)];
+      const tierRom = tierRoms[Math.min((item.tier||1)-1, tierRoms.length-1)];
+      const enh = item.enhance_level || 0;
+      const crit = (item.base_luck || 0) + enh * 2;
+      const setIcon = item.set_type === 'wealth' ? '💛' : '💚';
+      const setLabel = item.set_type === 'wealth' ? '财富套装' : '兴盛套装';
+      const desc = item.description || `来自深海的${item.tier_name}级装备，蕴含${setLabel}的力量。`;
+
+      const modal = document.createElement('div');
+      modal.id = 'equipDetailModal';
+      modal.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.88);padding:20px;backdrop-filter:blur(6px)';
+      modal.innerHTML = `
+        <div style="width:100%;max-width:340px;background:linear-gradient(160deg,#001828 0%,#001020 100%);border:2px solid ${color};border-radius:22px;padding:24px 18px;position:relative;box-shadow:0 0 50px rgba(0,0,0,0.8),0 0 20px ${color}40">
+          <style>@keyframes equipReveal{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}</style>
+          <button onclick="document.getElementById('equipDetailModal').remove()" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+
+          <div style="text-align:center;margin-bottom:12px">
+            <div style="font-size:72px;filter:drop-shadow(0 0 14px ${color})">${slotIcons[item.slot] || '🗡️'}</div>
+          </div>
+
+          <div style="text-align:center;margin-bottom:4px">
+            <span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:bold;background:${color}20;color:${color};border:1px solid ${color}60">${item.tier_name} ${tierRom}</span>
+          </div>
+          <div style="text-align:center;font-size:20px;color:#fff;font-weight:bold;margin-bottom:4px">${slotNames[item.slot] || item.slot}</div>
+          <div style="text-align:center;margin-bottom:14px">
+            <span style="font-size:11px;color:${item.set_type==='wealth'?'#ffd700':'#00e564'}">${setIcon} ${setLabel}</span>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.3);border-radius:14px;padding:14px;margin-bottom:14px;border:1px solid rgba(255,255,255,0.06)">
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:10px;text-align:center">📊 属性详情</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div style="background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.2);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:18px">⚔️</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.4)">攻击</div>
+                <div style="font-size:16px;color:#ff6666;font-weight:bold">+${item.base_power}</div>
+              </div>
+              <div style="background:rgba(80,130,255,0.1);border:1px solid rgba(80,130,255,0.2);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:18px">🛡️</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.4)">防御</div>
+                <div style="font-size:16px;color:#6699ff;font-weight:bold">+${item.base_defense}</div>
+              </div>
+              <div style="background:rgba(80,200,120,0.1);border:1px solid rgba(80,200,120,0.2);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:18px">❤️</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.4)">生命</div>
+                <div style="font-size:16px;color:#66cc88;font-weight:bold">+${item.base_hp}</div>
+              </div>
+              <div style="background:rgba(255,140,180,0.1);border:1px solid rgba(255,140,180,0.2);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:18px">💥</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.4)">暴击</div>
+                <div style="font-size:16px;color:#ff88bb;font-weight:bold">+${crit}%</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+            <div style="background:${color}15;border:1px solid ${color}40;border-radius:10px;padding:6px 14px;text-align:center">
+              <div style="font-size:11px;color:rgba(255,255,255,0.5)">强化等级</div>
+              <div style="font-size:14px;color:${color};font-weight:bold">+${enh}</div>
+            </div>
+            <div style="background:rgba(100,200,255,0.1);border:1px solid rgba(100,200,255,0.2);border-radius:10px;padding:6px 14px;text-align:center">
+              <div style="font-size:11px;color:rgba(255,255,255,0.5)">获取方式</div>
+              <div style="font-size:12px;color:#00d4ff;font-weight:bold">限时抢购</div>
+            </div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.25);border-radius:12px;padding:12px;margin-bottom:14px;text-align:center;border:1px solid rgba(255,255,255,0.05)">
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">📜 装备描述</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.7;font-style:italic">"${desc}"</div>
+          </div>
+
+          <div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:12px">点击外部关闭</div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+    }
+
+    async function loadBossCards() {
+      try {
+        const res = await fetch(`${API_BASE}/boss_cards/all`, { headers: getAuthHeader() });
+        const data = await res.json();
+        if (!data.cards || data.cards.length === 0) {
+          document.getElementById('cardsContainer').innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,200,255,0.4)">暂无收集卡</div>';
+          return;
+        }
+        const rarityClass = { legend: 'legend', legendary: 'legend', epic: 'epic', rare: 'rare', normal: 'normal' };
+        const rarityText = { legend: '传奇', legendary: '传奇', epic: '史诗', rare: '稀有', normal: '普通' };
+        const html = data.cards.map((c, idx) => {
+          const rc = rarityClass[c.rarity] || 'normal';
+          const rt = rarityText[c.rarity] || '普通';
+          const locked = c.owned ? '' : 'locked';
+          const stats = `攻击:${c.attack} 防御:${c.defense}`;
+          return `<div class="boss-card-item ${rc} ${locked}" data-idx="${idx}" style="${c.owned ? 'cursor:pointer' : ''}">
+            ${!c.owned ? '<div class="lock-overlay">🔒</div>' : '<div class="boss-card-stats">'+stats+'</div>'}
+            <div class="boss-card-icon">${c.icon}</div>
+            <div class="boss-card-name">${c.name}</div>
+            <div class="boss-card-rarity rarity-${rc}">${rt}</div>
+            ${c.owned ? `<div style="font-size:9px;color:rgba(0,200,100,0.8);margin-top:2px;font-weight:bold">No:${String(c.kill_serial||'∞').padStart(4,'0')}</div>` : ''}
+          </div>`;
+        }).join('');
+        document.getElementById('cardsContainer').innerHTML = '<div class="cards-grid">' + html + '</div>';
+
+        // Add click listeners for owned cards
+        document.querySelectorAll('.boss-card-item:not(.locked)').forEach(card => {
+          card.addEventListener('click', function() {
+            const idx = parseInt(this.getAttribute('data-idx'));
+            showBigCard(data.cards[idx]);
+          });
+        });
+      } catch(e) {
+        document.getElementById('cardsContainer').innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,200,255,0.4)">加载失败</div>';
+      }
+    }
+  </script>
+</body>
+</html>

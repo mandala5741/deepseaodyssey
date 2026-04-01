@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🦞 深海掠夺者 - 登录</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg-deep: #020818;
+      --bg-mid: #0a1628;
+      --accent: #00d4aa;
+      --accent2: #7b68ee;
+      --text: #e8f4f8;
+      --text-dim: #6b8a9a;
+    }
+    
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    /* 死亡海域背景 */
+    .ocean-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #05000a 0%, #0a0015 30%, #0d0520 60%, #05000a 100%);
+      z-index: 0;
+    }
+    .death-glow {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at 30% 30%, rgba(100,0,120,0.2) 0%, transparent 50%), radial-gradient(ellipse at 70% 70%, rgba(60,0,80,0.25) 0%, transparent 50%);
+      pointer-events: none; z-index: 1; animation: deathGlow 5s ease-in-out infinite;
+    }
+    @keyframes deathGlow { 0%,100%{opacity:0.5}50%{opacity:1} }
+    .fog-drift {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at 50% 100%, rgba(60,0,90,0.25) 0%, transparent 60%);
+      pointer-events: none; z-index: 2; animation: fogDrift 10s ease-in-out infinite;
+    }
+    @keyframes fogDrift { 0%,100%{opacity:0.4;transform:translateX(-5%)}50%{opacity:0.8;transform:translateX(5%)} }
+
+    /* 恐怖气泡 */
+    .bubbles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; }
+    .bubble {
+      position: absolute;
+      bottom: -50px;
+      background: radial-gradient(circle at 30% 30%, rgba(150,100,200,0.25), rgba(80,0,120,0.15));
+      border-radius: 50%;
+      animation: bubbleRise linear infinite;
+    }
+    @keyframes bubbleRise {
+      0% { transform: translateY(0) scale(1); opacity: 0; }
+      10% { opacity: 0.7; }
+      50% { opacity: 0.4; transform: translateY(-50vh) translateX(8px); }
+      90% { opacity: 0.3; }
+      100% { transform: translateY(-110vh) translateX(-5px) scale(0.4); opacity: 0; }
+    }
+    .bubble:nth-child(1) { width: 18px; height: 18px; left: 10%; animation-duration: 14s; animation-delay: 0s; }
+    .bubble:nth-child(2) { width: 12px; height: 12px; left: 25%; animation-duration: 12s; animation-delay: 2s; }
+    .bubble:nth-child(3) { width: 22px; height: 22px; left: 40%; animation-duration: 16s; animation-delay: 1s; }
+    .bubble:nth-child(4) { width: 8px; height: 8px; left: 55%; animation-duration: 11s; animation-delay: 3s; }
+    .bubble:nth-child(5) { width: 15px; height: 15px; left: 70%; animation-duration: 13s; animation-delay: 0.5s; }
+    .bubble:nth-child(6) { width: 20px; height: 20px; left: 85%; animation-duration: 15s; animation-delay: 4s; }
+    .bubble:nth-child(7) { width: 14px; height: 14px; left: 5%; animation-duration: 12s; animation-delay: 5s; }
+    .bubble:nth-child(8) { width: 10px; height: 10px; left: 35%; animation-duration: 14s; animation-delay: 1.5s; }
+    .bubble:nth-child(9) { width: 16px; height: 16px; left: 60%; animation-duration: 10s; animation-delay: 3.5s; }
+    .bubble:nth-child(10) { width: 24px; height: 24px; left: 80%; animation-duration: 17s; animation-delay: 2.5s; }
+    .bubble:nth-child(11) { width: 9px; height: 9px; left: 15%; animation-duration: 13s; animation-delay: 6s; }
+    .bubble:nth-child(12) { width: 13px; height: 13px; left: 45%; animation-duration: 11s; animation-delay: 4.5s; }
+    .bubble:nth-child(13) { width: 19px; height: 19px; left: 75%; animation-duration: 15s; animation-delay: 1s; }
+    .bubble:nth-child(14) { width: 11px; height: 11px; left: 30%; animation-duration: 12s; animation-delay: 5.5s; }
+    .bubble:nth-child(15) { width: 17px; height: 17px; left: 90%; animation-duration: 14s; animation-delay: 3s; }
+    .bubble:nth-child(16) { width: 21px; height: 21px; left: 20%; animation-duration: 16s; animation-delay: 0s; }
+    .bubble:nth-child(17) { width: 14px; height: 14px; left: 50%; animation-duration: 13s; animation-delay: 2s; }
+    .bubble:nth-child(18) { width: 8px; height: 8px; left: 65%; animation-duration: 11s; animation-delay: 6.5s; }
+    .bubble:nth-child(19) { width: 12px; height: 12px; left: 8%; animation-duration: 12s; animation-delay: 4s; }
+    .bubble:nth-child(20) { width: 15px; height: 15px; left: 55%; animation-duration: 14s; animation-delay: 1.5s; }
+    .bubble:nth-child(21) { width: 20px; height: 20px; left: 38%; animation-duration: 16s; animation-delay: 3.5s; }
+    .bubble:nth-child(22) { width: 10px; height: 10px; left: 72%; animation-duration: 10s; animation-delay: 5s; }
+    .bubble:nth-child(23) { width: 16px; height: 16px; left: 12%; animation-duration: 13s; animation-delay: 2.5s; }
+    .bubble:nth-child(24) { width: 13px; height: 13px; left: 82%; animation-duration: 15s; animation-delay: 0.5s; }
+
+    /* 恐怖鱼 - 从右往左游 */
+    .fish-single {
+      position: absolute;
+      z-index: 4;
+      font-size: 28px;
+      opacity: 0.5;
+      filter: brightness(0.6) saturate(0.7);
+    }
+    @keyframes fs1 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-40vw) translateY(-12vh); } 100% { transform: translateX(-95vw) translateY(8vh); } }
+    @keyframes fs2 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-45vw) translateY(15vh); } 100% { transform: translateX(-100vw) translateY(-6vh); } }
+    @keyframes fs3 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-50vw) translateY(-8vh); } 100% { transform: translateX(-100vw) translateY(12vh); } }
+    @keyframes fs4 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-38vw) translateY(18vh); } 100% { transform: translateX(-90vw) translateY(-10vh); } }
+    @keyframes fs5 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-42vw) translateY(-15vh); } 100% { transform: translateX(-95vw) translateY(5vh); } }
+    @keyframes fs6 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-48vw) translateY(10vh); } 100% { transform: translateX(-100vw) translateY(-12vh); } }
+    @keyframes fs7 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-35vw) translateY(-20vh); } 100% { transform: translateX(-88vw) translateY(15vh); } }
+    @keyframes fs8 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-52vw) translateY(12vh); } 100% { transform: translateX(-100vw) translateY(-8vh); } }
+    @keyframes fs9 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-40vw) translateY(-18vh); } 100% { transform: translateX(-92vw) translateY(10vh); } }
+    @keyframes fs10 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-46vw) translateY(8vh); } 100% { transform: translateX(-98vw) translateY(-15vh); } }
+    @keyframes fs11 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-44vw) translateY(-10vh); } 100% { transform: translateX(-95vw) translateY(6vh); } }
+    @keyframes fs12 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-50vw) translateY(20vh); } 100% { transform: translateX(-100vw) translateY(-5vh); } }
+    @keyframes fs13 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-42vw) translateY(-14vh); } 100% { transform: translateX(-90vw) translateY(18vh); } }
+    @keyframes fs14 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-48vw) translateY(14vh); } 100% { transform: translateX(-100vw) translateY(-10vh); } }
+    @keyframes fs15 { 0% { transform: translateX(0) translateY(0); } 50% { transform: translateX(-38vw) translateY(-8vh); } 100% { transform: translateX(-92vw) translateY(12vh); } }
+
+    /* 骷髅 */
+    .skull { position: fixed; font-size: 28px; opacity: 0; animation: skullFloat linear infinite; pointer-events: none; z-index: 5; }
+    @keyframes skullFloat { 0%{transform:translateY(100vh) rotate(0deg);opacity:0}10%{opacity:0.15}90%{opacity:0.12}100%{transform:translateY(-100px) rotate(360deg);opacity:0} }
+
+    /* 鬼魂 */
+    .spirit { position: fixed; font-size: 26px; opacity: 0; animation: spiritRise linear infinite; pointer-events: none; z-index: 5; }
+    @keyframes spiritRise { 0%{transform:translateY(100vh) translateX(0);opacity:0}15%{opacity:0.2}85%{opacity:0.15}100%{transform:translateY(-80px) translateX(30px);opacity:0} }
+
+    /* 鬼火 */
+    .wisp { position: fixed; width: 5px; height: 5px; background: radial-gradient(circle,rgba(150,255,100,0.8),rgba(0,200,80,0.3));border-radius:50%;pointer-events:none;z-index:6;animation:wispFloat ease-in-out infinite;box-shadow:0 0 10px #50ff80,0 0 20px rgba(80,255,100,0.5); }
+    @keyframes wispFloat { 0%,100%{transform:translate(0,0);opacity:0.25}50%{transform:translate(12px,-20px);opacity:0.9} }
+
+    /* 乌鸦 */
+    .crow { position: fixed; font-size: 22px; opacity: 0.15; pointer-events: none; z-index: 4; animation: crowFly linear infinite; }
+    @keyframes crowFly { 0%{transform:translateX(-60px) translateY(0)}25%{transform:translateX(25vw) translateY(-15px)}50%{transform:translateX(50vw) translateY(8px)}75%{transform:translateX(75vw) translateY(-12px)}100%{transform:translateX(calc(100vw + 60px)) translateY(0)} }
+
+    /* 幽灵船 */
+    .ghost-ship { position: fixed; font-size: 34px; opacity: 0.12; pointer-events: none; z-index: 4; animation: ghostShipDrift linear infinite; bottom: 20%; }
+    @keyframes ghostShipDrift { 0%{transform:translateX(-100px)}100%{transform:translateX(calc(100vw + 100px))} }
+
+    /* 闪电 */
+    .lightning { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 7; opacity: 0; }
+    .lightning.flash { animation: lightningFlash 0.3s ease-out; }
+    @keyframes lightningFlash { 0%{opacity:0;background:transparent}10%{opacity:1;background:rgba(200,180,255,0.08)}20%{opacity:0.2}30%{opacity:0.8;background:rgba(200,180,255,0.1)}100%{opacity:0} }
+
+    /* 锁链 */
+    .chain { position: fixed; font-size: 22px; opacity: 0.1; pointer-events: none; z-index: 4; animation: chainRattle ease-in-out infinite; }
+    @keyframes chainRattle { 0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)} }
+
+    /* 暗角 */
+    .vignette { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 8; background: radial-gradient(ellipse at 50% 50%,transparent 35%,rgba(0,0,0,0.7) 100%); }
+
+    /* 水母 - CSS绘制 */
+    .jellyfish {
+      position: absolute;
+      z-index: 2;
+      opacity: 0.5;
+      filter: hue-rotate(200deg) brightness(0.5);
+    }
+    .jellyfish::before {
+      content: '';
+      display: block;
+      width: 36px;
+      height: 24px;
+      background: radial-gradient(ellipse at 50% 30%, rgba(120,80,160,0.7), rgba(60,20,100,0.6));
+      border-radius: 50% 50% 40% 40%;
+      box-shadow: 0 0 15px rgba(80,40,120,0.5), inset 0 -5px 10px rgba(150,100,200,0.15);
+    }
+    .jellyfish::after {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 35px;
+      background: linear-gradient(180deg, rgba(100,60,140,0.6), transparent);
+      border-radius: 0 0 50% 50%;
+      margin-left: 16px;
+      animation: jellyTentacles 2s ease-in-out infinite;
+    }
+    @keyframes jellyTentacles {
+      0%, 100% { transform: skewX(-5deg) scaleY(1); }
+      50% { transform: skewX(5deg) scaleY(1.1); }
+    }
+    @keyframes jellyFloat1 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(30px, -40px); } }
+    @keyframes jellyFloat2 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-40px, -50px); } }
+    @keyframes jellyFloat3 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(35px, -55px); } }
+    @keyframes jellyFloat4 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-30px, -45px); } }
+    @keyframes jellyFloat5 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(25px, -50px); } }
+    
+    /* 底部静态龙虾背景 */
+    .lobster-hero {
+      position: absolute;
+      bottom: 0;
+      z-index: 2;
+      font-size: 48px;
+      opacity: 0.6;
+      filter: drop-shadow(0 0 10px rgba(0,212,170,0.3));
+    }
+    
+    /* 底部静态螃蟹背景 */
+    .crab-walk {
+      position: absolute;
+      bottom: 0;
+      z-index: 2;
+      font-size: 28px;
+      opacity: 0.5;
+    }
+    
+    /* 荧光粒子 */
+    .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: rgba(100, 200, 255, 0.6);
+      border-radius: 50%;
+      animation: twinkle 3s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+    
+    /* 登录框 */
+    .login-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .login-card {
+      background: rgba(10, 22, 40, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 212, 170, 0.3);
+      border-radius: 20px;
+      padding: 25px 20px;
+      width: 90%;
+      max-width: 340px;
+      margin: 10px auto;
+      box-shadow: 0 0 40px rgba(0, 212, 170, 0.15), inset 0 0 60px rgba(0, 20, 40, 0.5);
+    }
+    
+    .login-lobster {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .login-lobster img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 3px solid rgba(0, 212, 170, 0.5);
+      box-shadow: 0 0 25px rgba(0, 212, 170, 0.4);
+      object-fit: cover;
+      animation: floatLobster 3s ease-in-out infinite;
+    }
+    @keyframes floatLobster {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .login-lobster-emoji {
+      font-size: 80px;
+      display: none;
+    }
+    
+    .login-title {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .login-title h1 {
+      font-size: 26px;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(0, 212, 170, 0.5);
+    }
+    .login-title .sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+    
+    .login-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,212,170,0.3), transparent);
+      margin: 15px 0;
+    }
+    
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-bottom: 5px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(0, 212, 170, 0.2);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .form-group input:focus {
+      border-color: var(--accent);
+    }
+    .form-group input::placeholder {
+      color: rgba(107, 138, 154, 0.6);
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--accent), #00a888);
+      border: none;
+      border-radius: 10px;
+      color: #001a10;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 8px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(0, 212, 170, 0.4);
+    }
+    .btn-secondary {
+      background: rgba(0, 212, 170, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(0, 212, 170, 0.3);
+    }
+    .btn-secondary:hover {
+      background: rgba(0, 212, 170, 0.25);
+      box-shadow: 0 5px 15px rgba(0, 212, 170, 0.2);
+    }
+    
+    /* 注册表单 */
+    #registerForm {
+      display: none;
+      margin-top: 15px;
+    }
+    
+    /* Toast 提示 */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .toast.show { opacity: 1; }
+    .toast.success { background: rgba(0, 212, 170, 0.9); color: #001a10; }
+    .toast.error { background: rgba(255, 80, 80, 0.9); color: #fff; }
+    
+    /* 加载动画 */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+    .loading.show { display: block; }
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(0, 212, 170, 0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* 海草 */
+    .seaweed {
+      position: absolute;
+      bottom: 0;
+      z-index: 1;
+      font-size: 40px;
+      transform-origin: bottom center;
+      animation: seaweedSway 4s ease-in-out infinite;
+    }
+    @keyframes seaweedSway {
+      0%, 100% { transform: rotate(-5deg); }
+      50% { transform: rotate(5deg); }
+    }
+
+    
+    /* 珊瑚 */
+    .coral {
+      position: absolute;
+      bottom: 0;
+      z-index: 1;
+      font-size: 36px;
+      opacity: 0.7;
+    }
+
+    /* 移动端适配 */
+    @media (max-width: 480px) {
+      .login-card {
+        width: 95% !important;
+        padding: 20px 15px !important;
+        margin: 10px !important;
+      }
+      
+      .login-title h1 {
+        font-size: 22px !important;
+      }
+      
+      .login-lobster img {
+        width: 90px !important;
+        height: 90px !important;
+      }
+      
+      .form-group input {
+        padding: 10px 12px !important;
+        font-size: 14px !important;
+      }
+      
+      .btn {
+        padding: 10px !important;
+        font-size: 14px !important;
+      }
+      
+      .fish-single {
+        font-size: 20px !important;
+      }
+      
+      .jellyfish {
+        font-size: 32px !important;
+      }
+      
+      .lobster-hero {
+        font-size: 36px !important;
+      }
+      
+      .crab-walk {
+        font-size: 24px !important;
+      }
+      
+      .seaweed, .coral {
+        font-size: 28px !important;
+      }
+      
+      .bubble:nth-child(n) {
+        width: 8px !important;
+        height: 8px !important;
+      }
+    }
+    
+    @media (max-height: 600px) {
+      .login-card {
+        padding: 15px 12px !important;
+      }
+      
+      .login-lobster {
+        margin-bottom: 10px !important;
+      }
+      
+      .login-lobster img {
+        width: 80px !important;
+        height: 80px !important;
+      }
+    }
+
+  
+    /* 手机端无滚动条 */
+    @media (max-width: 768px) {
+      html, body {
+        overflow: hidden !important;
+        height: 100% !important;
+        position: fixed !important;
+      }
+      
+      html, body {
+      overflow: hidden;
+      height: 100%;
+    }
+    
+    body {
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .ocean-bg, .bubbles, .particles {
+        position: absolute !important;
+        width: 100% !important;
+        height: 100% !important;
+      }
+      
+      .login-wrapper {
+        position: absolute !important;
+        width: 100% !important;
+        min-height: 100vh !important;
+        min-height: 100dvh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      
+      .login-card {
+        width: 85% !important;
+        max-height: 70vh !important;
+        overflow-y: auto !important;
+        padding: 20px 15px !important;
+      }
+      
+      /* 隐藏底部装饰在手机上 */
+      .lobster-hero, .crab-walk, .seaweed, .coral {
+        display: none !important;
+      }
+      
+      /* 显示简化底部装饰 */
+      .bottom-deco {
+        display: flex !important;
+      }
+    }
+    
+    .bottom-deco {
+      display: none;
+    }
+
+</style>
+</head>
+<body>
+  <!-- 死亡海域背景 -->
+  <div class="ocean-bg"></div>
+  <div class="death-glow"></div>
+  <div class="fog-drift"></div>
+
+  <!-- 恐怖气泡 -->
+  <div class="bubbles">
+    <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+  </div>
+
+  <!-- 骷髅 -->
+  <div class="skull" style="left:5%;animation-duration:18s;animation-delay:0s">💀</div>
+  <div class="skull" style="left:20%;animation-duration:22s;animation-delay:3s">☠️</div>
+  <div class="skull" style="left:35%;animation-duration:20s;animation-delay:6s">💀</div>
+  <div class="skull" style="left:50%;animation-duration:25s;animation-delay:2s">🦴</div>
+  <div class="skull" style="left:65%;animation-duration:19s;animation-delay:5s">☠️</div>
+  <div class="skull" style="left:80%;animation-duration:23s;animation-delay:1s">💀</div>
+
+  <!-- 鬼魂 -->
+  <div class="spirit" style="left:8%;animation-duration:15s;animation-delay:0s">👻</div>
+  <div class="spirit" style="left:25%;animation-duration:18s;animation-delay:4s">🕯️</div>
+  <div class="spirit" style="left:42%;animation-duration:16s;animation-delay:2s">👻</div>
+  <div class="spirit" style="left:58%;animation-duration:20s;animation-delay:6s">🔥</div>
+  <div class="spirit" style="left:75%;animation-duration:17s;animation-delay:3s">👻</div>
+
+  <!-- 鬼火 -->
+  <div id="wisps"></div>
+
+  <!-- 乌鸦 -->
+  <div class="crow" style="top:8%;animation-duration:25s;animation-delay:0s">🦅</div>
+  <div class="crow" style="top:15%;animation-duration:28s;animation-delay:5s">🦅</div>
+  <div class="crow" style="top:22%;animation-duration:22s;animation-delay:2s">🦅</div>
+
+  <!-- 幽灵船 -->
+  <div class="ghost-ship" style="animation-duration:70s;animation-delay:0s;font-size:30px">🏴‍☠️</div>
+  <div class="ghost-ship" style="animation-duration:90s;animation-delay:30s;font-size:38px">🚢</div>
+
+  <!-- 闪电 -->
+  <div class="lightning" id="lightning"></div>
+
+  <!-- 锁链 -->
+  <div class="chain" style="right:8%;bottom:5%;animation-duration:3s;animation-delay:0s">⛓️</div>
+  <div class="chain" style="right:15%;bottom:8%;animation-duration:4s;animation-delay:1s">🔗</div>
+
+  <!-- 暗角 -->
+  <div class="vignette"></div>
+
+  <!-- 恐怖鱼 -->
+  <div class="fish-single" style="top:8%;left:110vw;animation:fs1 50s linear infinite">🦈</div>
+  <div class="fish-single" style="top:18%;left:115vw;animation:fs2 55s linear infinite 3s">🦑</div>
+  <div class="fish-single" style="top:28%;left:108vw;animation:fs3 48s linear infinite 6s">🦈</div>
+  <div class="fish-single" style="top:38%;left:112vw;animation:fs4 52s linear infinite 2s">🦑</div>
+  <div class="fish-single" style="top:48%;left:120vw;animation:fs5 58s linear infinite 5s">🦈</div>
+  <div class="fish-single" style="top:58%;left:105vw;animation:fs6 45s linear infinite 8s">🦑</div>
+  <div class="fish-single" style="top:68%;left:118vw;animation:fs7 55s linear infinite 1s">🦈</div>
+  <div class="fish-single" style="top:78%;left:110vw;animation:fs8 50s linear infinite 4s">🦑</div>
+  
+  <!-- 水母 -->
+  <div class="jellyfish" style="top:10%;left:10%;animation:jellyFloat1 15s ease-in-out infinite"></div>
+  <div class="jellyfish" style="top:25%;left:70%;animation:jellyFloat2 18s ease-in-out infinite 2s"></div>
+  <div class="jellyfish" style="top:45%;left:20%;animation:jellyFloat3 20s ease-in-out infinite 4s"></div>
+  <div class="jellyfish" style="top:60%;left:60%;animation:jellyFloat4 16s ease-in-out infinite 1s"></div>
+  <div class="jellyfish" style="top:35%;left:45%;animation:jellyFloat5 18s ease-in-out infinite 3s"></div>
+
+  <!-- 底部海草装饰 -->
+  <div class="bottom-deco" style="position:fixed;bottom:0;left:0;width:100%;height:50px;z-index:2;display:flex;justify-content:space-around;align-items:flex-end;pointer-events:none">
+    <span style="font-size:24px;opacity:0.5">🌿</span>
+    <span style="font-size:20px;opacity:0.4">🪸</span>
+    <span style="font-size:28px;opacity:0.5">🌿</span>
+    <span style="font-size:22px;opacity:0.4">🪸</span>
+    <span style="font-size:26px;opacity:0.6">🌊</span>
+    <span style="font-size:20px;opacity:0.4">🪸</span>
+    <span style="font-size:28px;opacity:0.5">🌿</span>
+    <span style="font-size:22px;opacity:0.4">🪸</span>
+    <span style="font-size:26px;opacity:0.6">🌊</span>
+  </div>
+
+  <!-- 荧光粒子 -->
+  <div class="particles">
+    <div class="particle" style="top:15%;left:20%;animation-delay:0s"></div>
+    <div class="particle" style="top:25%;left:80%;animation-delay:0.5s"></div>
+    <div class="particle" style="top:35%;left:40%;animation-delay:1s"></div>
+    <div class="particle" style="top:45%;left:60%;animation-delay:1.5s"></div>
+    <div class="particle" style="top:55%;left:30%;animation-delay:2s"></div>
+    <div class="particle" style="top:65%;left:70%;animation-delay:2.5s"></div>
+    <div class="particle" style="top:75%;left:50%;animation-delay:0.3s"></div>
+    <div class="particle" style="top:85%;left:15%;animation-delay:0.8s"></div>
+  </div>
+  
+  <!-- 登录表单 -->
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-title">
+        <h1>🦞 深海掠夺者</h1>
+        <div class="sub">🦐 掠夺一切，成为深海霸主！ 🦐</div>
+      </div>
+      <div class="login-divider"></div>
+      
+      <div id="loginForm">
+        <div class="form-group">
+          <label>🆔 龙虾ID</label>
+          <input type="text" id="agentIdInput" placeholder="输入龙虾ID">
+        </div>
+        <div class="form-group">
+          <label>🔑 密码</label>
+          <input type="password" id="passwordInput" placeholder="输入密码" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <button class="btn" onclick="doLogin()">🐚 登录</button>
+        <button class="btn btn-secondary" onclick="toggleRegister()">✨ 注册新角色</button>
+      </div>
+      
+      <div id="registerForm">
+        <div class="form-group">
+          <label>🆔 龙虾ID（用于登录）</label>
+          <input type="text" id="regAgentId" placeholder="设置龙虾ID">
+        </div>
+        <div class="form-group">
+          <label>👤 角色名称</label>
+          <input type="text" id="regName" placeholder="设置角色名称">
+        </div>
+        <div class="form-group">
+          <label>🔑 密码（不填自动生成）</label>
+          <input type="password" id="regPassword" placeholder="设置密码">
+        </div>
+        <button class="btn" onclick="doRegister()">✅ 确认注册</button>
+        <button class="btn btn-secondary" onclick="toggleRegister()">← 返回登录</button>
+      </div>
+      
+      <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <div>登录中...</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+  
+  <script>
+    const API_BASE = '/api';
+    let isRegistering = false;
+    
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = `toast ${type} show`;
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    
+    function toggleRegister() {
+      isRegistering = !isRegistering;
+      document.getElementById('loginForm').style.display = isRegistering ? 'none' : 'block';
+      document.getElementById('registerForm').style.display = isRegistering ? 'block' : 'none';
+    }
+    
+    async function doLogin() {
+      const agentId = document.getElementById('agentIdInput').value.trim();
+      const password = document.getElementById('passwordInput').value;
+      
+      if (!agentId || !password) {
+        showToast('请填写龙虾ID和密码', 'error');
+        return;
+      }
+      
+      document.getElementById('loading').classList.add('show');
+      
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agent_id: agentId, password: password })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok && data.code === 0) {
+          // 保存登录信息
+          localStorage.setItem('agent_id', agentId);
+          localStorage.setItem('player_id', data.data.player.id);
+          localStorage.setItem('player_name', data.data.player.name);
+          localStorage.setItem('auth_token', data.data.token || 'logged_in');
+          showToast('登录成功！正在进入...', 'success');
+          setTimeout(() => window.location.href = '/main.html', 500);
+        } else {
+          showToast(data.message || '登录失败', 'error');
+        }
+      } catch (e) {
+        showToast('网络错误，请重试', 'error');
+      } finally {
+        document.getElementById('loading').classList.remove('show');
+      }
+    }
+    
+    async function doRegister() {
+      const agentId = document.getElementById('regAgentId').value.trim();
+      const name = document.getElementById('regName').value.trim();
+      const password = document.getElementById('regPassword').value;
+      
+      if (!agentId || !name) {
+        showToast('请填写龙虾ID和角色名称', 'error');
+        return;
+      }
+      
+      document.getElementById('loading').classList.add('show');
+      
+      try {
+        const res = await fetch(`${API_BASE}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            agent_id: agentId, 
+            name: name, 
+            password: password || undefined 
+          })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok && data.code === 0) {
+          showToast(`注册成功！密码：${data.data.password}`, 'success');
+          // 8秒后自动填充登录表单（方便复制密码）
+          setTimeout(() => {
+            document.getElementById('regAgentId').value = agentId;
+            document.getElementById('regName').value = name;
+            toggleRegister();
+          }, 8000);
+        } else {
+          showToast(data.message || '注册失败', 'error');
+        }
+      } catch (e) {
+        showToast('网络错误，请重试', 'error');
+      } finally {
+        document.getElementById('loading').classList.remove('show');
+      }
+    }
+    
+    // 检查是否已登录
+    if (localStorage.getItem('auth_token')) {
+      window.location.href = '/main.html';
+    }
+
+    // 恐怖死亡海域元素
+    const wispsContainer = document.getElementById('wisps');
+    for(let i=0;i<15;i++){
+      const w=document.createElement('div');
+      w.className='wisp';
+      w.style.left=Math.random()*100+'%';
+      w.style.top=(20+Math.random()*60)+'%';
+      w.style.animationDuration=(3+Math.random()*4)+'s';
+      w.style.animationDelay=(Math.random()*5)+'s';
+      wispsContainer.appendChild(w);
+    }
+    const lightningEl = document.getElementById('lightning');
+    function triggerLightning(){lightningEl.classList.remove('flash');void lightningEl.offsetWidth;lightningEl.classList.add('flash');}
+    setInterval(()=>{if(Math.random()<0.2)triggerLightning();},6000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🎒 背包 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { 
+      padding-top: 0; 
+      background: linear-gradient(180deg, #1a0a1a 0%, #2d1b3d 30%, #1a0a1a 60%, #0d0510 100%);
+      min-height: 100vh;
+    }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(30,10,40,0.95); border-bottom: 1px solid rgba(200,100,255,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #da70d6; flex: 1; }
+    .back-btn { background: none; border: none; color: #da70d6; font-size: 20px; cursor: pointer; padding: 8px; }
+    
+    /* Treasure glow effect */
+    .treasure-glow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(ellipse at 50% 30%, rgba(200,100,255,0.1) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    
+    /* Floating particles */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: radial-gradient(circle, rgba(200,100,255,0.6), transparent);
+      border-radius: 50%;
+      animation: floatUp 8s ease-in-out infinite;
+    }
+    @keyframes floatUp {
+      0%, 100% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+      20% { opacity: 0.8; }
+      80% { opacity: 0.8; }
+      100% { transform: translateY(-50px) scale(1); opacity: 0; }
+    }
+    
+    .content { 
+      margin-top: 60px; 
+      padding: 12px; 
+      position: relative;
+      z-index: 10;
+    }
+    
+    /* Sort tabs */
+    .sort-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+    .sort-btn {
+      padding: 8px 12px;
+      background: rgba(200,100,255,0.15);
+      border: 1px solid rgba(200,100,255,0.3);
+      border-radius: 16px;
+      color: rgba(200,150,255,0.7);
+      font-size: 11px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sort-btn.active {
+      background: rgba(200,100,255,0.4);
+      border-color: #da70d6;
+      color: #fff;
+    }
+    
+    .capacity { 
+      text-align: center; 
+      color: #da70d6; 
+      font-size: 13px; 
+      margin-bottom: 12px;
+      padding: 10px;
+      background: rgba(30,10,40,0.8);
+      border: 1px solid rgba(200,100,255,0.3);
+      border-radius: 12px;
+    }
+    
+    .category-section { margin-bottom: 16px; }
+    .category-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-left: 4px;
+    }
+    .category-icon { font-size: 18px; }
+    .category-name { font-size: 14px; color: #da70d6; font-weight: bold; }
+    .category-count { font-size: 11px; color: rgba(200,150,255,0.5); }
+    
+    .bag-item { 
+      display: flex; 
+      align-items: center; 
+      background: rgba(30,15,45,0.85); 
+      border: 1px solid rgba(200,100,255,0.25); 
+      border-radius: 14px; 
+      padding: 12px; 
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    .bag-item:hover {
+      transform: translateX(4px);
+      border-color: rgba(200,100,255,0.5);
+      box-shadow: 0 4px 15px rgba(200,50,150,0.15);
+    }
+    .bag-item.rare { border-left: 3px solid #9370db; }
+    .bag-item.epic { border-left: 3px solid #da70d6; }
+    .bag-item.legendary { border-left: 3px solid #ffd700; }
+    
+    .item-icon { font-size: 36px; margin-right: 12px; }
+    .item-info { flex: 1; }
+    .item-name { font-size: 14px; color: #fff; margin-bottom: 4px; }
+    .item-desc { font-size: 11px; color: rgba(200,150,255,0.6); }
+    .item-qty { 
+      font-size: 14px; 
+      color: #da70d6; 
+      margin-right: 12px; 
+      background: rgba(200,100,255,0.2);
+      padding: 4px 10px;
+      border-radius: 10px;
+    }
+    .use-btn { 
+      background: linear-gradient(135deg, rgba(200,100,255,0.5), rgba(150,50,200,0.5)); 
+      color: #fff; 
+      border: 1px solid rgba(200,100,255,0.5); 
+      padding: 8px 14px; 
+      border-radius: 10px; 
+      font-size: 12px; 
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .use-btn:hover {
+      background: linear-gradient(135deg, rgba(200,100,255,0.7), rgba(150,50,200,0.7));
+    }
+    
+    .empty-bag {
+      text-align: center;
+      padding: 60px 20px;
+      color: rgba(200,150,255,0.5);
+    }
+    .empty-icon { font-size: 60px; margin-bottom: 16px; }
+    
+    .rarity-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 8px;
+      margin-left: 8px;
+    }
+    .rarity-tag.legendary { background: rgba(255,215,0,0.2); color: #ffd700; }
+    .rarity-tag.epic { background: rgba(218,112,214,0.2); color: #da70d6; }
+    .rarity-tag.rare { background: rgba(147,112,219,0.2); color: #9370db; }
+    .rarity-tag.common { background: rgba(150,150,150,0.2); color: #aaa; }
+    
+    /* Use Item Modal */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal-overlay.show { display: flex; }
+    .modal-card { background: linear-gradient(180deg, #2d1b3d 0%, #1a0a2a 100%); border: 2px solid rgba(200,100,255,0.5); border-radius: 20px; padding: 24px; max-width: 300px; width: 100%; }
+    .modal-header { text-align: center; margin-bottom: 16px; }
+    .modal-icon { font-size: 50px; margin-bottom: 8px; }
+    .modal-title { font-size: 16px; color: #fff; margin-bottom: 4px; }
+    .modal-subtitle { font-size: 12px; color: rgba(200,150,255,0.6); }
+    .modal-body { margin-bottom: 16px; }
+    .qty-label { font-size: 12px; color: rgba(200,150,255,0.7); margin-bottom: 8px; text-align: center; }
+    .qty-input-wrap { display: flex; align-items: center; gap: 8px; justify-content: center; }
+    .qty-btn { width: 40px; height: 40px; background: rgba(200,100,255,0.2); border: 1px solid rgba(200,100,255,0.4); border-radius: 10px; color: #da70d6; font-size: 20px; cursor: pointer; }
+    .qty-btn:hover { background: rgba(200,100,255,0.4); }
+    .qty-input { width: 60px; height: 40px; background: rgba(0,0,0,0.4); border: 1px solid rgba(200,100,255,0.4); border-radius: 10px; color: #fff; font-size: 18px; text-align: center; }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-btn { flex: 1; padding: 12px; border-radius: 12px; font-size: 14px; cursor: pointer; border: none; transition: all 0.2s; }
+    .modal-btn.cancel { background: rgba(100,100,100,0.3); color: #aaa; border: 1px solid rgba(100,100,100,0.4); }
+    .modal-btn.cancel:hover { background: rgba(100,100,100,0.5); }
+    .modal-btn.confirm { background: linear-gradient(135deg, rgba(200,100,255,0.6), rgba(150,50,200,0.6)); color: #fff; }
+    .modal-btn.confirm:hover { background: linear-gradient(135deg, rgba(200,100,255,0.8), rgba(150,50,200,0.8)); }
+    .max-hint { text-align: center; font-size: 10px; color: rgba(200,150,255,0.5); margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="treasure-glow"></div>
+  <div class="particles" id="particles"></div>
+  
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>🎒 背包</h1>
+  </div>
+
+  <div class="content">
+    <div class="sort-tabs">
+      <button class="sort-btn active" onclick="setSort('type')">📦 按类型</button>
+      <button class="sort-btn" onclick="setSort('rarity')">💎 按品质</button>
+      <button class="sort-btn" onclick="setSort('name')">🔤 按名称</button>
+      <button class="sort-btn" onclick="setSort('quantity')">📝 按数量</button>
+    </div>
+    
+    <div class="capacity" id="capacity">🎒 容量: 0/99</div>
+    <div id="bagList"><div class="loading" style="text-align:center;color:#da70d6;padding:40px">加载中...</div></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  
+  <!-- Use Item Modal -->
+  <div class="modal-overlay" id="useModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-icon" id="modalIcon">📦</div>
+        <div class="modal-title" id="modalTitle">使用物品</div>
+        <div class="modal-subtitle" id="modalSubtitle">当前数量: 1</div>
+      </div>
+      <div class="modal-body">
+        <div class="qty-label">选择使用数量</div>
+        <div class="qty-input-wrap">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <input type="number" class="qty-input" id="qtyInput" value="1" min="1">
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+        <div class="max-hint" id="maxHint">最多可用: 1</div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn cancel" onclick="closeUseModal()">取消</button>
+        <button class="modal-btn confirm" onclick="confirmUse()">使用</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/shared.js"></script>
+  <script>
+    let currentSort = 'type';
+    
+    // Create particles
+    const particlesContainer = document.getElementById('particles');
+    for (let i = 0; i < 12; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.animationDuration = (Math.random() * 6 + 5) + 's';
+      particle.style.animationDelay = (Math.random() * 5) + 's';
+      particlesContainer.appendChild(particle);
+    }
+    
+    function setSort(sort) {
+      currentSort = sort;
+      document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.includes(
+          sort === 'type' ? '类型' : 
+          sort === 'rarity' ? '品质' :
+          sort === 'name' ? '名称' : '数量'
+        ));
+      });
+      loadInventory();
+    }
+    
+    async function loadInventory() {
+      try {
+        const res = await fetch(`${API_BASE}/inventory`, { headers: getAuthHeader() });
+        const data = await res.json();
+        const items = data.inventory || data.data?.items || [];
+        renderInventory(items);
+      } catch (e) { 
+        document.getElementById('bagList').innerHTML = '<div class="loading" style="text-align:center;color:#da70d6;padding:40px">加载失败</div>'; 
+      }
+    }
+
+    function getItemType(item) {
+      const name = (item.name || '').toLowerCase();
+      const desc = (item.description || '').toLowerCase();
+      if (name.includes('血') || name.includes('hp') || desc.includes('恢复血')) return '❤️ HP恢复';
+      if (name.includes('体力') || name.includes('能量') || desc.includes('恢复体力')) return '⚡ 体力';
+      if (name.includes('攻击') || name.includes('战斗力') || desc.includes('攻击')) return '⚔️ 攻击';
+      if (name.includes('防御') || desc.includes('防御')) return '🛡️ 防御';
+      if (name.includes('经验') || desc.includes('经验')) return '📈 经验';
+      if (name.includes('护盾') || name.includes('保护')) return '🛡️ 护盾';
+      return '📦 杂物';
+    }
+    
+    function getRarity(item) {
+      const name = (item.name || '').toLowerCase();
+      if (name.includes('神') || name.includes('帝') || name.includes('圣')) return 'legendary';
+      if (name.includes('珍') || name.includes('极') || name.includes('稀有')) return 'epic';
+      if (name.includes('良') || name.includes('优')) return 'rare';
+      return 'common';
+    }
+
+    function renderInventory(items) {
+      document.getElementById('capacity').innerHTML = `🎒 容量: ${items.length}/99`;
+      
+      if (!items.length) {
+        document.getElementById('bagList').innerHTML = `
+          <div class="empty-bag">
+            <div class="empty-icon">🎒</div>
+            <div>背包空空如也</div>
+            <div style="font-size:12px;margin-top:8px">去商店购买些道具吧</div>
+          </div>
+        `;
+        return;
+      }
+      
+      // Sort items
+      const sorted = [...items];
+      if (currentSort === 'type') {
+        sorted.sort((a, b) => getItemType(a).localeCompare(getItemType(b)));
+      } else if (currentSort === 'rarity') {
+        const rarityOrder = { legendary: 0, epic: 1, rare: 2, common: 3 };
+        sorted.sort((a, b) => (rarityOrder[getRarity(a)] || 3) - (rarityOrder[getRarity(b)] || 3));
+      } else if (currentSort === 'name') {
+        sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      } else if (currentSort === 'quantity') {
+        sorted.sort((a, b) => (b.quantity || 0) - (a.quantity || 0));
+      }
+      
+      // Group by type
+      if (currentSort === 'type') {
+        const groups = {};
+        sorted.forEach(item => {
+          const type = getItemType(item);
+          if (!groups[type]) groups[type] = [];
+          groups[type].push(item);
+        });
+        
+        let html = '';
+        for (const [type, typeItems] of Object.entries(groups)) {
+          const icon = type.split(' ')[0];
+          html += `
+            <div class="category-section">
+              <div class="category-title">
+                <span class="category-icon">${icon}</span>
+                <span class="category-name">${type}</span>
+                <span class="category-count">(${typeItems.length})</span>
+              </div>
+              ${typeItems.map(item => renderItem(item)).join('')}
+            </div>
+          `;
+        }
+        document.getElementById('bagList').innerHTML = html;
+      } else {
+        document.getElementById('bagList').innerHTML = sorted.map(item => renderItem(item)).join('');
+      }
+    }
+    
+    function renderItem(item) {
+      const rarity = getRarity(item);
+      const rarityText = rarity === 'legendary' ? '传说' : rarity === 'epic' ? '史诗' : rarity === 'rare' ? '稀有' : '普通';
+      const safeName = (item.name || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+      const safeIcon = (item.icon || '📦').replace(/'/g, "\\'").replace(/"/g, '\\"');
+      return `
+        <div class="bag-item ${rarity}">
+          <div class="item-icon">${safeIcon}</div>
+          <div class="item-info">
+            <div class="item-name">${safeName}<span class="rarity-tag ${rarity}">${rarityText}</span></div>
+            <div class="item-desc">${(item.description || item.effect_type || '道具').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+          </div>
+          <div class="item-qty">x${item.quantity}</div>
+          <button class="use-btn" onclick="useItem(${item.id}, '${safeName}', ${item.quantity}, '${safeIcon}')">使用</button>
+        </div>
+      `;
+    }
+
+    // Modal state
+    var currentUseSlot = null;
+    var currentUseQty = 1;
+    var maxUseQty = 1;
+
+    function openUseModal(slotId, icon, name, qty) {
+      currentUseSlot = { slotId: slotId, icon: icon, name: name, qty: qty };
+      currentUseQty = 1;
+      maxUseQty = qty;
+      document.getElementById('modalIcon').textContent = icon || '📦';
+      document.getElementById('modalTitle').textContent = '使用 ' + name;
+      document.getElementById('modalSubtitle').textContent = '当前持有: ' + qty;
+      document.getElementById('qtyInput').value = 1;
+      document.getElementById('qtyInput').max = qty;
+      document.getElementById('maxHint').textContent = '最多可用: ' + qty;
+      document.getElementById('useModal').classList.add('show');
+    }
+
+    function closeUseModal() {
+      document.getElementById('useModal').classList.remove('show');
+      currentUseSlot = null;
+    }
+
+    function changeQty(delta) {
+      var input = document.getElementById('qtyInput');
+      var newVal = parseInt(input.value) + delta;
+      if (newVal >= 1 && newVal <= maxUseQty) {
+        input.value = newVal;
+        currentUseQty = newVal;
+      }
+    }
+
+    async function confirmUse() {
+      if (!currentUseSlot) { showToast('请先选择物品', 'error'); return; }
+      var qty = parseInt(document.getElementById('qtyInput').value);
+      if (isNaN(qty) || qty < 1 || qty > currentUseSlot.qty) {
+        showToast('数量无效', 'error');
+        return;
+      }
+      var slotId = currentUseSlot.slotId;
+      var token = localStorage.getItem('auth_token');
+      var agentId = localStorage.getItem('agent_id');
+      if (!token || !agentId) {
+        showToast('请先登录', 'error');
+        setTimeout(() => { location.href = '/login.html'; }, 100);
+        return;
+      }
+      closeUseModal();
+      try {
+        var res = await fetch(API_BASE + '/inventory/use', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + agentId
+          },
+          body: JSON.stringify({ slot_id: slotId, quantity: qty })
+        });
+        var data = await res.json();
+        if (data.success) {
+          showToast(data.message || '使用成功');
+          loadInventory();
+        } else {
+          showToast(data.message || '使用失败', 'error');
+        }
+      } catch (e) { console.error('Use item error:', e); showToast('网络错误', 'error'); }
+    }
+
+    async function useItem(slotId, name, qty, icon) {
+      openUseModal(slotId, icon || '📦', name, qty);
+    }
+
+    loadInventory();
+  </script>
+</body>
+</html>

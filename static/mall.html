@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🏪 商店 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { 
+      padding-top: 0; 
+      background: linear-gradient(180deg, #000428 0%, #001e3c 30%, #002855 50%, #001e3c 70%, #000428 100%);
+      min-height: 100vh;
+    }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(0,4,40,0.95); border-bottom: 1px solid rgba(128,0,255,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #8000ff; flex: 1; }
+    .back-btn { background: none; border: none; color: #8000ff; font-size: 20px; cursor: pointer; padding: 8px; }
+    
+    /* Bioluminescent particles */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: radial-gradient(circle, rgba(0,150,255,0.8), transparent);
+      border-radius: 50%;
+      animation: float 8s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+      20% { opacity: 0.8; }
+      80% { opacity: 0.8; }
+      100% { transform: translateY(-100px) scale(1); opacity: 0; }
+    }
+    
+    .content { 
+      margin-top: 60px; 
+      padding: 12px; 
+      position: relative;
+      z-index: 10;
+    }
+    
+    /* Category tabs */
+    .category-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+    .cat-btn {
+      padding: 8px 14px;
+      background: rgba(128,0,255,0.15);
+      border: 1px solid rgba(128,0,255,0.3);
+      border-radius: 20px;
+      color: #8000ff;
+      font-size: 12px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .cat-btn.active {
+      background: rgba(128,0,255,0.4);
+      border-color: #8000ff;
+    }
+    
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-left: 4px;
+    }
+    .section-icon { font-size: 20px; }
+    .section-label { font-size: 14px; color: #8000ff; font-weight: bold; }
+    
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    
+    .mall-card {
+      background: rgba(0,20,60,0.8);
+      border: 1px solid rgba(128,0,255,0.3);
+      border-radius: 14px;
+      padding: 14px 10px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+    .mall-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(128,0,255,0.6);
+      box-shadow: 0 8px 25px rgba(128,0,255,0.2);
+    }
+    .mall-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #8000ff, #da70d6, #8000ff);
+    }
+    
+    .card-icon {
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
+    
+    .card-name {
+      font-size: 13px;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    
+    .card-desc {
+      font-size: 10px;
+      color: rgba(200,180,255,0.6);
+      margin-bottom: 8px;
+      height: 28px;
+      overflow: hidden;
+    }
+    
+    .card-price {
+      font-size: 12px;
+      color: #ffd700;
+      margin-bottom: 8px;
+    }
+    
+    .card-stock {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    .card-stock.available {
+      background: rgba(0,200,100,0.2);
+      color: #00c864;
+    }
+    .card-stock.limited {
+      background: rgba(255,150,0,0.2);
+      color: #ff9600;
+    }
+    .card-stock.soldout {
+      background: rgba(255,50,50,0.2);
+      color: #ff5050;
+    }
+    
+    .buy-btn {
+      width: 100%;
+      padding: 8px;
+      background: linear-gradient(135deg, rgba(128,0,255,0.5), rgba(100,0,200,0.5));
+      border: 1px solid rgba(128,0,255,0.5);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .buy-btn:hover { background: linear-gradient(135deg, rgba(128,0,255,0.7), rgba(100,0,200,0.7)); }
+    .buy-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: rgba(100,100,100,0.3);
+    }
+    
+    .category-section {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+  
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>🏪 海底商店</h1>
+  </div>
+
+  <div class="content">
+    <div class="category-tabs">
+      <button class="cat-btn active" onclick="filterCategory('all')">全部</button>
+      <button class="cat-btn" onclick="filterCategory('hp_recover')">❤️ HP</button>
+      <button class="cat-btn" onclick="filterCategory('energy_recover')">⚡ 体力</button>
+      <button class="cat-btn" onclick="filterCategory('combat_buff')">⚔️ 战斗</button>
+      <button class="cat-btn" onclick="filterCategory('special_item')">🎁 特殊</button>
+      <button class="cat-btn" onclick="filterCategory('permanent_buff')">💎 永久</button>
+    </div>
+    
+    <div id="shopContent"><div class="loading" style="text-align:center;color:#8000ff;padding:40px">加载中...</div></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/shared.js"></script>
+  <script>
+    let allItems = [];
+    let currentCategory = 'all';
+    
+    // Create bioluminescent particles
+    const particlesContainer = document.getElementById('particles');
+    for (let i = 0; i < 20; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.animationDuration = (Math.random() * 6 + 5) + 's';
+      particle.style.animationDelay = (Math.random() * 5) + 's';
+      particlesContainer.appendChild(particle);
+    }
+    
+    async function loadShop() {
+      try {
+        const headers = getAuthHeader();
+        if (!headers['Authorization']) {
+          document.getElementById('shopContent').innerHTML = '<div style="text-align:center;color:#8000ff;padding:40px">请先登录</div>';
+          return;
+        }
+        const res = await fetch(`${API_BASE}/mall`, { headers: headers });
+        const data = await res.json();
+        const items = data.items || data.data || [];
+        if (!items.length) {
+          document.getElementById('shopContent').innerHTML = '<div style="text-align:center;color:#8000ff;padding:40px">暂无商品</div>';
+          return;
+        }
+        allItems = items;
+        renderShop(items);
+      } catch (e) { 
+        document.getElementById('shopContent').innerHTML = '<div style="text-align:center;color:#ff5050;padding:40px">加载失败</div>'; 
+      }
+    }
+
+    function filterCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.includes(
+          cat === 'all' ? '全部' : 
+          cat === 'hp_recover' ? 'HP' : 
+          cat === 'energy_recover' ? '体力' :
+          cat === 'combat_buff' ? '战斗' :
+          cat === 'special_item' ? '特殊' : '永久'
+        ));
+      });
+      
+      const filtered = cat === 'all' ? allItems : allItems.filter(i => i.category === cat);
+      renderShop(filtered);
+    }
+
+    function renderShop(items) {
+      if (!items.length) {
+        document.getElementById('shopContent').innerHTML = '<div style="text-align:center;color:#8000ff;padding:40px">该分类暂无商品</div>';
+        return;
+      }
+      
+      // Group by category
+      const categories = {
+        'hp_recover': { icon: '❤️', name: 'HP恢复', items: [] },
+        'energy_recover': { icon: '⚡', name: '体力恢复', items: [] },
+        'combat_buff': { icon: '⚔️', name: '战斗增益', items: [] },
+        'special_item': { icon: '🎁', name: '特殊道具', items: [] },
+        'permanent_buff': { icon: '💎', name: '永久增益', items: [] },
+      };
+      
+      items.forEach(item => {
+        const cat = item.category || 'special_item';
+        if (!categories[cat]) categories[cat] = { icon: '📦', name: '其他', items: [] };
+        categories[cat].items.push(item);
+      });
+      
+      let html = '';
+      for (const [catKey, catData] of Object.entries(categories)) {
+        if (!catData.items.length) continue;
+        html += `
+          <div class="category-section">
+            <div class="section-title">
+              <span class="section-icon">${catData.icon}</span>
+              <span class="section-label">${catData.name}</span>
+            </div>
+            <div class="items-grid">
+              ${catData.items.map(item => renderCard(item)).join('')}
+            </div>
+          </div>
+        `;
+      }
+      
+      document.getElementById('shopContent').innerHTML = html;
+    }
+
+    function renderCard(item) {
+      const remaining = item.remaining;
+      const maxDaily = item.max_daily;
+      const isLimited = maxDaily > 0;
+      const canBuy = !isLimited || remaining > 0;
+      
+      let stockClass = 'available';
+      let stockText = '有货';
+      if (isLimited) {
+        if (remaining > 0 && remaining <= 3) {
+          stockClass = 'limited';
+          stockText = `仅剩${remaining}`;
+        } else if (remaining <= 0) {
+          stockClass = 'soldout';
+          stockText = '售罄';
+        } else {
+          stockText = `剩余${remaining}`;
+        }
+      }
+      
+      const currencyIcon = item.currency_type === 'gold' ? '💰' : '🪙';
+      const price = item.price;
+      
+      return `
+        <div class="mall-card">
+          <div class="card-icon">${item.icon || '📦'}</div>
+          <div class="card-name">${item.name}</div>
+          <div class="card-desc">${item.description || ''}</div>
+          <div class="card-price">${currencyIcon} ${price.toLocaleString()}</div>
+          <div class="card-stock ${stockClass}">${stockText}</div>
+          <button class="buy-btn" onclick="${canBuy ? `buyItem('${item.item_id}', 1)` : ''}" ${!canBuy ? 'disabled' : ''}>
+            ${canBuy ? '购买' : '明日重置'}
+          </button>
+        </div>
+      `;
+    }
+
+    async function buyItem(itemId, qty) {
+      try {
+        const headers = getAuthHeader();
+        const res = await fetch(`${API_BASE}/mall/buy`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...headers },
+          body: JSON.stringify({ item_id: itemId, quantity: qty })
+        });
+        const data = await res.json();
+        if (data.success || data.code === 0) {
+          showToast('购买成功！');
+          loadShop();
+        } else {
+          showToast(data.message || '购买失败', 'error');
+        }
+      } catch (e) { showToast('网络错误', 'error'); }
+    }
+
+    loadShop();
+  </script>
+</body>
+</html>

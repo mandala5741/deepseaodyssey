@@ -1,0 +1,210 @@
+<!-- atmosphere-added: 👻 幽灵船队 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>👻 幽灵船队 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { padding-top: 0; background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 40%, #0a0a1a 100%); min-height: 100vh; }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(10,10,26,0.95); border-bottom: 1px solid rgba(128,128,255,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #8888ff; flex: 1; }
+    .back-btn { background: none; border: none; color: #8888ff; font-size: 20px; cursor: pointer; padding: 8px; }
+    .content { margin-top: 60px; padding: 12px; position: relative; z-index: 10; }
+    .stats-card, .battle-card, .quest-progress, .result-card { background: rgba(10,10,26,0.85); border: 2px solid #8888ff; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+    .card-title { font-size: 14px; color: #8888ff; margin-bottom: 8px; }
+    .stat-bar { height: 12px; background: rgba(0,0,0,0.4); border-radius: 6px; margin: 8px 0; overflow: hidden; }
+    .stat-bar-fill { height: 100%; border-radius: 6px; transition: width 0.3s; }
+    .stat-bar-fill.hp { background: linear-gradient(90deg, #ff4444, #ff6b6b); }
+    .stat-bar-fill.exp { background: linear-gradient(90deg, #ffd43b, #f59f00); }
+    .stat-row { display: flex; justify-content: space-between; font-size: 13px; color: #ffd43b; margin-top: 4px; }
+    .monster-display { font-size: 80px; margin: 20px 0; animation: ghostFloat 4s ease-in-out infinite; }
+    @keyframes ghostFloat { 0%, 100% { transform: translateY(0) translateX(0); opacity: 0.6; } 50% { transform: translateY(-20px) translateX(10px); opacity: 1; } }
+    .monster-hp-bar { height: 16px; background: rgba(0,0,0,0.4); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+    .monster-hp-fill { height: 100%; background: linear-gradient(90deg, #ff4444, #ff6b6b); transition: width 0.3s; }
+    .monster-name { font-size: 18px; color: #8888ff; margin-bottom: 4px; }
+    .monster-level { font-size: 12px; color: rgba(136,136,255,0.7); margin-bottom: 8px; }
+    .monster-hp-text { font-size: 12px; color: #8888ff; }
+    .monster-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+    .monster-btn { background: rgba(136,136,255,0.1); border: 1px solid rgba(136,136,255,0.4); border-radius: 12px; padding: 12px 8px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .monster-btn:hover { background: rgba(136,136,255,0.2); }
+    .monster-btn.selected { border-color: #ffd43b; background: rgba(255,212,59,0.15); }
+    .monster-btn-icon { font-size: 32px; }
+    .monster-btn-name { font-size: 11px; color: #8888ff; margin-top: 4px; }
+    .monster-btn-level { font-size: 10px; color: rgba(136,136,255,0.6); }
+    .attack-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #8888ff, #aaaaff); border: none; border-radius: 12px; color: #0a0a1a; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 16px; }
+    .quest-bar { height: 10px; background: rgba(0,0,0,0.4); border-radius: 5px; overflow: hidden; }
+    .quest-fill { height: 100%; background: linear-gradient(90deg, #ffd43b, #f59f00); transition: width 0.3s; }
+    .quest-text { font-size: 12px; color: rgba(136,136,255,0.8); margin-top: 6px; }
+    .result-icon { font-size: 48px; margin-bottom: 12px; }
+    .result-text { font-size: 18px; color: #ffd43b; margin-bottom: 8px; }
+    .result-reward { font-size: 14px; color: rgba(255,212,59,0.8); }
+  
+    /* Atmosphere: 👻 幽灵船队 */
+
+    .ghost-glow { position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 30% 30%,rgba(100,0,150,0.15) 0%,transparent 50%),radial-gradient(ellipse at 70% 70%,rgba(50,0,100,0.2) 0%,transparent 50%);pointer-events:none;z-index:1;animation:glowFlicker 5s ease-in-out infinite; }
+    @keyframes glowFlicker { 0%,100%{opacity:0.6}30%{opacity:0.3}50%{opacity:0.9}70%{opacity:0.4} }
+    .spirit { position:fixed;font-size:28px;opacity:0;animation:spiritRise linear infinite;pointer-events:none;z-index:4; }
+    @keyframes spiritRise { 0%{transform:translateY(100vh) translateX(0) scale(0.8);opacity:0}15%{opacity:0.2}85%{opacity:0.15}100%{transform:translateY(-80px) translateX(30px) scale(1.2);opacity:0} }
+    .will-o-wisp { position:fixed;width:6px;height:6px;background:radial-gradient(circle,rgba(150,255,100,0.9),rgba(0,200,100,0.3));border-radius:50%;pointer-events:none;z-index:5;animation:wispFloat ease-in-out infinite;box-shadow:0 0 10px #50ff80,0 0 20px rgba(80,255,128,0.5); }
+    @keyframes wispFloat { 0%,100%{transform:translateY(0) translateX(0);opacity:0.3}50%{transform:translateY(-25px) translateX(15px);opacity:0.9} }
+    .fog-layer { position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 50% 100%,rgba(80,0,120,0.2) 0%,transparent 60%);pointer-events:none;z-index:2;animation:fogDrift 10s ease-in-out infinite; }
+    @keyframes fogDrift { 0%,100%{opacity:0.4;transform:translateX(-5%)}50%{opacity:0.7;transform:translateX(5%)} }
+    .chain { position:fixed;font-size:22px;opacity:0.1;pointer-events:none;z-index:3;animation:chainRattle ease-in-out infinite; }
+    @keyframes chainRattle { 0%,100%{transform:rotate(-10deg)}50%{transform:rotate(10deg)} }
+    .ghost-ship { position:fixed;font-size:32px;opacity:0.1;pointer-events:none;z-index:3;animation:ghostShipDrift linear infinite;bottom:20%; }
+    @keyframes ghostShipDrift { 0%{transform:translateX(-100px)}100%{transform:translateX(calc(100vw + 100px))} }
+    .skull-wave { position:fixed;font-size:24px;opacity:0;animation:skullWave linear infinite;pointer-events:none;z-index:4; }
+    @keyframes skullWave { 0%{transform:translateY(0);opacity:0}20%{opacity:0.1}80%{opacity:0.08}100%{transform:translateY(-60px);opacity:0} }
+    .vignette { position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:6;background:radial-gradient(ellipse at 50% 50%,transparent 35%,rgba(0,0,0,0.6) 100%); }
+</style>
+</head>
+<body>
+  
+  <div class="ghost-glow"></div>
+  <div class="fog-layer"></div>
+  <div id="spiritContainer"></div>
+  <div id="wispContainer"></div>
+  <div id="chainContainer"></div>
+  <div id="ghostShipContainer"></div>
+  <div id="skullWaveContainer"></div>
+  <div class="vignette"></div>
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/seas.html'">←</button>
+    <h1>👻 幽灵船队</h1>
+  </div>
+  <div class="content">
+    <div class="stats-card">
+      <div class="card-title">⚔️ 我的状态</div>
+      <div class="stat-bar"><div class="stat-bar-fill hp" id="playerHpBar" style="width:100%"></div></div>
+      <div class="stat-row"><span>❤️ HP: <span id="playerHp">0/0</span></span><span>⚡ 体力: <span id="playerEnergy">0</span></span></div>
+      <div class="stat-bar" style="margin-top:8px"><div class="stat-bar-fill exp" id="playerExpBar" style="width:0%"></div></div>
+      <div class="stat-row"><span>📈 Lv.<span id="playerLevel">1</span></span><span>EXP: <span id="playerExp">0</span>/<span id="playerMaxExp">100</span></span></div>
+    </div>
+    <div class="battle-card">
+      <div class="card-title">🎯 选择目标</div>
+      <div class="monster-list" id="monsterList"></div>
+    </div>
+    <div class="battle-card" id="battleArea" style="display:none">
+      <div class="card-title">⚔️ 战斗中</div>
+      <div class="monster-display" id="monsterDisplay">👻</div>
+      <div class="monster-name" id="monsterName">幽灵海盗</div>
+      <div class="monster-level" id="monsterLevel">Lv.1</div>
+      <div class="monster-hp-bar"><div class="monster-hp-fill" id="monsterHpFill" style="width:100%"></div></div>
+      <div class="monster-hp-text">❤️ <span id="monsterHp">100</span>/<span id="monsterMaxHp">100</span></div>
+      <button class="attack-btn" onclick="attack()">⚔️ 攻击</button>
+    </div>
+    <div class="quest-progress" id="questProgress" style="display:none">
+      <div class="card-title">📋 幽灵船队任务进度</div>
+      <div class="quest-bar"><div class="quest-fill" id="questFill" style="width:0%"></div></div>
+      <div class="quest-text">击败幽灵: <span id="questCount">0</span>/10</div>
+    </div>
+    <div class="result-card" id="resultArea" style="display:none">
+      <div class="result-icon" id="resultIcon">🏆</div>
+      <div class="result-text" id="resultText">胜利！</div>
+      <div class="result-reward" id="resultReward">+50 经验 +10 金贝</div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="/shared.js"></script>
+  <script>
+    const monsters = [
+      { id: 1, name: '幽灵海盗', icon: '👻', level: 3, hp: 120, attack: 22, exp: 45, gold: 18 },
+      { id: 2, name: '亡魂水手', icon: '💀', level: 5, hp: 200, attack: 35, exp: 85, gold: 38 },
+      { id: 3, name: '诅咒船长', icon: '🏴‍☠️', level: 7, hp: 350, attack: 55, exp: 150, gold: 70 },
+      { id: 4, name: '亡灵舰长', icon: '⚓', level: 10, hp: 600, attack: 85, exp: 250, gold: 120 },
+      { id: 5, name: '幽魂领主', icon: '👑', level: 14, hp: 1100, attack: 130, exp: 450, gold: 200 },
+      { id: 6, name: '死亡之翼', icon: '🦅', level: 20, hp: 2200, attack: 200, exp: 800, gold: 400 },
+    ];
+    let currentMonster = null, playerData = {}, questKills = 0, battleInProgress = false;
+    async function loadPlayerData() {
+      try {
+        const res = await fetch(`${API_BASE}/player/profile`, { headers: getAuthHeader() });
+        const data = await res.json();
+        if (data.player) { playerData = data.player; updatePlayerUI(); }
+      } catch (e) {}
+    }
+    function updatePlayerUI() {
+      const hp = playerData.hp || 0, maxHp = playerData.max_hp || 100, exp = playerData.exp || 0, level = playerData.level || 1, maxExp = level * level * 100;
+      document.getElementById('playerHp').textContent = `${hp}/${maxHp}`;
+      document.getElementById('playerHpBar').style.width = `${(hp/maxHp*100).toFixed(1)}%`;
+      document.getElementById('playerEnergy').textContent = playerData.energy || 0;
+      document.getElementById('playerLevel').textContent = level;
+      document.getElementById('playerExp').textContent = exp;
+      document.getElementById('playerMaxExp').textContent = maxExp;
+      document.getElementById('playerExpBar').style.width = `${(exp/maxExp*100).toFixed(1)}%`;
+    }
+    function renderMonsterList() {
+      document.getElementById('monsterList').innerHTML = monsters.map(m => `<div class="monster-btn" onclick="selectMonster(${m.id})"><div class="monster-btn-icon">${m.icon}</div><div class="monster-btn-name">${m.name}</div><div class="monster-btn-level">Lv.${m.level}</div></div>`).join('');
+    }
+    function selectMonster(id) {
+      currentMonster = monsters.find(m => m.id === id);
+      if (!currentMonster) return;
+      document.querySelectorAll('.monster-btn').forEach((btn, i) => btn.classList.toggle('selected', monsters[i].id === id));
+      document.getElementById('battleArea').style.display = 'block';
+      document.getElementById('resultArea').style.display = 'none';
+      document.getElementById('questProgress').style.display = 'block';
+      document.getElementById('monsterDisplay').textContent = currentMonster.icon;
+      document.getElementById('monsterName').textContent = currentMonster.name;
+      document.getElementById('monsterLevel').textContent = `Lv.${currentMonster.level}`;
+      document.getElementById('monsterHp').textContent = currentMonster.hp;
+      document.getElementById('monsterMaxHp').textContent = currentMonster.hp;
+      document.getElementById('monsterHpFill').style.width = '100%';
+      battleInProgress = true;
+    }
+    function attack() {
+      if (!battleInProgress || !currentMonster) return;
+      const playerAttack = Math.floor((playerData.power || 10) / 10) + 5;
+      currentMonster.hp -= playerAttack;
+      if (currentMonster.hp < 0) currentMonster.hp = 0;
+      const hpPct = (currentMonster.hp / currentMonster.maxHp) * 100;
+      document.getElementById('monsterHp').textContent = currentMonster.hp;
+      document.getElementById('monsterHpFill').style.width = `${hpPct}%`;
+      if (currentMonster.hp <= 0) { battleInProgress = false; questKills++; updateQuestProgress(); showResult(true); return; }
+      const newHp = playerData.hp - currentMonster.attack;
+      playerData.hp = newHp <= 0 ? 0 : newHp;
+      updatePlayerUI();
+      if (playerData.hp <= 0) { battleInProgress = false; showResult(false); }
+    }
+    function showResult(won) {
+      document.getElementById('battleArea').style.display = 'none';
+      document.getElementById('resultArea').style.display = 'block';
+      if (won) {
+        document.getElementById('resultIcon').textContent = '🏆';
+        document.getElementById('resultText').textContent = '胜利！';
+        document.getElementById('resultReward').textContent = `+${currentMonster.exp} 经验 +${currentMonster.gold} 金贝`;
+        setTimeout(() => { document.getElementById('resultArea').style.display = 'none'; document.getElementById('questProgress').style.display = 'none'; document.querySelectorAll('.monster-btn').forEach(btn => btn.classList.remove('selected')); currentMonster = null; }, 2000);
+      } else {
+        document.getElementById('resultIcon').textContent = '💀';
+        document.getElementById('resultText').textContent = '战败...';
+        document.getElementById('resultReward').textContent = '休息一下再来吧';
+        setTimeout(() => { loadPlayerData(); document.getElementById('resultArea').style.display = 'none'; }, 2000);
+      }
+    }
+    function updateQuestProgress() {
+      const pct = Math.min(100, (questKills / 10) * 100);
+      document.getElementById('questFill').style.width = `${pct}%`;
+      document.getElementById('questCount').textContent = questKills;
+      if (questKills >= 10) showToast('🎉 幽灵船队任务完成！');
+    }
+    loadPlayerData();
+    renderMonsterList();
+  
+
+    // Ghost atmosphere
+    const spiritC = document.getElementById('spiritContainer');
+    const spiritIcons = ['👻','💀','🕯️','🔥','👻','✨'];
+    for(let i=0;i<7;i++){const s=document.createElement('div');s.className='spirit';s.textContent=spiritIcons[i%spiritIcons.length];s.style.left=(5+i*14)+'%';s.style.animationDuration=(15+i*3)+'s';s.style.animationDelay=(i*2.5)+'s';s.style.fontSize=(20+Math.random()*12)+'px';spiritC.appendChild(s);}
+    const wispC = document.getElementById('wispContainer');
+    for(let i=0;i<12;i++){const w=document.createElement('div');w.className='will-o-wisp';w.style.left=Math.random()*100+'%';w.style.top=(20+Math.random()*60)+'%';w.style.animationDuration=(3+Math.random()*3)+'s';w.style.animationDelay=(Math.random()*5)+'s';wispC.appendChild(w);}
+    const chainC = document.getElementById('chainContainer');
+    ['⛓️','🔗','⛓️'].forEach((icon,i)=>{const c=document.createElement('div');c.className='chain';c.textContent=icon;c.style.right=(8+i*25)+'%';c.style.bottom=(5+i*4)+'%';c.style.animationDuration=(2.5+Math.random()*2)+'s';c.style.animationDelay=(i*1.5)+'s';chainC.appendChild(c);});
+    const gsC = document.getElementById('ghostShipContainer');
+    ['🚢','🏴‍☠️','🚢'].forEach((icon,i)=>{const g=document.createElement('div');g.className='ghost-ship';g.textContent=icon;g.style.animationDuration=(60+i*20)+'s';g.style.animationDelay=(i*22)+'s';g.style.fontSize=(26+i*6)+'px';gsC.appendChild(g);});
+    const swC = document.getElementById('skullWaveContainer');
+    ['💀','☠️','💀','🦴'].forEach((icon,i)=>{const s=document.createElement('div');s.className='skull-wave';s.textContent=icon;s.style.left=(8+i*22)+'%';s.style.animationDuration=(6+Math.random()*3)+'s';s.style.animationDelay=(i*3)+'s';swC.appendChild(s);});
+
+</script>
+</body>
+</html>

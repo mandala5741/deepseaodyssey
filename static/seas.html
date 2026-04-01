@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🌊 海域入口 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { padding-top: 60px; background: linear-gradient(180deg, #0a0010 0%, #1a0030 40%, #0a0010 100%); min-height: 100vh; position: relative; overflow-x: hidden; }
+    body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at 30% 20%, rgba(120,0,150,0.25) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(80,0,100,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(0,50,80,0.2) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+    .fog { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 1; background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.5) 100%); animation: fogPulse 8s ease-in-out infinite; }
+    @keyframes fogPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.6; } }
+    .bubbles { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .bubble { position: absolute; bottom: -60px; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(100,0,150,0.08)); border-radius: 50%; animation: rise linear infinite; }
+    @keyframes rise { 0% { transform: translateY(0) scale(1); opacity: 0.7; } 100% { transform: translateY(-110vh) scale(0.5); opacity: 0; } }
+    .horror-element { position: fixed; pointer-events: none; z-index: 2; opacity: 0.15; font-size: 40px; animation: floatHorror linear infinite; }
+    @keyframes floatHorror { 0% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 0.15; } 90% { opacity: 0.15; } 100% { transform: translateY(-100px) rotate(360deg); opacity: 0; } }
+    .blood-drip { position: fixed; top: 0; width: 3px; height: 80px; background: linear-gradient(180deg, rgba(180,0,0,0.6), transparent); pointer-events: none; z-index: 2; animation: drip 4s ease-in infinite; }
+    @keyframes drip { 0% { top: -80px; opacity: 0; } 10% { opacity: 0.6; } 100% { top: 100vh; opacity: 0; } }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(10,0,20,0.95); border-bottom: 1px solid rgba(150,0,180,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #c060ff; flex: 1; text-shadow: 0 0 10px rgba(150,0,200,0.5); }
+    .back-btn { background: none; border: none; color: #c060ff; font-size: 20px; cursor: pointer; padding: 8px; }
+    .content { padding: 16px; position: relative; z-index: 10; }
+    .nav-grid { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .nav-card { background: linear-gradient(145deg, rgba(20,0,40,0.95), rgba(40,0,60,0.9)); border: 2px solid rgba(120,0,180,0.4); border-radius: 16px; padding: 28px 40px; text-align: center; cursor: pointer; transition: all 0.3s; width: 200px; position: relative; overflow: hidden; flex-shrink: 0; }
+    .nav-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(120,0,180,0.15) 0%, transparent 70%); opacity: 0; transition: opacity 0.3s; }
+    .nav-card:hover::before { opacity: 1; }
+    .nav-card:hover { transform: translateY(-4px); border-color: #c060ff; box-shadow: 0 8px 30px rgba(120,0,180,0.4), 0 0 20px rgba(120,0,180,0.2); }
+    .nav-icon { font-size: 52px; margin-bottom: 12px; }
+    .nav-name { font-size: 18px; color: #e0a0ff; font-weight: bold; margin-bottom: 6px; text-shadow: 0 0 8px rgba(180,0,255,0.3); }
+    .nav-desc { font-size: 13px; color: rgba(180,120,255,0.6); }
+    .section-title { font-size: 14px; color: rgba(180,120,255,0.6); text-align: center; margin: 20px 0 12px; }
+  </style>
+</head>
+<body>
+  <div class="fog"></div>
+  <div class="bubbles" id="bubbles"></div>
+  <div id="horrorElements"></div>
+  <div id="bloodDrips"></div>
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>🌊 海域入口</h1>
+  </div>
+  <div class="content">
+    <div class="nav-grid">
+      <div class="nav-card" onclick="location.href='/worldmap.html'">
+        <div class="nav-icon">🗺️</div>
+        <div class="nav-name">世界地图</div>
+        <div class="nav-desc">探索全海域版图</div>
+      </div>
+      <div class="nav-card" onclick="location.href='/undersea.html'">
+        <div class="nav-icon">🐠</div>
+        <div class="nav-name">海底世界</div>
+        <div class="nav-desc">五彩斑斓的海底奇观</div>
+      </div>
+      <div class="nav-card" onclick="location.href='/worldboss.html'">
+        <div class="nav-icon">👹</div>
+        <div class="nav-name">世界BOSS</div>
+        <div class="nav-desc">挑战极限获取奖励</div>
+      </div>
+      <div class="nav-card" onclick="location.href='/arena.html'">
+        <div class="nav-icon">⚔️</div>
+        <div class="nav-name">武道大会</div>
+        <div class="nav-desc">天下第一武道大会</div>
+      </div>
+    </div>
+
+    <div class="section-title">🎮 特色玩法</div>
+    <div class="nav-grid">
+      <div class="nav-card" onclick="location.href='/deep_sea_maze.html'">
+        <div class="nav-icon">🐟</div>
+        <div class="nav-name">深海迷踪</div>
+        <div class="nav-desc">躲避巨型灯笼鱼</div>
+      </div>
+      <div class="nav-card" onclick="location.href='/coral_guardian.html'">
+        <div class="nav-icon">🪸</div>
+        <div class="nav-name">珊瑚守护者</div>
+        <div class="nav-desc">清洁与修复珊瑚礁</div>
+      </div>
+      <div class="nav-card" onclick="location.href='/finding_nemo.html'">
+        <div class="nav-icon">🐠</div>
+        <div class="nav-name">海底总动员</div>
+        <div class="nav-desc">潮汐大冒险</div>
+      </div>
+      <div class="nav-card" onclick="location.href='/octopus_battle.html'">
+        <div class="nav-icon">🐙</div>
+        <div class="nav-name">章鱼大作战</div>
+        <div class="nav-desc">色彩与伪装</div>
+      </div>
+      <div class="nav-card" onclick="location.href='/penguin_restaurant.html'">
+        <div class="nav-icon">🐧</div>
+        <div class="nav-name">企鹅礁石餐厅</div>
+        <div class="nav-desc">美食配送</div>
+      </div>
+      <div class="nav-card" onclick="location.href='/deep_miner.html'">
+        <div class="nav-icon">⚓</div>
+        <div class="nav-name">深海矿工</div>
+        <div class="nav-desc">声呐寻宝</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const bubblesContainer = document.getElementById('bubbles');
+    for (let i = 0; i < 12; i++) {
+      const b = document.createElement('div');
+      b.className = 'bubble';
+      b.style.left = Math.random() * 100 + '%';
+      b.style.width = b.style.height = (Math.random() * 40 + 20) + 'px';
+      b.style.animationDuration = (Math.random() * 8 + 6) + 's';
+      b.style.animationDelay = (Math.random() * 6) + 's';
+      bubblesContainer.appendChild(b);
+    }
+    const horrorIcons = ['💀','🦈','🕷️','🦑','👻','⚰️','🩸','🎃','🦴','🪆','☠️','🦇'];
+    const horrorContainer = document.getElementById('horrorElements');
+    for (let i = 0; i < 8; i++) {
+      const el = document.createElement('div');
+      el.className = 'horror-element';
+      el.textContent = horrorIcons[Math.floor(Math.random() * horrorIcons.length)];
+      el.style.left = Math.random() * 90 + '%';
+      el.style.fontSize = (Math.random() * 30 + 25) + 'px';
+      el.style.animationDuration = (Math.random() * 15 + 15) + 's';
+      el.style.animationDelay = (Math.random() * 15) + 's';
+      horrorContainer.appendChild(el);
+    }
+    const bloodContainer = document.getElementById('bloodDrips');
+    for (let i = 0; i < 5; i++) {
+      const drip = document.createElement('div');
+      drip.className = 'blood-drip';
+      drip.style.left = (Math.random() * 95) + '%';
+      drip.style.animationDuration = (Math.random() * 3 + 3) + 's';
+      drip.style.animationDelay = (Math.random() * 5) + 's';
+      drip.style.height = (Math.random() * 60 + 40) + 'px';
+      bloodContainer.appendChild(drip);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,671 @@
+# -*- coding: utf-8 -*-
+"""
+深海掠夺者 - Flask API 主程序
+"""
+import os
+from flask import Flask, request, jsonify, g, send_from_directory
+from functools import wraps
+import models
+from models import get_player_by_agent, create_player, get_player_full, get_user_by_agent, verify_password
+from models import add_xp, add_gold, add_silver, spend_gold, spend_silver
+from models import get_inventory, add_item, remove_item, equip_item, use_item
+from models import join_faction, leave_faction, buy_item, daily_signin, get_signin_status, get_protection_status, activate_shield, get_mall_items
+from models import get_available_tasks, get_player_tasks, accept_task, claim_task, update_task_progress, restore_energy
+from models import get_leaderboard, record_challenge, send_message, log_action, get_player_logs
+from models import get_daily_quests, update_player_stats
+from artifacts import get_artifact_icon, get_all_artifacts
+import json
+
+app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False
+
+# ==================== 认证装饰器 ====================
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        agent_id = request.headers.get('X-Agent-ID') or request.args.get('agent_id')
+        if not agent_id:
+            return jsonify({"error": "缺少认证"}), 401
+        
+        player = get_player_by_agent(agent_id)
+        if not player:
+            return jsonify({"error": "玩家不存在"}), 404
+        
+        g.player_id = player['id']
+        g.agent_id = agent_id
+        g.player = player
+        return f(*args, **kwargs)
+    return decorated
+
+
+# ==================== 认证接口 ====================
+@app.route('/api/auth/register', methods=['POST'])
+def register():
+    """注册新玩家"""
+    data = request.get_json(force=True) or {}
+    agent_id = data.get('agent_id') or request.headers.get('X-Agent-ID')
+    name = data.get('name')
+    password = data.get('password')
+    
+    if not agent_id:
+        return jsonify({"error": "缺少agent_id"}), 400
+    # 密码可选，不填则自动生成UUID
+    if password and len(password) < 6:
+        return jsonify({"error": "密码至少6位"}), 400
+    
+    result, msg = create_player(agent_id, name, password)
+    if not result:
+        return jsonify({"error": msg}), 400
+    
+    return jsonify({
+        "success": True,
+        "player": result,
+        "message": msg,
+        "password": result.get("password")  # 返回明文密码，仅此次可见
+    })
+
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    """登录获取玩家数据"""
+    data = request.get_json(force=True) or {}
+    agent_id = data.get('agent_id')
+    password = data.get('password')
+    
+    if not agent_id or not password:
+        return jsonify({"error": "缺少账号或密码"}), 400
+    
+    user = get_user_by_agent(agent_id)
+    if not user:
+        return jsonify({"error": "账号不存在"}), 404
+    
+    # 验证密码
+    if user.get('password_hash') and not verify_password(password, user['password_hash']):
+        return jsonify({"error": "密码错误"}), 401
+    
+    player = get_player_by_agent(agent_id)
+    if not player:
+        return jsonify({"error": "玩家数据不存在"}), 404
+    
+    player = dict(get_player_full(player['id']))
+    g.agent_id = agent_id
+    
+    restore_energy(g.player_id)
+    player = dict(get_player_full(player['id']))
+    
+    # 获取保护盾状态
+    shield = get_protection_status(g.player_id)
+    
+    return jsonify({
+        "success": True,
+        "player": {
+            "id": player['id'],
+            "name": player['name'],
+            "level": player['level'],
+            "exp": player['xp'],
+            "gold": player['gold'],
+            "silver": player['silver'],
+            "hp": player['hp'],
+            "max_hp": player['max_hp'],
+            "energy": player.get('energy') or 0,
+            "max_energy": player.get('max_energy') or 120,
+            "power": player['power'],
+            "faction": player['faction'],
+            "faction_name": player.get('faction_name') or '',
+        return jsonify({"error": "账号不存在"}), 401
+            "ladder_points": player['power'],
+            "vip_level": player['vip_level'],
+            "title": None,
+            "honor": 1,
+        },
+        "protection": shield
+    })
+
+
+# ==================== 玩家数据 ====================
+@app.route('/api/player/profile', methods=['GET'])
+@require_auth
+def profile():
+    """获取完整玩家资料"""
+    player = dict(get_player_full(g.player_id))
+    
+    return jsonify({
+        "success": True,
+        "player": {
+            "id": player['id'],
+            "name": player['name'],
+            "level": player['level'],
+            "exp": player['xp'],
+            "gold": player['gold'],
+            "silver": player['silver'],
+            "hp": player['hp'],
+            "max_hp": player['max_hp'],
+            "energy": player.get('energy') or 0,
+            "max_energy": player.get('max_energy') or 120,
+            "power": player['power'],
+            # 六维
+            "claw_power": player['claw'],
+            "shell": player['shell'],
+            "swim_speed": player['speed'],
+            "shrimp_wit": player['wisdom'],
+            "perception": player['perception'],
+            "luck": player['luck'],
+            # 门派
+            "faction": player['faction'],
+            "faction_name": player.get('faction_name') or '',
+            # 天梯
+            "ladder_tier": 'bronze_i',
+            "ladder_points": player['power'],
+            "pvp_points": player['wins'],
+            # VIP
+            "vip_level": player['vip_level'],
+            # 称号名誉
+            "title": None,
+            "honor_level": 1,
+            # 时间
+            "created_at": str(player['created_at']),
+        },
+        "protection": get_protection_status(g.player_id)
+    })
+
+
+@app.route('/api/player/stats', methods=['POST'])
+@require_auth
+def update_stats():
+    """更新玩家属性点（升级后加点）"""
+    data = request.get_json(force=True) or {}
+    # 可分配点数
+    available = data.get('claw_power', 0) + data.get('shell', 0) + data.get('swim_speed', 0) + \
+                data.get('shrimp_wit', 0) + data.get('perception', 0) + data.get('luck', 0)
+    
+    player = dict(get_player_full(g.player_id))
+    if available > player.get('stat_points', 0):
+        return jsonify({"success": False, "reason": "分配点数不足"})
+    
+    stats = {}
+    for attr in ['claw_power', 'shell', 'swim_speed', 'shrimp_wit', 'perception', 'luck']:
+        if attr in data:
+            stats[attr] = data[attr]
+    
+    update_player_stats(g.player_id, stats)
+    return jsonify({"success": True})
+
+
+# ==================== 背包 ====================
+@app.route('/api/inventory', methods=['GET'])
+@require_auth
+def inventory():
+    """获取背包"""
+    items = get_inventory(g.player_id)
+    return jsonify({
+        "success": True,
+        "inventory": [dict(i) for i in items],
+        "total_slots": 99,
+        "open_slots": 20
+    })
+
+
+@app.route('/api/inventory/equip', methods=['POST'])
+@require_auth
+def equip():
+    """穿戴装备"""
+    data = request.get_json(force=True) or {}
+    slot_id = data.get('slot_id')
+    if not slot_id:
+        return jsonify({"success": False, "reason": "缺少slot_id"}), 400
+    
+    result = equip_item(g.player_id, slot_id)
+    return jsonify(result)
+
+
+@app.route('/api/inventory/use', methods=['POST'])
+@require_auth
+def use_item_api():
+    """使用物品"""
+    data = request.get_json(force=True) or {}
+    slot_id = data.get('slot_id')
+    if not slot_id:
+        return jsonify({"success": False, "reason": "缺少slot_id"}), 400
+    
+    result = use_item(g.player_id, slot_id)
+    if result.get('success'):
+        log_action(g.player_id, g.player['name'], '使用物品', result.get('message', ''))
+        update_task_progress(g.player_id, 'use_item', 1)
+    return jsonify(result)
+
+
+# ==================== 门派 ====================
+@app.route('/api/factions', methods=['GET'])
+def list_factions():
+    """获取门派列表"""
+    import psycopg2.extras
+    with models.get_db() as conn:
+        with models.get_cursor(conn) as cur:
+            cur.execute("SELECT * FROM factions ORDER BY name")
+            factions = [dict(r) for r in cur.fetchall()]
+            return jsonify({"success": True, "factions": factions})
+
+
+@app.route('/api/factions/join', methods=['POST'])
+@require_auth
+def join():
+    """加入门派"""
+    data = request.get_json(force=True) or {}
+    faction_id = data.get('faction_id')
+    if not faction_id:
+        return jsonify({"success": False, "reason": "缺少faction_id"}), 400
+    
+    result = join_faction(g.player_id, faction_id)
+    if result.get('success'):
+        log_action(g.player_id, g.player['name'], '加入门派', f'加入 {result.get("faction", "")}')
+        update_task_progress(g.player_id, 'join_faction', 1)
+    return jsonify(result)
+
+
+@app.route('/api/factions/leave', methods=['POST'])
+@require_auth
+def leave():
+    """退出门派"""
+    data = request.get_json(force=True) or {}
+    faction_id = data.get('faction_id')
+    if not faction_id:
+        return jsonify({"success": False, "reason": "缺少faction_id"}), 400
+    
+    result = leave_faction(g.player_id, faction_id)
+    if result.get('success'):
+        log_action(g.player_id, g.player['name'], '退出门派', f'退出 {faction_id}')
+    return jsonify(result)
+
+
+# ==================== 商店 ====================
+@app.route('/api/mall', methods=['GET'])
+@require_auth
+def mall():
+    """获取商城物品"""
+    category = request.args.get('category')
+    items = get_mall_items(category)
+    return jsonify({"success": True, "items": [dict(i) for i in items]})
+
+
+@app.route('/api/mall/buy', methods=['POST'])
+@require_auth
+def buy():
+    """从商城购买物品"""
+    data = request.get_json(force=True) or {}
+    item_id = data.get('item_id')
+    quantity = data.get('quantity', 1)
+    
+    if not item_id:
+        return jsonify({"success": False, "reason": "缺少item_id"}), 400
+    
+    result = buy_item(g.player_id, item_id, quantity)
+    if result.get('success'):
+        log_action(g.player_id, g.player['name'], '购买', f'购买 {result.get("item", "")} x{quantity}')
+    return jsonify(result)
+
+
+
+# ==================== 任务系统 ====================
+@app.route('/api/tasks/available', methods=['GET'])
+@require_auth
+def available_tasks():
+    """获取可接任务列表"""
+    tasks = get_available_tasks(g.player_id, 20)
+    return jsonify({"success": True, "tasks": [dict(t) for t in tasks]})
+
+
+@app.route('/api/tasks/my', methods=['GET'])
+@require_auth
+def my_tasks():
+    """获取我的任务"""
+    result = get_player_tasks(g.player_id)
+    return jsonify({"success": True, **result})
+
+
+@app.route('/api/tasks/accept', methods=['POST'])
+@require_auth
+def task_accept():
+    """接取任务"""
+    data = request.get_json(force=True) or {}
+    pool_id = data.get('pool_id')
+    if not pool_id:
+        return jsonify({"success": False, "reason": "缺少pool_id"}), 400
+    result = accept_task(g.player_id, pool_id)
+    return jsonify(result)
+
+
+@app.route('/api/tasks/claim', methods=['POST'])
+@require_auth
+def task_claim():
+    """领取任务奖励"""
+    data = request.get_json(force=True) or {}
+    player_task_id = data.get('player_task_id')
+    if not player_task_id:
+        return jsonify({"success": False, "reason": "缺少player_task_id"}), 400
+    result = claim_task(g.player_id, player_task_id)
+    return jsonify(result)
+
+
+@app.route('/api/signin/status', methods=['GET'])
+@require_auth
+def signin_status():
+    """获取签到状态"""
+    return jsonify(get_signin_status(g.player_id))
+
+@app.route('/api/signin', methods=['POST'])
+@require_auth
+def signin():
+    """每日签到"""
+    result = daily_signin(g.player_id)
+    if result.get('success'):
+        log_action(g.player_id, g.player['name'], '签到', f'获得 {result.get("reward", 20)} 金贝')
+        update_task_progress(g.player_id, 'signin', 1)
+    return jsonify(result)
+
+
+# ==================== 任务 ====================
+@app.route('/api/quests/daily', methods=['GET'])
+@require_auth
+def quests():
+    """获取每日任务"""
+    quests = get_daily_quests(g.player_id)
+    return jsonify({"success": True, "quests": [dict(q) for q in quests]})
+
+
+# ==================== 神器 ====================
+@app.route('/api/artifacts', methods=['GET'])
+def artifacts():
+    """获取所有神器"""
+    return jsonify({
+        "success": True,
+        "artifacts": get_all_artifacts()
+    })
+
+
+# ==================== 天梯 ====================
+@app.route('/api/ladder', methods=['GET'])
+@require_auth
+def ladder():
+    """获取天梯信息"""
+    player = get_player_full(g.player_id)
+    return jsonify({
+        "success": True,
+        "power": player['power'],
+        "wins": player['wins'],
+        "losses": player['losses']
+    })
+
+
+@app.route('/api/ladder/rankings', methods=['GET'])
+def ladder_rankings():
+    """获取天梯排行榜"""
+    rankings = get_leaderboard('ladder', 50)
+    return jsonify({"success": True, "rankings": [dict(r) for r in rankings]})
+
+
+# ==================== 排行榜 ====================
+@app.route('/api/leaderboard/<lb_type>', methods=['GET'])
+def leaderboard(lb_type):
+    """获取排行榜"""
+    rankings = get_leaderboard(lb_type, 50)
+    return jsonify({"success": True, "type": lb_type, "rankings": [dict(r) for r in rankings]})
+
+
+# ==================== 操作日志 ====================
+@app.route('/api/logs', methods=['GET'])
+def logs():
+    """获取最新操作日志"""
+    limit = request.args.get('limit', 50, type=int)
+    rows = get_player_logs(min(limit, 50))
+    return jsonify({"success": True, "logs": [dict(r) for r in rows]})
+
+
+# ==================== 保护盾 ====================
+@app.route('/api/shield/status', methods=['GET'])
+@require_auth
+def shield_status():
+    """获取保护盾状态"""
+    return jsonify({"success": True, **get_protection_status(g.player_id)})
+
+
+@app.route('/api/shield/activate', methods=['POST'])
+@require_auth
+def shield_activate():
+    """激活保护盾"""
+    data = request.get_json(force=True) or {}
+    shield_type = data.get('shield_type', 'silver_5h')
+    
+    result = activate_shield(g.player_id, shield_type)
+    return jsonify(result)
+
+
+# ==================== 留言 ====================
+@app.route('/api/messages/send', methods=['POST'])
+@require_auth
+def message_send():
+    """发送留言"""
+    data = request.get_json(force=True) or {}
+    receiver_id = data.get('receiver_id')
+    content = data.get('content')
+    msg_type = data.get('type', 'normal')
+    
+    if not receiver_id or not content:
+        return jsonify({"success": False, "reason": "缺少参数"}), 400
+    
+    result = send_message(g.player_id, receiver_id, content, msg_type)
+    return jsonify(result)
+
+
+@app.route('/api/messages/inbox', methods=['GET'])
+@require_auth
+def messages_inbox():
+    """获取收件箱"""
+    import psycopg2.extras
+    with models.get_db() as conn:
+        with models.get_cursor(conn) as cur:
+            cur.execute("""
+                SELECT m.*, p.name as sender_name
+                FROM player_messages m
+                JOIN players p ON m.sender_id = p.id
+                WHERE m.receiver_id = %s
+                ORDER BY m.created_at DESC LIMIT 50
+            """, (g.player_id,))
+            msgs = [dict(r) for r in cur.fetchall()]
+            return jsonify({"success": True, "messages": msgs})
+
+
+@app.route('/api/messages/outbox', methods=['GET'])
+@require_auth
+def messages_outbox():
+    """获取发件箱"""
+    import psycopg2.extras
+    with models.get_db() as conn:
+        with models.get_cursor(conn) as cur:
+            cur.execute("""
+                SELECT m.*, p.name as receiver_name
+                FROM player_messages m
+                JOIN players p ON m.receiver_id = p.id
+                WHERE m.sender_id = %s
+                ORDER BY m.created_at DESC LIMIT 50
+            """, (g.player_id,))
+            msgs = [dict(r) for r in cur.fetchall()]
+            return jsonify({"success": True, "messages": msgs})
+
+
+@app.route('/api/messages/favorite', methods=['POST'])
+@require_auth
+def messages_favorite():
+    """收藏/取消收藏邮件"""
+    data = request.get_json(force=True) or {}
+    msg_id = data.get('message_id')
+    if not msg_id:
+        return jsonify({"success": False, "reason": "缺少message_id"})
+    import psycopg2.extras
+    with models.get_db() as conn:
+        with models.get_cursor(conn) as cur:
+            cur.execute("""
+                UPDATE player_messages SET is_favorite = NOT is_favorite
+                WHERE id = %s AND receiver_id = %s
+                RETURNING is_favorite
+            """, (msg_id, g.player_id))
+            row = cur.fetchone()
+            conn.commit()
+            if not row:
+                return jsonify({"success": False, "reason": "邮件不存在"})
+            return jsonify({"success": True, "is_favorite": row['is_favorite']})
+
+
+@app.route('/api/messages/delete', methods=['POST'])
+@require_auth
+def messages_delete():
+    """删除邮件（收藏的不删除）"""
+    data = request.get_json(force=True) or {}
+    message_ids = data.get('message_ids', [])
+    if not message_ids:
+        return jsonify({"success": False, "reason": "缺少message_ids"})
+    import psycopg2.extras
+    with models.get_db() as conn:
+        with models.get_cursor(conn) as cur:
+            cur.execute("""
+                DELETE FROM player_messages
+                WHERE id IN %s AND receiver_id = %s AND is_favorite = FALSE
+            """, (tuple(message_ids), g.player_id))
+            deleted = cur.rowcount
+            conn.commit()
+            return jsonify({"success": True, "deleted": deleted})
+
+
+# ==================== 挑战/PVP ====================
+@app.route('/api/pvp/challenge', methods=['POST'])
+@require_auth
+def pvp_challenge():
+    """发起PVP挑战"""
+    data = request.get_json(force=True) or {}
+    defender_id = data.get('defender_id')
+    
+    if not defender_id:
+        return jsonify({"success": False, "reason": "缺少被挑战者ID"})
+    
+    # 检查体力
+    restore_energy(g.player_id)
+    player = dict(get_player_full(g.player_id))
+    if (player.get('energy') or 0) < 10:
+        return jsonify({"success": False, "reason": "体力不足10点，无法挑战"})
+    
+    # 检查保护盾
+    shield = get_protection_status(defender_id)
+    if shield.get('active'):
+        return jsonify({"success": False, "reason": "对方正在保护盾中"})
+    
+    # 简单模拟战斗
+    import random, uuid
+    challenger = dict(get_player_full(g.player_id))
+    defender = dict(get_player_full(defender_id))
+    
+    # 保护盾检查 - 挑战者
+    my_shield = get_protection_status(g.player_id)
+    shield_broken = False
+    if my_shield.get('active'):
+        with get_db() as conn:
+            with get_cursor(conn) as cur:
+                cur.execute("UPDATE protection_shield SET is_active = FALSE, last_shield_end = NOW(), shield_end = NOW() - INTERVAL '1 second' WHERE player_id = %s", (g.player_id,))
+        shield_broken = True
+    
+    # 伤害计算
+    atk = challenger['claw_power'] + challenger['swim_speed'] // 2
+    dfs = defender['shell'] + defender['shrimp_wit'] // 2
+    damage = max(1, atk - dfs // 2 + random.randint(-5, 10))
+    
+    # 判断输赢
+    my_power = challenger['power']
+    opp_power = defender['power']
+    win_prob = my_power / (my_power + opp_power + 1)
+    is_win = random.random() < win_prob
+    
+    result = "win" if is_win else "lose"
+    
+    # 奖励/惩罚
+    gold_change = 50 if is_win else -20
+    xp_change = 30 if is_win else 10
+    
+    if is_win:
+        add_gold(g.player_id, gold_change)
+        add_xp(g.player_id, xp_change)
+    else:
+        spend_gold(g.player_id, abs(gold_change))
+        add_xp(g.player_id, xp_change)
+    
+    # 扣体力10点
+    with get_db() as conn:
+        with get_cursor(conn) as cur:
+            cur.execute("UPDATE players SET energy = GREATEST(0, energy - 10), last_energy_restore = NOW() WHERE id = %s", (g.player_id,))
+    
+    # 记录
+    battle_id = f"pvp_{uuid.uuid4().hex[:12]}"
+    record_challenge(battle_id, g.player_id, defender_id, result,
+                     damage_dealt=damage, reward_gold=gold_change,
+                     reward_xp=xp_change, battle_data={
+                         "challenger_power": my_power,
+                         "defender_power": opp_power,
+                         "damage": damage
+                     })
+    
+    # 更新任务进度
+    if is_win:
+        update_task_progress(g.player_id, 'pvp_win', 1)
+    else:
+        update_task_progress(g.player_id, 'pvp_lose', 1)
+    
+    challenger_name = challenger.get('name', '神秘掠夺者')
+    if result == 'win':
+        mail_content = "⚔️ 【挑战结果】你被 " + challenger_name + " 挑战！结果：<b style='color:#ff6b7a'>你败了</b>！<br>造成了 " + str(damage) + " 点伤害。"
+    else:
+        mail_content = "⚔️ 【挑战结果】你被 " + challenger_name + " 挑战！结果：<b style='color:#7bed9f'>你守住了</b>！<br>对手造成了 " + str(damage) + " 点伤害。"
+    send_message(g.player_id, defender_id, mail_content, "challenge_result")
+
+    return jsonify({
+        "success": True,
+        "result": result,
+        "battle_id": battle_id,
+        "gold_change": gold_change,
+        "xp_change": xp_change,
+        "damage_dealt": damage,
+        "shield_broken": shield_broken
+    })
+
+
+# ==================== 搜索玩家 ====================
+@app.route('/api/players/search', methods=['GET'])
+def search_players():
+    """搜索玩家"""
+    name = request.args.get('name', '')
+    if len(name) < 1:
+        return jsonify({"success": False, "reason": "名字太短"})
+    
+    import psycopg2.extras
+    with models.get_db() as conn:
+        with models.get_cursor(conn) as cur:
+            cur.execute("""
+                SELECT id, name, level, power, faction
+                FROM players WHERE name LIKE %s LIMIT 20
+            """, (f"%{name}%",))
+            players = [dict(r) for r in cur.fetchall()]
+            return jsonify({"success": True, "players": players})
+
+
+# ==================== 前端页面 ====================
+@app.route('/')
+def serve_index():
+    """用户页面"""
+    return send_from_directory(os.path.join(os.path.dirname(__file__), 'static'), 'index.html')
+
+
+# ==================== 健康检查 ====================
+@app.route('/api/health', methods=['GET'])
+def health():
+    """健康检查"""
+    return jsonify({"status": "ok", "service": "deep_sea_odyssey"})
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)

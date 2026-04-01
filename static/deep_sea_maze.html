@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🐟 深海迷踪 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      padding-top: 50px;
+      background: #000d1a;
+      min-height: 100vh;
+      font-family: -apple-system, sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; height: 50px;
+      background: rgba(0,10,25,0.95);
+      border-bottom: 1px solid rgba(0,180,255,0.3);
+      display: flex; align-items: center; padding: 0 12px; z-index: 200;
+    }
+    .header h1 { font-size: 15px; color: #00d4ff; flex: 1; }
+    .back-btn { background: none; border: none; color: #00d4ff; font-size: 20px; cursor: pointer; padding: 6px; }
+
+    /* HUD */
+    #hud {
+      position: fixed; top: 50px; left: 0; right: 0; z-index: 150;
+      display: none;
+      padding: 8px 14px;
+      background: rgba(0,10,25,0.8);
+      border-bottom: 1px solid rgba(0,150,255,0.2);
+      color: #fff;
+      font-size: 13px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .hud-item { display: flex; align-items: center; gap: 5px; }
+    .hud-label { color: rgba(255,255,255,0.5); font-size: 11px; }
+    .hud-val { color: #00d4ff; font-weight: bold; font-size: 14px; }
+    .hud-score { color: #ffd700; font-weight: bold; font-size: 15px; }
+
+    #gameCanvas {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      cursor: crosshair;
+    }
+
+    /* Start Screen */
+    #startScreen {
+      position: fixed; inset: 0; z-index: 300;
+      background: radial-gradient(ellipse at 50% 30%, #001a30 0%, #000d1a 60%, #000508 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .start-fish { font-size: 80px; margin-bottom: 16px; animation: fishFloat 2s ease-in-out infinite alternate; }
+    .start-title { font-size: 26px; color: #00d4ff; font-weight: bold; margin-bottom: 8px; text-shadow: 0 0 20px rgba(0,212,255,0.5); }
+    .start-sub { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 28px; text-align: center; line-height: 1.6; }
+    .start-btn {
+      background: linear-gradient(135deg, #0088bb, #00b4d4);
+      border: none; border-radius: 25px;
+      color: #fff; font-size: 16px; font-weight: bold;
+      padding: 14px 40px; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,150,200,0.4);
+      transition: transform 0.15s;
+    }
+    .start-btn:active { transform: scale(0.96); }
+    .start-tips {
+      margin-top: 30px; text-align: center;
+      background: rgba(0,60,100,0.4);
+      border: 1px solid rgba(0,150,200,0.25);
+      border-radius: 14px; padding: 16px 20px; max-width: 320px;
+    }
+    .start-tips-title { color: #00d4ff; font-size: 13px; margin-bottom: 10px; font-weight: bold; }
+    .tip-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; color: rgba(255,255,255,0.65); font-size: 12px; }
+    .tip-icon { font-size: 18px; }
+    .tip-text { text-align: left; }
+
+    /* Game Over */
+    #gameOver {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,5,15,0.92);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .go-icon { font-size: 64px; margin-bottom: 16px; }
+    .go-title { font-size: 24px; color: #ff6060; font-weight: bold; margin-bottom: 6px; }
+    .go-score { font-size: 16px; color: #ffd700; margin-bottom: 6px; }
+    .go-best { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 28px; }
+    .go-btn {
+      background: linear-gradient(135deg, #0088bb, #00b4d4);
+      border: none; border-radius: 25px;
+      color: #fff; font-size: 15px; font-weight: bold;
+      padding: 13px 36px; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,150,200,0.4);
+      transition: transform 0.15s; margin: 6px;
+    }
+    .go-btn:active { transform: scale(0.96); }
+    .go-btn-secondary {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(0,150,200,0.3);
+      border-radius: 25px;
+      color: rgba(255,255,255,0.7); font-size: 14px;
+      padding: 12px 30px; cursor: pointer;
+    }
+    .btn-row { display: flex; gap: 10px; }
+
+    /* Power-up HUD indicators */
+    #powerupHud {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 150; display: none; gap: 12px;
+    }
+    .powerup-icon {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; border: 2px solid rgba(255,255,255,0.3);
+      transition: opacity 0.3s;
+    }
+    .powerup-icon.active {
+      border-color: #00d4ff;
+      box-shadow: 0 0 16px rgba(0,212,255,0.5);
+      animation: powerPulse 0.5s ease-in-out infinite alternate;
+    }
+    .powerup-icon.inactive { opacity: 0.3; }
+
+    @keyframes fishFloat {
+      0% { transform: translateY(0) rotate(-5deg); }
+      100% { transform: translateY(-12px) rotate(5deg); }
+    }
+    @keyframes powerPulse {
+      0% { box-shadow: 0 0 8px rgba(0,212,255,0.5); }
+      100% { box-shadow: 0 0 20px rgba(0,212,255,0.8); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Start Screen -->
+<div id="startScreen">
+  <div class="start-fish">🐟</div>
+  <div class="start-title">深海迷踪</div>
+  <div class="start-sub">在漆黑的海沟中躲避巨型灯笼鱼的追捕<br>点击水面移动，点击泡泡加速，点击墨汁隐身</div>
+  <button class="start-btn" onclick="startGame()">开始潜行</button>
+  <div class="start-tips">
+    <div class="start-tips-title">🎮 操作说明</div>
+    <div class="tip-row"><span class="tip-icon">🐟</span><span class="tip-text">点击任意位置移动小鱼</span></div>
+    <div class="tip-row"><span class="tip-icon">🫧</span><span class="tip-text">收集气泡 → 获得冲刺加速</span></div>
+    <div class="tip-row"><span class="tip-icon">🖤</span><span class="tip-text">收集墨汁 → 灯笼鱼丢失目标</span></div>
+    <div class="tip-row"><span class="tip-icon">🪸</span><span class="tip-text">躲在珊瑚后 → 降低被发现概率</span></div>
+  </div>
+</div>
+
+<!-- Game Over -->
+<div id="gameOver">
+  <div class="go-icon">🦑</div>
+  <div class="go-title">被灯笼鱼捕获了！</div>
+  <div class="go-score" id="goScore">存活时间：0秒</div>
+  <div class="go-best" id="goBest">历史最佳：0秒</div>
+  <div class="btn-row">
+    <button class="go-btn" onclick="startGame()">再次挑战</button>
+    <button class="go-btn-secondary" onclick="location.href='/seas.html'">返回海域</button>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="hud" style="display:none">
+  <div class="hud-item">
+    <span style="font-size:14px">⏱️</span>
+    <span class="hud-label">存活</span>
+    <span class="hud-val" id="hudTime">0</span>
+  </div>
+  <div class="hud-item">
+    <span style="font-size:14px">💀</span>
+    <span class="hud-label">危险</span>
+    <span class="hud-val" id="hudDanger">安全</span>
+  </div>
+  <div class="hud-item">
+    <span style="font-size:14px">⭐</span>
+    <span class="hud-label">得分</span>
+    <span class="hud-score" id="hudScore">0</span>
+  </div>
+</div>
+
+<!-- Power-up indicators -->
+<div id="powerupHud" style="display:none">
+  <div class="powerup-icon" id="inkIcon" style="background:rgba(30,30,40,0.8)">🖤</div>
+  <div class="powerup-icon" id="bubbleIcon" style="background:rgba(30,80,120,0.8)">🫧</div>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script src="/shared.js"></script>
+<script>
+// ─── Game Constants ───
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let W, H;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ─── Game State ───
+let state = 'start'; // start | playing | gameover
+let player, lantern, particles, bubbles, inks, corals, fishFoods;
+let score, survivalTime, lastTime;
+let bestTime = parseInt(localStorage.getItem('deepMazeBest') || '0');
+let inkCooldown = 0;
+let bubbleActive = 0;
+let inkActive = 0;
+let gameLoopId;
+
+// ─── Input ───
+let targetX = null, targetY = null;
+
+// ─── Entities ───
+function createPlayer() {
+  return {
+    x: W / 2, y: H / 2,
+    vx: 0, vy: 0,
+    r: 16,
+    glow: 0,
+    trail: [],
+    angle: 0
+  };
+}
+
+function createLantern() {
+  // Spawn from a random edge, away from player
+  let x, y;
+  const edge = Math.floor(Math.random() * 4);
+  if (edge === 0) { x = Math.random() * W; y = -60; }
+  else if (edge === 1) { x = W + 60; y = Math.random() * H; }
+  else if (edge === 2) { x = Math.random() * W; y = H + 60; }
+  else { x = -60; y = Math.random() * H; }
+  return {
+    x, y,
+    vx: 0, vy: 0,
+    r: 30,
+    angle: 0,
+    speed: 1.2 + Math.random() * 0.5,
+    huntMode: false,
+    huntTimer: 0,
+    bobOffset: Math.random() * Math.PI * 2,
+    jawOpen: 0
+  };
+}
+
+function spawnBubble() {
+  return {
+    x: Math.random() * (W - 80) + 40,
+    y: Math.random() * (H - 200) + 100,
+    r: 12 + Math.random() * 8,
+    wobble: Math.random() * Math.PI * 2,
+    wobbleSpeed: 0.03 + Math.random() * 0.02,
+    collected: false,
+    alpha: 0.7
+  };
+}
+
+function spawnInk() {
+  return {
+    x: Math.random() * (W - 80) + 40,
+    y: Math.random() * (H - 200) + 100,
+    r: 14,
+    wobble: Math.random() * Math.PI * 2,
+    collected: false,
+    alpha: 0.8
+  };
+}
+
+function spawnCoral() {
+  const sizes = [30, 45, 60, 50, 35];
+  return {
+    x: Math.random() * (W - 100) + 50,
+    y: Math.random() * (H - 200) + 100,
+    w: sizes[Math.floor(Math.random() * sizes.length)],
+    h: sizes[Math.floor(Math.random() * sizes.length)] * 0.7,
+    type: Math.floor(Math.random() * 3),
+    sway: Math.random() * Math.PI * 2,
+    hue: [340, 180, 280, 200][Math.floor(Math.random() * 4)]
+  };
+}
+
+// ─── Init Game ───
+function initGame() {
+  player = createPlayer();
+  lantern = createLantern();
+  particles = [];
+  bubbles = [];
+  inks = [];
+  corals = [];
+  fishFoods = [];
+  score = 0;
+  survivalTime = 0;
+  lastTime = performance.now();
+  inkCooldown = 0;
+  bubbleActive = 0;
+  inkActive = 0;
+  targetX = player.x;
+  targetY = player.y;
+
+  // Spawn corals (obstacles)
+  for (let i = 0; i < 8; i++) corals.push(spawnCoral());
+
+  // Spawn initial collectibles
+  for (let i = 0; i < 5; i++) bubbles.push(spawnBubble());
+  for (let i = 0; i < 3; i++) inks.push(spawnInk());
+}
+
+// ─── Start ───
+function startGame() {
+  state = 'playing';
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('gameOver').style.display = 'none';
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('powerupHud').style.display = 'flex';
+  initGame();
+  if (gameLoopId) cancelAnimationFrame(gameLoopId);
+  gameLoopId = requestAnimationFrame(loop);
+}
+
+// ─── Game Over ───
+function triggerGameOver() {
+  state = 'gameover';
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('powerupHud').style.display = 'none';
+  document.getElementById('gameOver').style.display = 'flex';
+  const sec = Math.floor(survivalTime);
+  document.getElementById('goScore').textContent = `存活时间：${sec}秒`;
+  if (sec > bestTime) {
+    bestTime = sec;
+    localStorage.setItem('deepMazeBest', bestTime);
+  }
+  document.getElementById('goBest').textContent = `历史最佳：${bestTime}秒`;
+}
+
+// ─── Input Handling ───
+canvas.addEventListener('click', function(e) {
+  if (state !== 'playing') return;
+  const rect = canvas.getBoundingClientRect();
+  targetX = e.clientX - rect.left;
+  targetY = e.clientY - rect.top;
+});
+
+canvas.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  if (state !== 'playing') return;
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  targetX = touch.clientX - rect.left;
+  targetY = touch.clientY - rect.top;
+}, { passive: false });
+
+// ─── Update ───
+function update(dt) {
+  survivalTime += dt;
+  score = Math.floor(survivalTime * 10);
+
+  // ── Player Movement ──
+  if (targetX !== null) {
+    const dx = targetX - player.x;
+    const dy = targetY - player.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > 5) {
+      const speed = bubbleActive > 0 ? 6 : 2.5;
+      player.vx = (dx / dist) * speed;
+      player.vy = (dy / dist) * speed;
+      player.angle = Math.atan2(dy, dx);
+    } else {
+      player.vx *= 0.8;
+      player.vy *= 0.8;
+    }
+  }
+
+  // Coral slowdown
+  let inCoral = false;
+  for (const c of corals) {
+    if (Math.abs(player.x - c.x) < c.w / 2 + player.r && Math.abs(player.y - c.y) < c.h / 2 + player.r) {
+      player.vx *= 0.5;
+      player.vy *= 0.5;
+      inCoral = true;
+      break;
+    }
+  }
+
+  player.x += player.vx;
+  player.y += player.vy;
+  player.x = Math.max(player.r, Math.min(W - player.r, player.x));
+  player.y = Math.max(player.r, Math.min(H - player.r, player.y));
+
+  // Trail
+  player.glow = Math.min(player.glow + 0.05, 1);
+  if (Math.abs(player.vx) > 0.5 || Math.abs(player.vy) > 0.5) {
+    player.trail.push({ x: player.x, y: player.y, a: 0.5 });
+    if (player.trail.length > 15) player.trail.shift();
+  }
+  player.trail.forEach(t => t.a *= 0.92);
+
+  // ── Ink / Bubble Cooldowns ──
+  if (inkActive > 0) inkActive -= dt;
+  if (bubbleActive > 0) bubbleActive -= dt;
+  document.getElementById('inkIcon').className = 'powerup-icon' + (inkActive > 0 ? ' active' : ' inactive');
+  document.getElementById('bubbleIcon').className = 'powerup-icon' + (bubbleActive > 0 ? ' active' : ' inactive');
+
+  // ── Lantern Fish AI ──
+  const lx = lantern;
+  // Bobbing
+  lx.bobOffset += 0.02;
+  const bobY = Math.sin(lx.bobOffset) * 3;
+
+  // Hunt mode timer
+  lx.huntTimer += dt;
+  if (lx.huntTimer > 4 + Math.random() * 3) {
+    lx.huntMode = !lx.huntMode;
+    lx.huntTimer = 0;
+  }
+
+  let tx = player.x, ty = player.y;
+  if (inkActive > 0) {
+    // Lost target - wander randomly
+    if (Math.random() < 0.02) {
+      tx = Math.random() * W;
+      ty = Math.random() * H;
+    } else {
+      tx = lx.x + (Math.random() - 0.5) * 200;
+      ty = lx.y + (Math.random() - 0.5) * 200;
+    }
+  } else if (inCoral && Math.random() < 0.4) {
+    // Harder to find player in coral
+    tx = player.x + (Math.random() - 0.5) * 150;
+    ty = player.y + (Math.random() - 0.5) * 150;
+  }
+
+  const dxL = tx - lx.x;
+  const dyL = ty - lx.y;
+  const distL = Math.sqrt(dxL * dxL + dyL * dyL);
+  const huntSpeed = lx.huntMode ? lx.speed * 1.8 : lx.speed;
+  if (distL > 5) {
+    lx.vx += (dxL / distL) * huntSpeed * 0.05;
+    lx.vy += (dyL / distL) * huntSpeed * 0.05;
+  }
+  lx.vx *= 0.95;
+  lx.vy *= 0.95;
+  lx.x += lx.vx;
+  lx.y += lx.vy + bobY * 0.1;
+  lx.x = Math.max(-40, Math.min(W + 40, lx.x));
+  lx.y = Math.max(-40, Math.min(H + 40, lx.y));
+  lx.angle = Math.atan2(lx.vy, lx.vx);
+
+  // Jaw animation
+  const targetJaw = lx.huntMode ? 0.3 : 0;
+  lx.jawOpen += (targetJaw - lx.jawOpen) * 0.1;
+
+  // ── Collision Check ──
+  const catchDist = player.r + lx.r * 0.85;
+  if (inkActive <= 0 && Math.abs(player.x - lx.x) < catchDist && Math.abs(player.y - lx.y) < catchDist) {
+    // Caught!
+    for (let i = 0; i < 30; i++) {
+      particles.push({
+        x: player.x, y: player.y,
+        vx: (Math.random() - 0.5) * 8,
+        vy: (Math.random() - 0.5) * 8,
+        r: 3 + Math.random() * 5,
+        color: `hsla(${180 + Math.random() * 60},80%,60%,`,
+        life: 1
+      });
+    }
+    triggerGameOver();
+    return;
+  }
+
+  // ── Collect Bubbles ──
+  for (const b of bubbles) {
+    if (b.collected) continue;
+    const d = Math.hypot(player.x - b.x, player.y - b.y);
+    if (d < player.r + b.r) {
+      b.collected = true;
+      bubbleActive = 3;
+      for (let i = 0; i < 12; i++) {
+        particles.push({
+          x: b.x, y: b.y,
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 0.5) * 4 - 1,
+          r: 3 + Math.random() * 4,
+          color: 'hsla(200,80%,80%,',
+          life: 1
+        });
+      }
+    }
+  }
+  bubbles = bubbles.filter(b => !b.collected);
+  if (bubbles.length < 4) bubbles.push(spawnBubble());
+
+  // ── Collect Ink ──
+  for (const k of inks) {
+    if (k.collected) continue;
+    const d = Math.hypot(player.x - k.x, player.y - k.y);
+    if (d < player.r + k.r) {
+      k.collected = true;
+      inkActive = 4;
+      // Burst ink particles
+      for (let i = 0; i < 20; i++) {
+        const ang = (i / 20) * Math.PI * 2;
+        particles.push({
+          x: k.x, y: k.y,
+          vx: Math.cos(ang) * (2 + Math.random() * 2),
+          vy: Math.sin(ang) * (2 + Math.random() * 2),
+          r: 8 + Math.random() * 8,
+          color: 'hsla(250,30%,20%,',
+          life: 1
+        });
+      }
+    }
+  }
+  inks = inks.filter(k => !k.collected);
+  if (inks.length < 2) inks.push(spawnInk());
+
+  // ── Particles ──
+  for (const p of particles) {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vx *= 0.96;
+    p.vy *= 0.96;
+    p.life -= 0.02;
+  }
+  particles = particles.filter(p => p.life > 0);
+
+  // ── Ambient Bubbles ──
+  if (Math.random() < 0.03) {
+    particles.push({
+      x: Math.random() * W,
+      y: H + 10,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: -0.5 - Math.random() * 1,
+      r: 2 + Math.random() * 4,
+      color: 'hsla(200,70%,80%,',
+      life: 1
+    });
+  }
+
+  // ── HUD ──
+  const dangerDist = Math.hypot(player.x - lx.x, player.y - lx.y);
+  const dangerEl = document.getElementById('hudDanger');
+  if (dangerDist < 100) dangerEl.textContent = '⚠️ 极危';
+  else if (dangerDist < 200) dangerEl.textContent = '❗ 危险';
+  else if (dangerDist < 350) dangerEl.textContent = '👁️ 注意';
+  else dangerEl.textContent = '✅ 安全';
+  document.getElementById('hudTime').textContent = Math.floor(survivalTime) + 's';
+  document.getElementById('hudScore').textContent = score;
+}
+
+// ─── Render ───
+function render() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Background gradient
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#000d1a');
+  bgGrad.addColorStop(0.5, '#001428');
+  bgGrad.addColorStop(1, '#000810');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Light rays from top
+  ctx.save();
+  for (let i = 0; i < 5; i++) {
+    const rayX = (W * 0.15) + (i * W * 0.17);
+    const rayGrad = ctx.createLinearGradient(rayX, 0, rayX + 80, H * 0.6);
+    rayGrad.addColorStop(0, 'rgba(0,80,160,0.04)');
+    rayGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = rayGrad;
+    ctx.beginPath();
+    ctx.moveTo(rayX, 0);
+    ctx.lineTo(rayX + 80, H * 0.6);
+    ctx.lineTo(rayX - 30, H * 0.6);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // ── Corals ──
+  for (const c of corals) {
+    c.sway += 0.015;
+    const swayX = Math.sin(c.sway) * 3;
+    ctx.save();
+    ctx.translate(c.x + swayX, c.y);
+    const colors = [
+      `hsl(${c.hue},60%,30%)`,
+      `hsl(${c.hue},50%,25%)`,
+      `hsl(${c.hue},70%,35%)`
+    ];
+    ctx.fillStyle = colors[c.type];
+    ctx.strokeStyle = `hsl(${c.hue},60%,40%)`;
+    ctx.lineWidth = 1.5;
+    // Draw coral branches
+    for (let b = 0; b < 3 + c.type; b++) {
+      const bx = (b - 1) * c.w * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(bx + swayX, -c.h * 0.5, bx + swayX * 2, -c.h);
+      ctx.lineWidth = 6 - b * 0.5;
+      ctx.stroke();
+      ctx.lineTo(bx + swayX * 2, -c.h);
+      ctx.lineTo(bx + swayX * 2 - 5, -c.h + 8);
+      ctx.lineTo(bx + swayX * 2, -c.h);
+      ctx.lineTo(bx + swayX * 2 + 5, -c.h + 8);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // ── Lantern Fish Light Cone ──
+  if (lantern && inkActive <= 0) {
+    const lx = lantern;
+    const coneAngle = Math.PI / 3;
+    const coneLen = lx.huntMode ? 280 : 220;
+    const coneDir = Math.atan2(player.y - lx.y, player.x - lx.x);
+    ctx.save();
+    ctx.globalAlpha = lx.huntMode ? 0.12 : 0.07;
+    const coneGrad = ctx.createRadialGradient(lx.x, lx.y, 0, lx.x, lx.y, coneLen);
+    coneGrad.addColorStop(0, 'rgba(255,240,120,0.9)');
+    coneGrad.addColorStop(0.3, 'rgba(255,200,80,0.5)');
+    coneGrad.addColorStop(1, 'rgba(255,150,0,0)');
+    ctx.fillStyle = coneGrad;
+    ctx.beginPath();
+    ctx.moveTo(lx.x, lx.y);
+    ctx.arc(lx.x, lx.y, coneLen, coneDir - coneAngle / 2, coneDir + coneAngle / 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Light glow
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    const glowGrad = ctx.createRadialGradient(lx.x, lx.y - 15, 0, lx.x, lx.y - 15, 60);
+    glowGrad.addColorStop(0, 'rgba(255,240,100,0.8)');
+    glowGrad.addColorStop(1, 'rgba(255,200,50,0)');
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.arc(lx.x, lx.y - 15, 60, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Ink Cloud ──
+  if (inkActive > 0) {
+    ctx.save();
+    ctx.globalAlpha = 0.3 * (inkActive / 4);
+    const inkGrad = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, 150);
+    inkGrad.addColorStop(0, 'rgba(10,5,20,0.9)');
+    inkGrad.addColorStop(1, 'rgba(10,5,20,0)');
+    ctx.fillStyle = inkGrad;
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, 150, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Bubbles ──
+  for (const b of bubbles) {
+    b.wobble += b.wobbleSpeed;
+    const wobX = Math.sin(b.wobble) * 3;
+    ctx.save();
+    ctx.globalAlpha = b.alpha;
+    const bGrad = ctx.createRadialGradient(b.x - b.r * 0.3, b.y - b.r * 0.3, 0, b.x, b.y, b.r);
+    bGrad.addColorStop(0, 'rgba(200,240,255,0.9)');
+    bGrad.addColorStop(0.5, 'rgba(100,200,255,0.5)');
+    bGrad.addColorStop(1, 'rgba(0,150,255,0.1)');
+    ctx.fillStyle = bGrad;
+    ctx.beginPath();
+    ctx.arc(b.x + wobX, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(150,220,255,0.6)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Ink Collectibles ──
+  for (const k of inks) {
+    k.wobble += 0.03;
+    const kwX = Math.sin(k.wobble) * 4;
+    ctx.save();
+    ctx.globalAlpha = k.alpha;
+    ctx.fillStyle = '#1a1030';
+    ctx.strokeStyle = '#6040a0';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(k.x + kwX, k.y, k.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Ink swirl inside
+    ctx.strokeStyle = '#8060c0';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(k.x + kwX - 3, k.y - 3, k.r * 0.4, 0, Math.PI * 1.5);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Particles ──
+  for (const p of particles) {
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color + p.life + ')';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Player Trail ──
+  for (let i = 0; i < player.trail.length; i++) {
+    const t = player.trail[i];
+    ctx.save();
+    ctx.globalAlpha = t.a * 0.5;
+    const trailGrad = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, player.r * 0.6);
+    trailGrad.addColorStop(0, 'rgba(0,220,255,0.8)');
+    trailGrad.addColorStop(1, 'rgba(0,150,255,0)');
+    ctx.fillStyle = trailGrad;
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, player.r * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Player ──
+  if (inkActive <= 0) {
+    // Glow
+    ctx.save();
+    ctx.globalAlpha = 0.3 + player.glow * 0.2;
+    const pGlow = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, player.r * 2.5);
+    pGlow.addColorStop(0, 'rgba(0,220,255,0.6)');
+    pGlow.addColorStop(1, 'rgba(0,100,255,0)');
+    ctx.fillStyle = pGlow;
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.r * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Body
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.rotate(player.angle);
+    // Tail
+    ctx.fillStyle = '#00aacc';
+    ctx.beginPath();
+    ctx.moveTo(-player.r * 0.6, 0);
+    ctx.lineTo(-player.r * 1.3, -player.r * 0.6);
+    ctx.lineTo(-player.r * 1.3, player.r * 0.6);
+    ctx.closePath();
+    ctx.fill();
+    // Body oval
+    const bodyGrad = ctx.createRadialGradient(-player.r * 0.2, -player.r * 0.2, 0, 0, 0, player.r);
+    bodyGrad.addColorStop(0, '#80e8ff');
+    bodyGrad.addColorStop(1, '#0099cc');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, player.r, player.r * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Eye
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(player.r * 0.4, -player.r * 0.15, player.r * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#001830';
+    ctx.beginPath();
+    ctx.arc(player.r * 0.45, -player.r * 0.15, player.r * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  } else {
+    // Ghost form when inked
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = '#2a1550';
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#6040a0';
+    ctx.beginPath();
+    ctx.arc(player.x - 4, player.y - 4, player.r * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Lantern Fish ──
+  if (lantern) {
+    const lx = lantern;
+    ctx.save();
+    ctx.translate(lx.x, lx.y);
+
+    // Body
+    const bodyGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, lx.r);
+    bodyGrad.addColorStop(0, '#4a3050');
+    bodyGrad.addColorStop(1, '#1a0a20');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, lx.r * 1.4, lx.r, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Spots
+    ctx.fillStyle = 'rgba(100,50,120,0.5)';
+    for (let s = 0; s < 5; s++) {
+      ctx.beginPath();
+      ctx.arc(-5 + s * 8, -5 + (s % 2) * 10, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Jaw
+    const jawOpen = lx.jawOpen * 10;
+    ctx.fillStyle = '#2a1030';
+    ctx.beginPath();
+    ctx.ellipse(lx.r * 0.9, jawOpen, lx.r * 0.5, lx.r * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(lx.r * 0.9, -jawOpen, lx.r * 0.5, lx.r * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Fins
+    ctx.fillStyle = '#3a2040';
+    ctx.beginPath();
+    ctx.moveTo(-lx.r * 0.3, 0);
+    ctx.lineTo(-lx.r * 0.9, -lx.r * 0.6);
+    ctx.lineTo(-lx.r * 0.6, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-lx.r * 0.3, 0);
+    ctx.lineTo(-lx.r * 0.9, lx.r * 0.6);
+    ctx.lineTo(-lx.r * 0.6, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    // Lantern (above head)
+    const bobLantern = Math.sin(lx.bobOffset) * 3;
+    ctx.save();
+    ctx.translate(-lx.r * 0.2, -lx.r - 8 + bobLantern);
+    // Stalk
+    ctx.strokeStyle = '#3a2040';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, lx.r * 0.5);
+    ctx.quadraticCurveTo(5, 0, 0, -15);
+    ctx.stroke();
+    // Lantern glow
+    ctx.globalAlpha = 0.8;
+    const lGrad = ctx.createRadialGradient(0, -15, 0, 0, -15, 25);
+    lGrad.addColorStop(0, 'rgba(255,240,100,0.9)');
+    lGrad.addColorStop(0.4, 'rgba(255,200,60,0.4)');
+    lGrad.addColorStop(1, 'rgba(255,150,0,0)');
+    ctx.fillStyle = lGrad;
+    ctx.beginPath();
+    ctx.arc(0, -15, 25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#ffee00';
+    ctx.beginPath();
+    ctx.arc(0, -15, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Eyes
+    const eyeX = lx.r * 0.3;
+    const eyeY = -lx.r * 0.2;
+    ctx.fillStyle = lx.huntMode ? '#ff3030' : '#cc8844';
+    ctx.beginPath();
+    ctx.arc(eyeX, eyeY, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(eyeX, eyeY, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // ── Bubble Speed Lines ──
+  if (bubbleActive > 0) {
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    for (let i = 0; i < 8; i++) {
+      const ang = (i / 8) * Math.PI * 2 + survivalTime * 3;
+      const sx = player.x + Math.cos(ang) * 30;
+      const sy = player.y + Math.sin(ang) * 30;
+      ctx.strokeStyle = 'rgba(100,220,255,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx - player.vx * 3, sy - player.vy * 3);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+// ─── Game Loop ───
+function loop(timestamp) {
+  if (state !== 'playing') return;
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+  update(dt);
+  render();
+  gameLoopId = requestAnimationFrame(loop);
+}
+
+// ─── Idle Render for Start Screen ───
+function idleRender() {
+  if (state !== 'start') return;
+  ctx.clearRect(0, 0, W, H);
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#000d1a');
+  bgGrad.addColorStop(1, '#000508');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+  requestAnimationFrame(idleRender);
+}
+idleRender();
+</script>
+</body>
+</html>

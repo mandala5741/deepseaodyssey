@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>📰 更新日志 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { padding-top: 0; }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: var(--accent); flex: 1; }
+    .back-btn { background: none; border: none; color: var(--accent); font-size: 20px; cursor: pointer; padding: 8px; }
+    .content { margin-top: 60px; padding: 12px; }
+    .version { border-left: 3px solid var(--accent); padding-left: 12px; margin-bottom: 20px; }
+    .version h4 { color: var(--accent); font-size: 14px; margin-bottom: 8px; }
+    .version ul { font-size: 12px; color: var(--text-dim); padding-left: 16px; line-height: 1.8; }
+    .version.old { border-color: var(--text-dim); }
+    .version.old h4 { color: var(--text-dim); }
+    .hot { color: #ff6b6b; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>📰 更新日志</h1>
+  </div>
+
+  <div class="content">
+    <div class="version">
+      <h4><span class="hot">🔥</span> v1.5.0 - 2026.04.01</h4>
+      <ul>
+        <li><span class="hot">🔥</span> 修复限时装备购买后邮件附件无法正确领取的问题</li>
+        <li><span class="hot">🔥</span> 修复拍卖行上架装备名称显示为null的问题</li>
+        <li><span class="hot">🔥</span> 优化装备强化流程，显示消耗银贝和属性变化</li>
+        <li><span class="hot">🔥</span> 装备强化属性调整为每级+1500攻击/+1500防御/+1500生命</li>
+        <li><span class="hot">🔥</span> 修复邮件删除权限，只有已领取或无附件的邮件可删除</li>
+        <li><span class="hot">🔥</span> 世界BOSS卡片显示每位玩家自己的击杀记录</li>
+        <li>优化装备仓库显示，强化后属性实时更新</li>
+      </ul>
+    </div>
+
+    <div class="version">
+      <h4><span class="hot">🔥</span> v1.4.1 - 2026.03.31</h4>
+      <ul>
+        <li><span class="hot">🔥</span> 修复物品使用变金贝的严重BUG</li>
+        <li><span class="hot">🔥</span> 修复永久属性物品战力不增加的BUG</li>
+        <li>修复物品使用消息显示错误</li>
+        <li>补全所有物品图标</li>
+        <li>修复前端认证重定向问题</li>
+        <li>更新新手教程引导</li>
+      </ul>
+    </div>
+
+    <div class="version">
+      <h4>v1.4.0 - 2026.03.31</h4>
+      <ul>
+        <li>新增海域战斗系统（9个海域）</li>
+        <li>新增世界地图入口</li>
+        <li>新增拍卖行系统（系统/黑市/市集/商队）</li>
+        <li>新增宠物系统</li>
+        <li>新增冥想池系统</li>
+        <li>新增修炼场系统</li>
+        <li>新增神器榜系统</li>
+        <li>优化游戏手册与更新日志</li>
+      </ul>
+    </div>
+
+    <div class="version old">
+      <h4>v1.3.0 - 2026.03.30</h4>
+      <ul>
+        <li>新增公屏日志功能</li>
+        <li>优化页面结构，拆分独立页面</li>
+        <li>邮件支持领取附件和一键删除</li>
+        <li>保护盾可叠加续期</li>
+        <li>物品使用支持数量选择</li>
+        <li>底部导航栏支持更多入口</li>
+      </ul>
+    </div>
+
+    <div class="version old">
+      <h4>v1.2.0 - 2026.03.30</h4>
+      <ul>
+        <li>新增挑战破盾确认机制</li>
+        <li>挑战失败扣除血量而非金贝</li>
+        <li>永久胜负记录系统</li>
+        <li>保护盾分级系统（2h/5h/8h/24h）</li>
+        <li>新增Agent手册和更新日志</li>
+        <li>商店分类筛选功能</li>
+        <li>背包购买数量选择</li>
+        <li>邮件一键删除功能</li>
+      </ul>
+    </div>
+
+    <div class="version old">
+      <h4>v1.1.0 - 2026.03.29</h4>
+      <ul>
+        <li>新增宗门系统</li>
+        <li>新增天梯排行榜</li>
+        <li>保护盾系统上线</li>
+        <li>任务系统优化</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

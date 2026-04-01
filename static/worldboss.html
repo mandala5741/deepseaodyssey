@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>👹 世界BOSS - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { padding-top: 0; background: linear-gradient(180deg, #1a0505 0%, #3d1010 40%, #1a0505 100%); min-height: 100vh; font-family: -apple-system, sans-serif; }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(40,10,10,0.97); border-bottom: 1px solid rgba(255,80,80,0.4); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #ff6b6b; flex: 1; text-shadow: 0 0 10px rgba(255,80,80,0.4); }
+    .back-btn { background: none; border: none; color: #ff6b6b; font-size: 20px; cursor: pointer; padding: 8px; }
+
+    .content { margin-top: 60px; padding: 12px; position: relative; z-index: 10; padding-bottom: 80px; }
+
+    /* Boss card */
+    .boss-card {
+      background: linear-gradient(145deg, rgba(60,10,10,0.95), rgba(30,5,5,0.98));
+      border: 2px solid rgba(255,60,60,0.5);
+      border-radius: 20px;
+      padding: 20px 16px;
+      text-align: center;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .boss-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at 50% 20%, rgba(255,60,0,0.12) 0%, transparent 70%);
+    }
+    .boss-icon { font-size: 80px; position: relative; filter: drop-shadow(0 0 20px rgba(255,60,0,0.7)); animation: bossFloat 3s ease-in-out infinite; }
+    @keyframes bossFloat { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-8px) rotate(2deg)} }
+    .boss-name { font-size: 22px; color: #ff4444; font-weight: bold; margin: 8px 0 4px; position: relative; text-shadow: 0 0 12px rgba(255,60,0,0.5); }
+    .boss-sub { font-size: 12px; color: rgba(255,120,120,0.6); margin-bottom: 12px; position: relative; }
+
+    /* HP bar */
+    .hp-container { position: relative; margin: 14px 0; position: relative; }
+    .hp-bar-bg { height: 24px; background: rgba(0,0,0,0.6); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,60,60,0.3); }
+    .boss-hp-fill { height: 100%; background: linear-gradient(90deg, #cc2200, #ff4400, #ff6600); border-radius: 12px; transition: width 0.4s; }
+    .hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 12px; color: #fff; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+
+    /* Countdown */
+    .countdown-card {
+      background: rgba(20,10,0,0.9);
+      border: 1px solid rgba(255,150,0,0.4);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .countdown-label { font-size: 11px; color: rgba(255,180,0,0.6); margin-bottom: 4px; }
+    .countdown-time { font-size: 28px; color: #ffd700; font-weight: bold; font-family: monospace; }
+    .countdown-hint { font-size: 10px; color: rgba(255,180,0,0.4); margin-top: 4px; }
+
+    /* Reward display */
+    .reward-row { display: flex; justify-content: center; gap: 30px; position: relative; }
+    .reward-item { text-align: center; }
+    .reward-val { font-size: 16px; color: #ffd700; font-weight: bold; }
+    .reward-label { font-size: 10px; color: rgba(255,200,100,0.5); }
+
+    /* Attack button */
+    .attack-btn {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, rgba(200,30,0,0.8), rgba(150,10,0,0.8));
+      border: 2px solid rgba(255,80,0,0.8);
+      border-radius: 16px;
+      color: #fff;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 12px 0;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .attack-btn:active { transform: scale(0.97); }
+    .attack-btn:disabled { background: rgba(80,80,80,0.5); border-color: #666; cursor: not-allowed; }
+
+    /* Damage result */
+    .damage-result {
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,60,60,0.3);
+      border-radius: 12px;
+      padding: 14px;
+      margin: 10px 0;
+      text-align: center;
+    }
+    .damage-done { font-size: 32px; color: #ff4444; font-weight: bold; }
+    .damage-hp { font-size: 13px; color: rgba(255,200,200,0.7); margin-top: 6px; }
+    .damage-counter { font-size: 12px; color: rgba(255,100,100,0.5); margin-top: 4px; }
+
+    /* Ranking */
+    .rank-section { background: rgba(30,10,10,0.8); border: 1px solid rgba(255,60,60,0.3); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+    .rank-title { font-size: 13px; color: #ff6b6b; font-weight: bold; margin-bottom: 10px; }
+    .rank-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; border-bottom: 1px solid rgba(255,60,60,0.1); }
+    .rank-item:last-child { border-bottom: none; }
+    .rank-num { min-width: 20px; color: #ffd700; font-weight: bold; text-align: center; }
+    .rank-name { flex: 1; color: #fff; }
+    .rank-dmg { color: #ff6b6b; font-weight: bold; }
+    .rank-medal { font-size: 16px; }
+    .my-rank { background: rgba(255,100,0,0.1); border-radius: 8px; padding: 6px 8px; margin-top: 8px; }
+
+    /* My damage */
+    .my-dmg-card { background: rgba(50,20,0,0.8); border: 1px solid rgba(255,150,0,0.4); border-radius: 12px; padding: 12px; text-align: center; margin-bottom: 14px; }
+    .my-dmg-val { font-size: 24px; color: #ffd700; font-weight: bold; }
+    .my-dmg-label { font-size: 11px; color: rgba(255,200,100,0.5); }
+
+    /* Flash effect */
+    .flash-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.3); pointer-events: none; z-index: 999; opacity: 0; }
+    .flash-overlay.active { animation: flashEffect 0.3s ease-out; }
+    @keyframes flashEffect { 0%{opacity:0.8} 100%{opacity:0} }
+
+    /* Defeated state */
+    .defeated-banner {
+      background: linear-gradient(135deg, rgba(0,80,0,0.8), rgba(0,50,0,0.8));
+      border: 2px solid rgba(50,200,50,0.6);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      color: #90ee90;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 12px 0;
+    }
+
+    /* Refresh btn */
+    .refresh-btn {
+      width: 100%;
+      padding: 12px;
+      background: rgba(50,20,0,0.6);
+      border: 1px solid rgba(255,150,0,0.4);
+      border-radius: 12px;
+      color: #ffd700;
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="flash-overlay" id="flashOverlay"></div>
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/seas.html'">←</button>
+    <h1>👹 世界BOSS</h1>
+  </div>
+
+  <div class="content" id="content">
+    <div id="loading" style="text-align:center;padding:60px;color:rgba(255,200,200,0.5)">加载中...</div>
+  </div>
+
+  <script src="/shared.js"></script>
+  <script>
+    var currentBoss = null;
+    var myDamage = 0;
+    var attackCount = 0;
+
+    function formatNum(n) {
+      n = parseInt(n) || 0;
+      if (n >= 100000000) return (n/100000000).toFixed(1) + '亿';
+      if (n >= 10000) return (n/10000).toFixed(1) + '万';
+      return n;
+    }
+
+    function formatTime(seconds) {
+      if (!seconds || seconds <= 0) return '00:00';
+      var m = Math.floor(seconds / 60);
+      var s = seconds % 60;
+      return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
+
+    function flashLightning() {
+      var f = document.getElementById('flashOverlay');
+      f.classList.remove('active');
+      void f.offsetWidth;
+      f.classList.add('active');
+    }
+
+    function showDamageResult(data) {
+      var dr = document.getElementById('damageResult');
+      if (!dr) return;
+      dr.style.display = 'block';
+      var isDefeated = data.boss_status === 'defeated';
+      dr.innerHTML = '<div class="damage-result">' +
+        '<div class="damage-done">-' + formatNum(data.damage) + '</div>' +
+        (isDefeated ? '<div style="color:#90ee90;font-size:16px;margin-top:8px">🎉 BOSS已被击败！</div>' : '') +
+        '<div class="damage-hp">BOSS剩余: ' + formatNum(data.boss_hp) + ' (' + data.boss_hp_percent + '%)</div>' +
+        '<div class="damage-counter">BOSS反击: -' + data.counter_damage + ' HP</div>' +
+      '</div>';
+      flashLightning();
+    }
+
+    async function loadBoss() {
+      try {
+        var res = await fetch(API_BASE + '/world_boss/status', { headers: getAuthHeader() });
+        var data = await res.json();
+        renderBoss(data);
+      } catch(e) {
+        document.getElementById('content').innerHTML = '<div style="text-align:center;padding:60px;color:rgba(255,200,200,0.5)">网络错误</div>';
+      }
+    }
+
+    function renderBoss(data) {
+      if (!data.active || !data.boss) {
+        var countdown = '';
+        if (data.seconds_remaining && data.seconds_remaining > 0) {
+          var mins = Math.floor(data.seconds_remaining / 60);
+          var secs = data.seconds_remaining % 60;
+          countdown = '<div class="countdown-card">' +
+            '<div class="countdown-label">⏰ 下一只BOSS刷新倒计时</div>' +
+            '<div class="countdown-time" id="countdownTime">' + formatTime(data.seconds_remaining) + '</div>' +
+            '<div class="countdown-hint">BOSS正在蓄力中，请耐心等待...</div>' +
+          '</div>';
+        }
+        document.getElementById('content').innerHTML = countdown +
+          '<div class="defeated-banner">🎉 当前没有活动的BOSS</div>' +
+          '<button class="refresh-btn" id="refreshBtn" onclick="refreshBoss()">🔄 手动刷新BOSS</button>';
+        if (data.seconds_remaining > 0) startCountdown(data.seconds_remaining);
+        return;
+      }
+
+      var b = data.boss;
+      currentBoss = b;
+      myDamage = data.my_damage || 0;
+
+      var rankHtml = '';
+      if (data.ranking && data.ranking.length) {
+        var medals = ['🥇','🥈','🥉','','','','','','',''];
+        data.ranking.forEach(function(r, i) {
+          rankHtml += '<div class="rank-item">' +
+            '<span class="rank-num">' + medals[i] + '</span>' +
+            '<span class="rank-name">' + r.name + '</span>' +
+            '<span class="rank-dmg">-' + formatNum(r.total_damage) + '</span>' +
+          '</div>';
+        });
+      } else {
+        rankHtml = '<div style="color:rgba(255,200,200,0.4);font-size:13px;text-align:center;padding:10px">暂无挑战记录</div>';
+      }
+
+      var myRankHtml = '';
+      if (data.ranking && data.ranking.length) {
+        var myRank = data.ranking.findIndex(function(r) { return r.id === gPlayerId; });
+        if (myRank >= 0) {
+          myRankHtml = '<div class="my-rank">' +
+            '<span style="color:#ffd700">我的排名: 第' + (myRank+1) + '名</span>' +
+            ' | 伤害: <span style="color:#ff6b6b">-' + formatNum(myDamage) + '</span>' +
+          '</div>';
+        }
+      }
+
+      var html = '<div class="boss-card">' +
+        '<div class="boss-icon">' + b.icon + '</div>' +
+        '<div class="boss-name">' + b.name + '</div>' +
+        '<div class="boss-sub">危险海域 · 世界BOSS</div>' +
+
+        '<div class="hp-container">' +
+          '<div class="hp-bar-bg">' +
+            '<div class="boss-hp-fill" id="hpFill" style="width:' + b.hp_percent + '%"></div>' +
+          '</div>' +
+          '<div class="hp-text">HP: ' + formatNum(b.current_hp) + ' / ' + formatNum(b.max_hp) + '</div>' +
+        '</div>' +
+
+        '<div class="reward-row">' +
+          '<div class="reward-item"><div class="reward-val">💰 ' + formatNum(b.reward_gold) + '</div><div class="reward-label">总奖金贝</div></div>' +
+          '<div class="reward-item"><div class="reward-val">✨ ' + formatNum(b.reward_exp) + '</div><div class="reward-label">总经验</div></div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div id="damageResult" style="display:none"></div>' +
+
+      '<button class="attack-btn" id="attackBtn" onclick="doAttack()">⚔️ 挑战BOSS</button>' +
+
+      '<div class="my-dmg-card">' +
+        '<div class="my-dmg-label">我的累计伤害</div>' +
+        '<div class="my-dmg-val">-' + formatNum(myDamage) + '</div>' +
+      '</div>' +
+
+      '<div class="rank-section">' +
+        '<div class="rank-title">🏆 伤害排行榜</div>' +
+        rankHtml +
+        myRankHtml +
+      '</div>';
+
+      document.getElementById('content').innerHTML = html;
+    }
+
+    var gPlayerId = null;
+    async function doAttack() {
+      var btn = document.getElementById('attackBtn');
+      if (!btn) return;
+      btn.disabled = true;
+      btn.textContent = '⚔️ 战斗中...';
+      flashLightning();
+
+      try {
+        var res = await fetch(API_BASE + '/world_boss/attack', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() }
+        });
+        var data = await res.json();
+
+        if (!data.success) {
+          showToast(data.reason || '挑战失败', 'error');
+          btn.disabled = false;
+          btn.textContent = '⚔️ 挑战BOSS';
+          return;
+        }
+
+        myDamage += data.damage;
+        attackCount++;
+        showDamageResult(data);
+
+        // Update HP bar
+        var hpFill = document.getElementById('hpFill');
+        if (hpFill) hpFill.style.width = data.boss_hp_percent + '%';
+
+        if (data.boss_status === 'defeated') {
+          flashLightning();
+          showToast('🎉 BOSS被击败！奖励已发至邮箱！', 'success');
+          if (data.announcement) {
+            showAnnouncement(data.announcement.message, data.announcement.icon);
+          }
+          setTimeout(function() { loadBoss(); }, 2000);
+        } else {
+          btn.disabled = false;
+          btn.textContent = '⚔️ 再次挑战';
+        }
+      } catch(e) {
+        showToast('网络错误', 'error');
+        btn.disabled = false;
+        btn.textContent = '⚔️ 挑战BOSS';
+      }
+    }
+
+    var countdownInterval = null;
+    function startCountdown(seconds) {
+      if (countdownInterval) clearInterval(countdownInterval);
+      var remaining = seconds;
+      countdownInterval = setInterval(function() {
+        remaining--;
+        var el = document.getElementById('countdownTime');
+        if (el) el.textContent = formatTime(remaining);
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          loadBoss();
+        }
+      }, 1000);
+    }
+
+    async function refreshBoss() {
+      var btn = document.getElementById('refreshBtn');
+      if (btn) { btn.disabled = true; btn.textContent = '刷新中...'; }
+      try {
+        var res = await fetch(API_BASE + '/world_boss/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() }
+        });
+        var data = await res.json();
+        if (data.success) {
+          showAnnouncement(data.message, '👹');
+          loadBoss();
+        } else {
+          showToast(data.reason || '刷新失败', 'error');
+          if (btn) { btn.disabled = false; btn.textContent = '🔄 手动刷新BOSS'; }
+        }
+      } catch(e) {
+        showToast('网络错误', 'error');
+        if (btn) { btn.disabled = false; btn.textContent = '🔄 手动刷新BOSS'; }
+      }
+    }
+
+    // Get player id from profile
+    (async function init() {
+      try {
+        var r = await fetch(API_BASE + '/player/profile', { headers: getAuthHeader() });
+        var d = await r.json();
+        if (d.data && d.data.id) gPlayerId = d.data.id;
+      } catch(e) {}
+      loadBoss();
+    })();
+
+    if (window.checkAnnouncements) window.checkAnnouncements();
+  </script>
+</body>
+</html>

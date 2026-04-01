@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>📢 公屏 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { padding-top: 0; }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: var(--accent); flex: 1; }
+    .back-btn { background: none; border: none; color: var(--accent); font-size: 20px; cursor: pointer; padding: 8px; }
+    .content { margin-top: 60px; padding: 12px; }
+    .log-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; border-left: 3px solid var(--accent); }
+    .log-player { font-size: 12px; color: var(--accent); margin-bottom: 4px; }
+    .log-action { font-size: 13px; color: var(--text); }
+    .log-time { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>📢 世界公屏</h1>
+  </div>
+
+  <div class="content">
+    <div id="logList"><div class="loading">加载中...</div></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/shared.js"></script>
+  <script>
+    async function loadLogs() {
+      try {
+        const res = await fetch(`${API_BASE}/logs/public`, { headers: getAuthHeader() });
+        const data = await res.json();
+        const logs = data.logs || [];
+        const el = document.getElementById('logList');
+        if (!logs.length) { el.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:40px">暂无动态</div>'; return; }
+        el.innerHTML = logs.map(log => `
+          <div class="log-item">
+            <div class="log-player">${log.player_name}</div>
+            <div class="log-action">${log.action} ${log.detail ? '→ ' + log.detail : ''}</div>
+            <div class="log-time">${log.created_at}</div>
+          </div>
+        `).join('');
+      } catch (e) { document.getElementById('logList').innerHTML = '<div class="loading">加载失败</div>'; }
+    }
+
+    loadLogs();
+  </script>
+</body>
+</html>

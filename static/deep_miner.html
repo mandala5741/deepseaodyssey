@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚓ 深海矿工 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { padding-top: 60px; background: linear-gradient(180deg, #001015 0%, #002030 40%, #001525 100%); min-height: 100vh; font-family: -apple-system, sans-serif; }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(0,20,30,0.95); border-bottom: 1px solid rgba(0,150,200,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #00bfff; flex: 1; }
+    .back-btn { background: none; border: none; color: #00bfff; font-size: 20px; cursor: pointer; }
+    .content { padding: 16px; text-align: center; color: #fff; }
+    .icon { font-size: 80px; margin: 30px 0 16px; }
+    h2 { color: #00bfff; margin-bottom: 12px; }
+    .desc { color: rgba(255,255,255,0.7); line-height: 1.8; max-width: 400px; margin: 0 auto 24px; }
+    .feature { background: rgba(0,30,50,0.6); border: 1px solid rgba(0,150,200,0.3); border-radius: 12px; padding: 14px; margin: 10px auto; max-width: 400px; text-align: left; }
+    .feature-title { color: #00bfff; font-weight: bold; margin-bottom: 8px; }
+    .feature-desc { color: rgba(255,255,255,0.6); font-size: 13px; }
+    .resource-bar { display: flex; gap: 12px; justify-content: center; margin: 16px 0; }
+    .resource { background: rgba(0,30,50,0.6); border: 1px solid rgba(0,150,200,0.3); border-radius: 10px; padding: 10px 16px; min-width: 80px; }
+    .resource-icon { font-size: 20px; }
+    .resource-val { font-size: 16px; color: #00bfff; font-weight: bold; }
+    .resource-label { font-size: 10px; color: rgba(255,255,255,0.4); }
+    .soon { background: rgba(255,150,0,0.2); border: 1px solid rgba(255,150,0,0.5); color: #ffa500; border-radius: 12px; padding: 14px; max-width: 400px; margin: 20px auto; font-size: 14px; }
+    .sonar-demo { display: flex; gap: 8px; justify-content: center; margin: 16px 0; }
+    .sonar-ping { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .ping-blue { background: rgba(0,100,200,0.4); border: 2px solid rgba(0,150,255,0.6); }
+    .ping-purple { background: rgba(120,0,180,0.4); border: 2px solid rgba(180,0,255,0.6); }
+    .ping-gold { background: rgba(200,150,0,0.4); border: 2px solid rgba(255,200,0,0.6); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/seas.html'">←</button>
+    <h1>⚓ 深海矿工</h1>
+  </div>
+  <div class="content">
+    <div class="icon">⚓</div>
+    <h2>深海矿工：声呐寻宝</h2>
+    <p class="desc">操控迷你潜水艇在深海海床进行矿物采集与考古发掘。在有限的燃料和氧气储备内，规划路线、规避风险、带回最有价值的宝藏！</p>
+
+    <div class="resource-bar">
+      <div class="resource">
+        <div class="resource-icon">⛽</div>
+        <div class="resource-val">100</div>
+        <div class="resource-label">燃料</div>
+      </div>
+      <div class="resource">
+        <div class="resource-icon">🫧</div>
+        <div class="resource-val">80</div>
+        <div class="resource-label">氧气</div>
+      </div>
+      <div class="resource">
+        <div class="resource-icon">📦</div>
+        <div class="resource-val">5/10</div>
+        <div class="resource-label">货舱</div>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-title">📡 声呐扫描</div>
+      <div class="feature-desc">发射声呐波探测周围地形。蓝色=普通矿石，紫色=稀有水晶，金色=沉船宝藏或化石。</div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-title">⚒️ 地形破坏</div>
+      <div class="feature-desc">消耗能量钻头挖掘通道、清除碎石，才能接近被掩埋的目标。升级钻头可大幅提升效率。</div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-title">🌋 热液喷口</div>
+      <div class="feature-desc">间歇性喷发的热液喷口有震动预警。喷发造成大量伤害，但附近伴生高价值稀有矿物！</div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-title">🦠 危险生物</div>
+      <div class="feature-desc">挖掘会惊醒博比特虫或巨型等足虫，它们会追踪攻击潜艇。可快速逃离或发射闪光弹驱散。</div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-title">🚢 沉船迷宫</div>
+      <div class="feature-desc">大型沉船内部形成复杂迷宫，藏着古代金币、瓷器等考古级宝藏。找到正确出口才能脱离！</div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-title">🔧 局外成长</div>
+      <div class="feature-desc">上浮后收集的矿物可兑换货币，升级钻头效率、货舱容量、抗压等级。稀有化石可捐赠海洋博物馆解锁成就。</div>
+    </div>
+
+    <div class="soon">🚧 游戏开发中，敬请期待...</div>
+  </div>
+</body>
+</html>

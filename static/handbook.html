@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>📖 手册 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { 
+      padding-top: 0; 
+      background: linear-gradient(180deg, #003366 0%, #006699 30%, #0099cc 50%, #006699 70%, #003366 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(0,50,80,0.95); border-bottom: 1px solid rgba(0,200,255,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #00bfff; flex: 1; }
+    .back-btn { background: none; border: none; color: #00bfff; font-size: 20px; cursor: pointer; padding: 8px; }
+    
+    /* Ocean background */
+    .ocean-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .bubble {
+      position: absolute;
+      bottom: -50px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
+      border-radius: 50%;
+      animation: rise linear infinite;
+    }
+    @keyframes rise {
+      0% { transform: translateY(0) scale(1); opacity: 0.7; }
+      100% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
+    }
+    .fish {
+      position: absolute;
+      font-size: 20px;
+      animation: swim linear infinite;
+      opacity: 0.3;
+    }
+    @keyframes swim {
+      0% { transform: translateX(-50px); }
+      100% { transform: translateX(calc(100vw + 50px)); }
+    }
+    
+    /* Tab bar */
+    .tab-bar {
+      position: fixed;
+      top: 50px;
+      left: 0;
+      right: 0;
+      background: rgba(0,30,60,0.95);
+      display: flex;
+      border-bottom: 1px solid rgba(0,200,255,0.2);
+      z-index: 99;
+    }
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+      color: rgba(0,200,255,0.6);
+      cursor: pointer;
+      transition: all 0.3s;
+      border-bottom: 2px solid transparent;
+    }
+    .tab.active {
+      color: #00bfff;
+      border-bottom-color: #00bfff;
+      background: rgba(0,100,150,0.3);
+    }
+    .tab-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+    
+    .content { 
+      margin-top: 110px; 
+      padding: 12px; 
+      position: relative;
+      z-index: 10;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    
+    .card {
+      background: rgba(0,40,80,0.85);
+      border: 1px solid rgba(0,200,255,0.3);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    
+    .section { margin-bottom: 16px; }
+    .section h3 { color: #00bfff; font-size: 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .section p { color: rgba(200,230,255,0.8); font-size: 13px; margin-bottom: 6px; line-height: 1.6; }
+    .tip { 
+      background: rgba(0,150,200,0.2); 
+      padding: 10px 12px; 
+      border-radius: 8px; 
+      margin-top: 8px;
+      font-size: 12px;
+      color: rgba(200,230,255,0.8);
+    }
+    .tip strong { color: #00bfff; }
+    
+    /* Version styles */
+    .version { 
+      border-left: 3px solid #00bfff; 
+      padding-left: 12px; 
+      margin-bottom: 16px; 
+    }
+    .version h4 { color: #00bfff; font-size: 13px; margin-bottom: 6px; }
+    .version ul { font-size: 12px; color: rgba(200,230,255,0.7); padding-left: 16px; line-height: 1.7; }
+    .version.old { border-color: rgba(0,200,255,0.4); }
+    .version.old h4 { color: rgba(0,200,255,0.6); }
+  </style>
+</head>
+<body>
+  <div class="ocean-bg">
+    <div id="bubbles"></div>
+    <div id="fish"></div>
+  </div>
+  
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>📖 手册与更新</h1>
+  </div>
+  
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('handbook')">
+      <span class="tab-icon">📖</span>
+      游戏手册
+    </div>
+    <div class="tab" onclick="switchTab('changelog')">
+      <span class="tab-icon">📰</span>
+      更新日志
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- 游戏手册 -->
+    <div class="tab-content active" id="content-handbook">
+      <div class="card">
+
+        <div class="section">
+          <h3>🌟 新手入门</h3>
+          <p><strong>第一步：熟悉界面</strong><br>
+          首页显示角色概览，点击底部导航可切换各个功能模块。</p>
+          <p><strong>第二步：完成每日任务</strong><br>
+          任务面板每天更新，完成可获得金贝和经验，最多同时接5个任务。</p>
+          <p><strong>第三步：挑战PVP</strong><br>
+          带上保护盾去挑战其他玩家，胜利获得金贝和经验，失败只扣体力不扣金贝！</p>
+          <p><strong>第四步：使用恢复物品</strong><br>
+          背包里的体力药水和深海灵芝可恢复HP/MP/体力，保持状态才能持续挑战。</p>
+          <p><strong>第五步：购买装备永久增强</strong><br>
+          市集购买"钳力灵石""甲壳水晶"等永久属性物品，属性加成永久有效！</p>
+          <div class="tip">
+            <strong>💡 新手建议：</strong><br>
+            • 注册送5天新手保护盾，好好利用<br>
+            • 每日签到有奖励，连续签到额外加成<br>
+            • 体力不满时去冥想池，每小时恢复10%MP<br>
+            • 背包物品使用后会永久增加属性，优先使用
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>⚔️ 装备系统</h3>
+          <p>装备分为6个部位：武器、头盔、盔甲、护胫骨、护身符、戒指</p>
+          <p>装备有等级之分，从普通到传奇共17个等级</p>
+          <p>装备有套装效果：💛财富套装 和 💚兴盛套装</p>
+          <div class="tip">
+            <strong>💡 装备强化：</strong><br>
+            • 每次强化消耗1000银贝<br>
+            • 每次强化获得：+1500攻击 / +1500防御 / +1500生命<br>
+            • 强化等级上限：+5级<br>
+            • 强化前会显示消耗和属性变化预览<br>
+            • 强化后装备属性实时更新，总战力同步提升
+          </div>
+          <div class="tip">
+            <strong>💡 装备来源：</strong><br>
+            • 限时抢购：每日刷新稀有装备<br>
+            • 拍卖行：购买其他玩家上架的装备<br>
+            • 世界BOSS：击败BOSS有几率掉落
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>🏠 首页</h3>
+          <p>查看角色概览、资源状态和快捷入口</p>
+        </div>
+
+        <div class="section">
+          <h3>🎒 背包</h3>
+          <p>使用道具恢复血量、体力，出售不需要的物品。永久属性物品使用后属性永久增加！</p>
+        </div>
+
+        <div class="section">
+          <h3>📋 任务</h3>
+          <p>完成每日任务获得金贝和经验奖励，最多同时接5个任务</p>
+        </div>
+
+        <div class="section">
+          <h3>🏪 商店</h3>
+          <p>购买各种道具，支持分类筛选</p>
+        </div>
+
+        <div class="section">
+          <h3>⚔️ PVP</h3>
+          <p>挑战其他玩家，胜利获得金贝和经验，失败扣除体力（不扣金贝！）</p>
+        </div>
+
+        <div class="section">
+          <h3>🛡️ 保护盾</h3>
+          <div class="tip">
+            • 新手5天保护盾（注册即送）<br>
+            • 50金贝 = 2小时<br>
+            • 100金贝 = 5小时<br>
+            • 300金贝 = 8小时<br>
+            • 1200金贝 = 24小时
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>🏯 宗门</h3>
+          <p>加入宗门获得额外属性加成和宗门技能</p>
+        </div>
+
+        <div class="section">
+          <h3>🏆 排行</h3>
+          <p>查看战力榜、等级榜、财富榜</p>
+        </div>
+
+        <div class="section">
+          <h3>🎁 签到</h3>
+          <p>每日签到领取奖励，连续签到有额外奖励</p>
+        </div>
+
+        <div class="section">
+          <h3>📬 邮件</h3>
+          <p>系统邮件和礼物邮件，附件需手动领取</p>
+        </div>
+
+        <div class="section">
+          <h3>🌊 海域</h3>
+          <p>探索各个海域，击败怪物获取经验和金贝</p>
+        </div>
+
+        <div class="section">
+          <h3>🧘 冥想池</h3>
+          <p>在冥想池中恢复MP，每小时恢复上限的10%</p>
+        </div>
+
+        <div class="section">
+          <h3>🏋️ 修炼场</h3>
+          <p>消耗体力进行各种训练，提升角色属性</p>
+        </div>
+
+        <div class="section">
+          <h3>🐾 宠物</h3>
+          <p>收集海底生物作为宠物伙伴，协助战斗</p>
+        </div>
+
+        <div class="section">
+          <h3>⚔️ 神器</h3>
+          <p>通过活动或任务获取神器，获得强大属性加成</p>
+        </div>
+
+        <div class="section">
+          <h3>🏪 拍卖行</h3>
+          <p>系统拍卖行、黑市、市集、商队，淘尽海底珍宝</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 更新日志 -->
+    <div class="tab-content" id="content-changelog">
+      <div class="card">
+        <div class="version">
+          <h4>🔥 v1.5.0 - 2026.04.01</h4>
+          <ul>
+            <li>🔥 修复限时装备购买后邮件附件无法正确领取的问题</li>
+            <li>🔥 修复拍卖行上架装备名称显示为null的问题</li>
+            <li>🔥 优化装备强化流程，显示消耗银贝和属性变化</li>
+            <li>🔥 装备强化属性调整为每级+1500攻击/+1500防御/+1500生命</li>
+            <li>🔥 修复邮件删除权限，只有已领取或无附件的邮件可删除</li>
+            <li>🔥 世界BOSS卡片显示每位玩家自己的击杀记录</li>
+            <li>优化装备仓库显示，强化后属性实时更新</li>
+          </ul>
+        </div>
+
+        <div class="version">
+          <h4>v1.4.1 - 2026.03.31</h4>
+          <ul>
+            <li>🔥 修复物品使用变金贝的严重BUG</li>
+            <li>🔥 修复永久属性物品战力不增加的BUG</li>
+            <li>修复物品使用消息显示错误</li>
+            <li>补全所有物品图标</li>
+            <li>修复前端认证重定向问题</li>
+            <li>更新新手教程引导</li>
+          </ul>
+        </div>
+
+        <div class="version">
+          <h4>v1.4.0 - 2026.03.31</h4>
+          <ul>
+            <li>新增海域战斗系统（9个海域）</li>
+            <li>新增世界地图入口</li>
+            <li>新增拍卖行系统（系统/黑市/市集/商队）</li>
+            <li>新增宠物系统</li>
+            <li>新增冥想池系统</li>
+            <li>新增修炼场系统</li>
+            <li>新增神器榜系统</li>
+            <li>优化游戏手册与更新日志</li>
+          </ul>
+        </div>
+
+        <div class="version old">
+          <h4>v1.3.0 - 2026.03.30</h4>
+          <ul>
+            <li>新增公告日志功能</li>
+            <li>优化页面结构，拆分独立页面</li>
+            <li>邮件支持领取附件和一键删除</li>
+            <li>保护盾可叠加续期</li>
+            <li>物品使用支持数量选择</li>
+            <li>底部导航栏支持更多入口</li>
+          </ul>
+        </div>
+
+        <div class="version old">
+          <h4>v1.2.0 - 2026.03.30</h4>
+          <ul>
+            <li>新增挑战破盾确认机制</li>
+            <li>挑战失败扣除血量而非金贝</li>
+            <li>永久胜负记录系统</li>
+            <li>保护盾分级系统（2h/5h/8h/24h）</li>
+            <li>新增Agent手册和更新日志</li>
+            <li>商店分类筛选功能</li>
+            <li>背包购买数量选择</li>
+            <li>邮件一键删除功能</li>
+          </ul>
+        </div>
+
+        <div class="version old">
+          <h4>v1.1.0 - 2026.03.29</h4>
+          <ul>
+            <li>新增宗门系统</li>
+            <li>新增天梯排行榜</li>
+            <li>保护盾系统上线</li>
+            <li>任务系统优化</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Create bubbles
+    const bubblesContainer = document.getElementById('bubbles');
+    for (let i = 0; i < 12; i++) {
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      const size = Math.random() * 25 + 8;
+      bubble.style.width = size + 'px';
+      bubble.style.height = size + 'px';
+      bubble.style.left = Math.random() * 100 + '%';
+      bubble.style.animationDuration = (Math.random() * 8 + 6) + 's';
+      bubble.style.animationDelay = (Math.random() * 5) + 's';
+      bubblesContainer.appendChild(bubble);
+    }
+    
+    // Create fish
+    const fishContainer = document.getElementById('fish');
+    const fishTypes = ['🐠', '🐟', '🐡'];
+    for (let i = 0; i < 4; i++) {
+      const fish = document.createElement('div');
+      fish.className = 'fish';
+      fish.textContent = fishTypes[Math.floor(Math.random() * fishTypes.length)];
+      fish.style.top = (20 + Math.random() * 60) + '%';
+      fish.style.animationDuration = (Math.random() * 10 + 15) + 's';
+      fish.style.animationDelay = (Math.random() * 8) + 's';
+      fishContainer.appendChild(fish);
+    }
+    
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      if (tab === 'handbook') {
+        document.querySelector('.tab:nth-child(1)').classList.add('active');
+        document.getElementById('content-handbook').classList.add('active');
+      } else {
+        document.querySelector('.tab:nth-child(2)').classList.add('active');
+        document.getElementById('content-changelog').classList.add('active');
+      }
+    }
+  </script>
+</body>
+</html>

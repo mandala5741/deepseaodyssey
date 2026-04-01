@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>深海冒险 - 深海掠夺者</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: linear-gradient(180deg, #0891b2 0%, #0e7490 20%, #155e75 40%, #164e63 70%, #0f4c5c 100%);
+  min-height: 100vh;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* 深海光线 */
+.sea-light-rays {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+.sea-light-rays::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: 10%;
+  width: 300px; height: 150%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 40%, transparent 70%);
+  transform: rotate(25deg);
+  animation: lightSway 8s ease-in-out infinite;
+}
+.sea-light-rays::after {
+  content: '';
+  position: absolute;
+  top: -50%; right: 15%;
+  width: 200px; height: 150%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.03) 30%, transparent 60%);
+  transform: rotate(-15deg);
+  animation: lightSway 10s ease-in-out infinite reverse;
+}
+@keyframes lightSway {
+  0%, 100% { transform: rotate(25deg) translateX(0); }
+  50% { transform: rotate(30deg) translateX(30px); }
+}
+
+/* 浮动粒子 */
+.sea-particles {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.particle {
+  position: absolute;
+  background: radial-gradient(circle, rgba(255,255,255,0.8), rgba(255,255,255,0.2));
+  border-radius: 50%;
+  animation: particleFloat linear infinite;
+}
+@keyframes particleFloat {
+  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.8; }
+  100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+}
+
+/* 主容器 */
+.sea-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 海底沙地 */
+.sea-floor {
+  position: absolute;
+  bottom: 80px;
+  left: 0; right: 0;
+  height: 120px;
+  background: linear-gradient(180deg, 
+    rgba(194,178,128,0) 0%,
+    rgba(210,180,140,0.3) 30%,
+    rgba(244,214,176,0.5) 60%,
+    rgba(255,228,196,0.7) 100%
+  );
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* 传送门 */
+.portal-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  background: linear-gradient(180deg, rgba(6,182,212,0) 0%, rgba(6,182,212,0.95) 25%, rgba(8,145,178,0.98) 100%);
+  padding: 10px 10px 20px;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+.portal-label {
+  text-align: center;
+  color: #22d3ee;
+  font-size: 11px;
+  margin-bottom: 8px;
+  text-shadow: 0 0 10px rgba(34,211,238,0.5);
+  letter-spacing: 2px;
+}
+.portal-portals {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.portal-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 60px;
+}
+.portal-btn:hover { background: rgba(34,211,238,0.4); border-color: #22d3ee; transform: scale(1.1); }
+.portal-btn.current { background: rgba(34,211,238,0.5); border-color: #fff; box-shadow: 0 0 20px rgba(34,211,238,0.7); }
+.portal-btn .portal-icon { font-size: 22px; margin-bottom: 2px; }
+.portal-btn .portal-name { font-size: 9px; color: #fff; }
+
+/* 龙虾 */
+.lobster {
+  position: absolute;
+  font-size: 32px;
+  cursor: pointer;
+  z-index: 20;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  transition: transform 0.1s;
+  animation: lobsterFloat 3s ease-in-out infinite;
+  text-shadow: 0 0 15px rgba(255,200,100,0.5);
+}
+.lobster:hover { transform: scale(1.3); }
+.lobster.me { 
+  filter: drop-shadow(0 0 20px #ffd700) drop-shadow(0 0 40px rgba(255,215,0,0.6)); 
+  transform: scale(1.15); 
+  animation: myLobsterGlow 2s ease-in-out infinite;
+}
+@keyframes myLobsterGlow {
+  0%, 100% { filter: drop-shadow(0 0 20px #ffd700) drop-shadow(0 0 40px rgba(255,215,0,0.4)); }
+  50% { filter: drop-shadow(0 0 30px #ffd700) drop-shadow(0 0 60px rgba(255,215,0,0.8)); }
+}
+@keyframes lobsterFloat {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-8px) rotate(3deg); }
+}
+@keyframes shieldPulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+/* 海洋生物 */
+.sea-creature {
+  position: absolute;
+  font-size: 24px;
+  pointer-events: none;
+  z-index: 8;
+  opacity: 0.6;
+  animation: creatureSwim linear infinite;
+}
+@keyframes creatureSwim {
+  0% { transform: translateX(-50px); }
+  100% { transform: translateX(calc(100vw + 50px)); }
+}
+
+/* 海底装饰物 */
+.sea-item {
+  position: absolute;
+  font-size: 26px;
+  cursor: pointer;
+  z-index: 10;
+  animation: itemBounce 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 10px rgba(255,215,0,0.6));
+  transition: transform 0.2s;
+}
+.sea-item:hover { transform: scale(1.4); }
+.sea-item:active { transform: scale(0.9); }
+@keyframes itemBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* 珊瑚 */
+.coral {
+  position: absolute;
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0.7;
+  animation: coralSway 3s ease-in-out infinite;
+}
+@keyframes coralSway {
+  0%, 100% { transform: rotate(-5deg) scale(1); }
+  50% { transform: rotate(5deg) scale(1.05); }
+}
+
+/* 气泡 */
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(6,182,212,0.3));
+  border: 1px solid rgba(255,255,255,0.5);
+  animation: bubbleRise linear infinite;
+  pointer-events: none;
+  z-index: 4;
+}
+@keyframes bubbleRise {
+  0% { transform: translateY(0) scale(1); opacity: 0.8; }
+  100% { transform: translateY(-120px) scale(0.3); opacity: 0; }
+}
+
+/* 拾取进度条 */
+.pickup-bar {
+  position: fixed;
+  bottom: 160px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.85);
+  border: 2px solid #22d3ee;
+  border-radius: 14px;
+  padding: 12px 20px;
+  z-index: 150;
+  text-align: center;
+  min-width: 200px;
+  display: none;
+}
+.pickup-bar.show { display: block; }
+.pickup-icon { font-size: 28px; margin-bottom: 6px; }
+.pickup-name { color: #22d3ee; font-size: 14px; margin-bottom: 8px; }
+.pickup-progress {
+  background: #333;
+  border-radius: 6px;
+  height: 10px;
+  overflow: hidden;
+}
+.pickup-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #22d3ee, #06b6d4);
+  transition: width 0.1s;
+  border-radius: 6px;
+}
+.pickup-text { color: #fff; font-size: 12px; margin-top: 6px; }
+
+/* 收纳袋弹窗 */
+.bag-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  backdrop-filter: blur(5px);
+}
+.bag-content {
+  background: linear-gradient(135deg, #0c4a6e 0%, #0e5a7c 50%, #164e63 100%);
+  border: 2px solid rgba(34,211,238,0.5);
+  border-radius: 20px;
+  padding: 20px;
+  width: 92%;
+  max-width: 380px;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+.bag-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+.bag-title { font-size: 18px; color: #22d3ee; }
+.bag-close { font-size: 24px; cursor: pointer; padding: 4px 8px; color: #fff; }
+.bag-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.bag-item {
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 10px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+.bag-item:hover { background: rgba(34,211,238,0.3); transform: scale(1.05); }
+.bag-item .item-icon { font-size: 28px; }
+.bag-item .item-name { font-size: 9px; color: #ccc; margin-top: 4px; }
+.bag-item.common { border-color: rgba(156,163,175,0.5); }
+.bag-item.uncommon { border-color: #22c55e; }
+.bag-item.rare { border-color: #3b82f6; }
+.bag-item.epic { border-color: #a855f7; }
+.bag-item.legendary { border-color: #f59e0b; background: rgba(245,158,11,0.2); }
+
+/* 保护盾开关 */
+.shield-toggle {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+}
+.shield-toggle input { opacity: 0; width: 0; height: 0; }
+.shield-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #475569;
+  border-radius: 28px;
+  transition: 0.3s;
+}
+.shield-slider::before {
+  content: '';
+  position: absolute;
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+.shield-toggle.on .shield-slider { background: #22c55e; }
+.shield-toggle.on .shield-slider::before { transform: translateX(24px); }
+
+/* 物品详情卡 */
+.item-card {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  backdrop-filter: blur(8px);
+}
+.card-inner {
+  background: linear-gradient(135deg, #1e3a5f 0%, #1e4b6e 50%, #164e63 100%);
+  border: 3px solid;
+  border-radius: 24px;
+  padding: 24px;
+  width: 90%;
+  max-width: 340px;
+  position: relative;
+  overflow: hidden;
+}
+.card-inner::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 60%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+  pointer-events: none;
+}
+.card-inner.common { border-color: #9ca3af; }
+.card-inner.uncommon { border-color: #22c55e; box-shadow: 0 0 30px rgba(34,197,94,0.4); }
+.card-inner.rare { border-color: #3b82f6; box-shadow: 0 0 30px rgba(59,130,246,0.4); }
+.card-inner.epic { border-color: #a855f7; box-shadow: 0 0 30px rgba(168,85,247,0.4); }
+.card-inner.legendary { border-color: #f59e0b; box-shadow: 0 0 40px rgba(245,158,11,0.5); }
+
+.card-wind {
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 80px; height: 80px;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%);
+  transform: rotate(45deg);
+  animation: windShine 3s ease-in-out infinite;
+}
+@keyframes windShine {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.card-icon-wrapper {
+  background: rgba(0,0,0,0.3);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+}
+.card-icon { font-size: 48px; display: block; }
+.card-rarity {
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-top: 6px;
+  display: inline-block;
+}
+.rarity-common { background: #6b7280; color: #fff; }
+.rarity-uncommon { background: #22c55e; color: #fff; }
+.rarity-rare { background: #3b82f6; color: #fff; }
+.rarity-epic { background: #a855f7; color: #fff; }
+.rarity-legendary { background: linear-gradient(90deg, #f59e0b, #ef4444); color: #fff; }
+
+.card-id {
+  text-align: right;
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+}
+.card-id span { display: block; }
+
+.card-title {
+  text-align: center;
+  font-size: 20px;
+  color: #fff;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.card-info {
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.card-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.card-info-row:last-child { border-bottom: none; }
+.card-info-label { color: rgba(255,255,255,0.6); }
+.card-info-value { color: #fff; }
+
+.card-desc {
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.6;
+  text-align: center;
+}
+
+.card-close {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  background: linear-gradient(135deg, #22d3ee, #06b6d4);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(34,211,238,0.4);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 14px;
+  z-index: 500;
+  transition: transform 0.3s ease;
+  border: 1px solid rgba(34,211,238,0.5);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- 深海光线 -->
+<div class="sea-light-rays"></div>
+<!-- 浮动粒子 -->
+<div class="sea-particles" id="seaParticles"></div>
+
+<!-- 主容器 -->
+<div class="sea-container" id="seaContainer">
+  <!-- 海底沙地 -->
+  <div class="sea-floor"></div>
+</div>
+
+<!-- 传送门 -->
+<div class="portal-bar">
+  <div class="portal-label">🌊 海域传送门</div>
+  <div class="portal-portals" id="portalList"></div>
+</div>
+
+<!-- 拾取进度 -->
+<div class="pickup-bar" id="pickupBar">
+  <div class="pickup-icon" id="pickupIcon">🐚</div>
+  <div class="pickup-name" id="pickupName">珍珠贝壳</div>
+  <div class="pickup-progress"><div class="pickup-progress-bar" id="pickupProgressBar"></div></div>
+  <div class="pickup-text">拾取中... <span id="pickupPercent">0</span>%</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ========== 配置 ==========
+const ZONES = [
+  { id: 'reef',  name: '珊瑚礁域', emoji: '🪸', bg: 'linear-gradient(180deg, #22d3ee 0%, #0891b2 30%, #0e7490 60%, #155e75 100%)' },
+  { id: 'abyss', name: '幽暗深渊', emoji: '🕳️', bg: 'linear-gradient(180deg, #7c3aed 0%, #4c1d95 30%, #2e1065 60%, #1a0533 100%)' },
+  { id: 'magma', name: '炽热岩浆', emoji: '🌋', bg: 'linear-gradient(180deg, #fb923c 0%, #ea580c 30%, #c2410c 60%, #7c2d12 100%)' },
+  { id: 'ice',   name: '极寒冰窟', emoji: '🧊', bg: 'linear-gradient(180deg, #67e8f9 0%, #22d3ee 30%, #0891b2 60%, #164e63 100%)' },
+];
+
+// 物品配置
+const FLOOR_ITEMS = [
+  // ========== 贝类（软体动物） ==========
+  { id: 'shell1', emoji: '🐚', name: '鲍鱼', rarity: 'uncommon', value: 35, desc: '名贵的鲍鱼，肉质鲜美' },
+  { id: 'shell2', emoji: '🦪', name: '扇贝', rarity: 'uncommon', value: 25, desc: '珍贵的扇贝，贝柱可是海鲜佳肴' },
+  { id: 'shell3', emoji: '🐚', name: '海螺', rarity: 'common', value: 15, desc: '美丽的海螺，吹响它可以召唤鱼群' },
+  { id: 'shell4', emoji: '🐚', name: '蛤蜊', rarity: 'common', value: 8, desc: '常见的蛤蜊，味美价廉' },
+  { id: 'shell5', emoji: '🦪', name: '牡蛎', rarity: 'uncommon', value: 22, desc: '鲜美的牡蛎，被称为海之牛奶' },
+  { id: 'shell6', emoji: '🦪', name: '贻贝', rarity: 'common', value: 12, desc: '淡菜，味道鲜美' },
+  { id: 'shell7', emoji: '🐚', name: '蛏子', rarity: 'uncommon', value: 20, desc: '长条形的贝类，口感鲜嫩' },
+  { id: 'shell8', emoji: '🐙', name: '章鱼', rarity: 'uncommon', value: 30, desc: '八腕的章鱼，触手有力' },
+  { id: 'shell9', emoji: '🦑', name: '乌贼', rarity: 'uncommon', value: 28, desc: '墨汁乌贼，可爱又美味' },
+  { id: 'shell10', emoji: '🦑', name: '鱿鱼', rarity: 'common', value: 18, desc: '常见的鱿鱼，烤着吃很香' },
+  { id: 'shell11', emoji: '🐚', name: '鹦鹉螺', rarity: 'epic', value: 160, desc: '古老的鹦鹉螺，螺旋精美' },
+  
+  // ========== 甲壳类 ==========
+  { id: 'crab1', emoji: '🦞', name: '龙虾', rarity: 'rare', value: 75, desc: '珍贵的龙虾，海鲜之王' },
+  { id: 'crab2', emoji: '🦀', name: '螃蟹', rarity: 'uncommon', value: 35, desc: '横行霸道的螃蟹，膏满肉肥' },
+  { id: 'crab3', emoji: '🦐', name: '皮皮虾', rarity: 'uncommon', value: 28, desc: '虾蛄，俗称皮皮虾，弹跳力惊人' },
+  { id: 'crab4', emoji: '🦐', name: '对虾', rarity: 'common', value: 20, desc: '常见的对虾，虾肉Q弹' },
+  { id: 'crab5', emoji: '🦀', name: '寄居蟹', rarity: 'common', value: 15, desc: '背着贝壳的小蟹，很可爱' },
+  { id: 'crab6', emoji: '🦐', name: '磷虾', rarity: 'common', value: 12, desc: '成群的磷虾，海洋的营养库' },
+  { id: 'crab7', emoji: '🦚', name: '藤壶', rarity: 'common', value: 8, desc: '附着在礁石上的小生物' },
+  
+  // ========== 棘皮动物 ==========
+  { id: 'echin1', emoji: '⭐', name: '海星', rarity: 'uncommon', value: 28, desc: '漂亮的海星，可以入药' },
+  { id: 'echin2', emoji: '🫧', name: '海胆', rarity: 'rare', value: 55, desc: '鲜美的海胆，黄如黄金' },
+  { id: 'echin3', emoji: '🥒', name: '海参', rarity: 'rare', value: 65, desc: '珍贵的海参，滋补佳品' },
+  { id: 'echin4', emoji: '⭐', name: '海蛇尾', rarity: 'common', value: 18, desc: '像蛇一样的海星，触手细长' },
+  { id: 'echin5', emoji: '🪷', name: '海百合', rarity: 'epic', value: 120, desc: '稀有的海百合，在深海中静静绽放' },
+  
+  // ========== 鱼类 ==========
+  { id: 'fish1', emoji: '🐠', name: '小丑鱼', rarity: 'uncommon', value: 30, desc: '和海葵共生的可爱小鱼' },
+  { id: 'fish2', emoji: '🐠', name: '蝴蝶鱼', rarity: 'uncommon', value: 28, desc: '色彩斑斓的蝴蝶鱼' },
+  { id: 'fish3', emoji: '🐠', name: '神仙鱼', rarity: 'rare', value: 45, desc: '优雅的神仙鱼，鳍如纱翼' },
+  { id: 'fish4', emoji: '🐡', name: '河豚', rarity: 'rare', value: 60, desc: '可爱的河豚，生气会鼓起来' },
+  { id: 'fish5', emoji: '🐟', name: '比目鱼', rarity: 'uncommon', value: 35, desc: '眼睛长在一侧的神奇鱼类' },
+  { id: 'fish6', emoji: '🐟', name: '石斑鱼', rarity: 'rare', value: 70, desc: '肉质细嫩的石斑鱼' },
+  { id: 'fish7', emoji: '🐟', name: '金枪鱼', rarity: 'uncommon', value: 40, desc: '游速极快的金枪鱼' },
+  { id: 'fish8', emoji: '🐟', name: '飞鱼', rarity: 'uncommon', value: 32, desc: '可以跃出水面滑翔的鱼' },
+  { id: 'fish9', emoji: '🐟', name: '海马', rarity: 'rare', value: 55, desc: '奇特的海马，父子情深' },
+  { id: 'fish10', emoji: '🐉', name: '海龙', rarity: 'epic', value: 85, desc: '神秘的海龙，和海马是亲戚' },
+  { id: 'fish11', emoji: '🐟', name: '翻车鱼', rarity: 'uncommon', value: 30, desc: '笨拙可爱的翻车鱼' },
+  { id: 'fish12', emoji: '🦈', name: '魔鬼鱼', rarity: 'rare', value: 65, desc: '优雅的蝠鲼，在海底翱翔' },
+  
+  // ========== 海洋哺乳动物 ==========
+  { id: 'mammal1', emoji: '🐬', name: '海豚', rarity: 'epic', value: 150, desc: '聪明的海豚，人类的好朋友' },
+  { id: 'mammal2', emoji: '🐋', name: '鲸鱼', rarity: 'legendary', value: 500, desc: '巨大的鲸鱼，海洋的巨人' },
+  { id: 'mammal3', emoji: '🦭', name: '海狮', rarity: 'rare', value: 80, desc: '可爱的海狮，会表演杂技' },
+  { id: 'mammal4', emoji: '🦭', name: '海豹', rarity: 'rare', value: 75, desc: '圆滚滚的海豹，憨态可掬' },
+  { id: 'mammal5', emoji: '🦈', name: '虎鲸', rarity: 'legendary', value: 666, desc: '海洋霸主虎鲸，战斗力惊人' },
+  
+  // ========== 爬行类 ==========
+  { id: 'reptile1', emoji: '🐢', name: '海龟', rarity: 'rare', value: 90, desc: '长寿的海龟，海洋精灵' },
+  { id: 'reptile2', emoji: '🐍', name: '海蛇', rarity: 'epic', value: 120, desc: '剧毒的海蛇，生存在海底' },
+  
+  // ========== 软骨鱼类 ==========
+  { id: 'cart1', emoji: '🦈', name: '大白鲨', rarity: 'legendary', value: 800, desc: '海洋顶级掠食者' },
+  { id: 'cart2', emoji: '🦈', name: '鲸鲨', rarity: 'legendary', value: 666, desc: '温柔的巨人，虽然是鲨鱼但吃浮游生物' },
+  { id: 'cart3', emoji: '🦈', name: '锤头鲨', rarity: 'epic', value: 180, desc: '头部形状独特的锤头鲨' },
+  
+  // ========== 腔肠动物 ==========
+  { id: 'coel1', emoji: '🪼', name: '水母', rarity: 'common', value: 15, desc: '晶莹剔透的水母，触须飘逸' },
+  { id: 'coel2', emoji: '🪸', name: '珊瑚虫', rarity: 'uncommon', value: 35, desc: '美丽的珊瑚，由无数珊瑚虫组成' },
+  { id: 'coel3', emoji: '🪸', name: '海葵', rarity: 'common', value: 18, desc: '像花一样的海葵，小丑鱼的家' },
+  { id: 'coel4', emoji: '🪼', name: '僧帽水母', rarity: 'rare', value: 50, desc: '美丽但危险的水母群' },
+  
+  // ========== 海绵动物 ==========
+  { id: 'sponge1', emoji: '🧽', name: '海绵', rarity: 'common', value: 12, desc: '多孔的海绵，清洁工的好帮手' },
+  { id: 'sponge2', emoji: '🧽', name: '偕老同穴', rarity: 'epic', value: 200, desc: '珍贵的海绵品种，又称维纳斯花篮' },
+  
+  // ========== 海藻类 ==========
+  { id: 'algae1', emoji: '🌿', name: '海带', rarity: 'common', value: 8, desc: '翠绿的海带，可食用' },
+  { id: 'algae2', emoji: '🪸', name: '紫菜', rarity: 'common', value: 10, desc: '可以用来做紫菜汤' },
+  { id: 'algae3', emoji: '🪸', name: '石花菜', rarity: 'uncommon', value: 25, desc: '可制作琼脂的海藻' },
+  { id: 'algae4', emoji: '🌿', name: '马尾藻', rarity: 'common', value: 10, desc: '漂浮的马尾藻，成片生长' },
+  { id: 'algae5', emoji: '🫒', name: '海葡萄', rarity: 'rare', value: 55, desc: '珍贵的海葡萄，口感独特' },
+  { id: 'algae6', emoji: '🌿', name: '钙化藻类', rarity: 'uncommon', value: 32, desc: '已经钙化的古老藻类' },
+  
+  // ========== 人工制品与遗存类 ==========
+  { id: 'art1', emoji: '🥫', name: '渔网', rarity: 'common', value: 12, desc: '废弃的渔网碎片' },
+  { id: 'art2', emoji: '🫧', name: '浮球', rarity: 'common', value: 10, desc: '渔船上用的玻璃浮球' },
+  { id: 'art3', emoji: '🏺', name: '陶器碎片', rarity: 'uncommon', value: 30, desc: '古代陶器的碎片' },
+  { id: 'art4', emoji: '🏺', name: '瓷器碎片', rarity: 'uncommon', value: 35, desc: '古代瓷器的碎片，很精美' },
+  { id: 'art5', emoji: '🪛', name: '铁钉', rarity: 'common', value: 8, desc: '古船上的铁钉，已经锈蚀' },
+  { id: 'art6', emoji: '🪵', name: '船木残片', rarity: 'uncommon', value: 22, desc: '沉船的木板，浸透海水' },
+  { id: 'art7', emoji: '🫙', name: '玻璃瓶', rarity: 'common', value: 10, desc: '被海水打磨光滑的玻璃瓶' },
+  { id: 'art8', emoji: '🪙', name: '海底金币', rarity: 'common', value: 25, desc: '古代沉船遗留的金币' },
+  { id: 'art9', emoji: '⚓', name: '小锚', rarity: 'rare', value: 60, desc: '沉船上的小铁锚' },
+  { id: 'art10', emoji: '💣', name: '炮弹', rarity: 'rare', value: 50, desc: '古代海战的炮弹' },
+  
+  // ========== 化石类 ==========
+  { id: 'fossil1', emoji: '🦴', name: '菊石化石', rarity: 'epic', value: 180, desc: '古老的菊石化石，保存完好' },
+  { id: 'fossil2', emoji: '🪸', name: '珊瑚化石', rarity: 'rare', value: 75, desc: '已经玉化的珊瑚化石' },
+  { id: 'fossil3', emoji: '🫧', name: '海胆化石', rarity: 'epic', value: 150, desc: '完整的海胆化石，稀有珍贵' },
+  { id: 'fossil4', emoji: '🐚', name: '贝壳化石', rarity: 'uncommon', value: 45, desc: '已经化石的古老贝壳' },
+  
+  // ========== 特殊物品 ==========
+  { id: 'pearl',  emoji: '💎', name: '珍珠', rarity: 'rare', value: 80, desc: '圆润光泽的珍珠，价值连城' },
+  { id: 'gem1',   emoji: '💠', name: '海蓝宝石', rarity: 'epic', value: 150, desc: '深邃的海蓝色宝石，据说能带来好运' },
+  { id: 'gem2', emoji: '💎', name: '海钻石', rarity: 'epic', value: 180, desc: '海底形成的钻石，硬度极高' },
+  { id: 'gem3', emoji: '💎', name: '海蛋白石', rarity: 'epic', value: 200, desc: '五彩斑斓的海底蛋白石' },
+  { id: 'treasure', emoji: '👑', name: '黄金冠', rarity: 'legendary', value: 500, desc: '沉没海底的王者之冠，拥有无上权力' },
+  { id: 'treasure2', emoji: '🏺', name: '珊瑚金权杖', rarity: 'legendary', value: 800, desc: '用纯金和珊瑚打造的权杖，象征着海底王国的权力' },
+  { id: 'treasure3', emoji: '⚓', name: '海神锚', rarity: 'legendary', value: 666, desc: '海神的锚，据说能平息海浪' },
+  { id: 'treasure4', emoji: '🔱', name: '三叉戟', rarity: 'legendary', value: 999, desc: '海神波塞冬的三叉戟，掌控海洋的力量' },
+];
+
+// 海洋生物（游动的装饰）
+const SEA_CREATURES = ['🐠', '🐟', '🐡', '🦀', '🦐', '🦞', '🐢', '🦑', '🪸', '🪼', '🦪', '🦑', '🐙', '🦈', '🐋', '🦭', '🐬', '🐟', '🦈'];
+
+// ========== 状态 ==========
+let currentZone = 'reef';
+let myPlayer = {
+  name: '掠夺者:蚩妊',
+  gold: 999999,
+  isShielded: true // 默认开启保护盾
+};
+// 海洋生物类型（其他玩家扮演的生物）
+const PLAYER_CREATURES = [
+  { emoji: '🦀', name: '螃蟹', rarity: 'common' },
+  { emoji: '🦐', name: '皮皮虾', rarity: 'uncommon' },
+  { emoji: '🐠', name: '小丑鱼', rarity: 'common' },
+  { emoji: '🐟', name: '比目鱼', rarity: 'uncommon' },
+  { emoji: '🐡', name: '河豚', rarity: 'uncommon' },
+  { emoji: '🦑', name: '鱿鱼', rarity: 'common' },
+  { emoji: '🐙', name: '章鱼', rarity: 'uncommon' },
+  { emoji: '🦪', name: '扇贝', rarity: 'common' },
+  { emoji: '⭐', name: '海星', rarity: 'common' },
+  { emoji: '🪸', name: '珊瑚', rarity: 'uncommon' },
+  { emoji: '🫧', name: '海胆', rarity: 'rare' },
+  { emoji: '🐢', name: '海龟', rarity: 'rare' },
+  { emoji: '🦈', name: '鲨鱼', rarity: 'epic' },
+  { emoji: '🐋', name: '鲸鱼', rarity: 'legendary' },
+];
+
+// 其他玩家（海底生物）- 带战斗属性
+let otherPlayers = [
+  { id: 1, name: '深海猎手', creature: PLAYER_CREATURES[0], x: 200, y: 300, isShielded: false, stats: { power: 120, attack: 25, defense: 15, speed: 10, luck: 5 } },
+  { id: 2, name: '海霸王', creature: PLAYER_CREATURES[5], x: 500, y: 200, isShielded: true, stats: { power: 200, attack: 45, defense: 30, speed: 15, luck: 10 } },
+  { id: 3, name: '珊瑚公主', creature: PLAYER_CREATURES[9], x: 300, y: 400, isShielded: false, stats: { power: 80, attack: 15, defense: 20, speed: 8, luck: 8 } },
+  { id: 4, name: '潮汐王子', creature: PLAYER_CREATURES[4], x: 600, y: 350, isShielded: false, stats: { power: 150, attack: 30, defense: 25, speed: 12, luck: 7 } },
+  { id: 5, name: '贝壳仙子', creature: PLAYER_CREATURES[7], x: 150, y: 450, isShielded: true, stats: { power: 100, attack: 20, defense: 18, speed: 10, luck: 12 } },
+  { id: 6, name: '礁石国王', creature: PLAYER_CREATURES[12], x: 450, y: 150, isShielded: false, stats: { power: 300, attack: 60, defense: 40, speed: 5, luck: 3 } },
+  { id: 7, name: '海藻精灵', creature: PLAYER_CREATURES[3], x: 550, y: 400, isShielded: false, stats: { power: 90, attack: 18, defense: 12, speed: 20, luck: 6 } },
+  { id: 8, name: '珍珠女王', creature: PLAYER_CREATURES[11], x: 350, y: 250, isShielded: true, stats: { power: 180, attack: 35, defense: 28, speed: 12, luck: 15 } },
+];
+let myLobster = { x: 0, y: 0, targetX: 0, targetY: 0, speed: 2 };
+let collectedItems = []; // { uid, item, zone, player, time }
+let seaItems = []; // 当前海域的物品
+let seaCreatures = []; // 当前海域的生物
+let pickingItem = null;
+let pickProgress = 0;
+let pickTimer = null;
+
+// ========== 初始化 ==========
+async function init() {
+  document.body.style.background = getZoneById(currentZone).bg;
+  
+  spawnParticles();
+  spawnBubbles();
+  spawnSeaCreatures();
+  spawnSeaItems();
+  renderPortal();
+  renderSeaFloor();
+  
+  // 我的龙虾初始位置
+  myLobster.x = window.innerWidth / 2 - 16;
+  myLobster.y = window.innerHeight - 200;
+  myLobster.targetX = myLobster.x;
+  myLobster.targetY = myLobster.y;
+  
+  renderMyLobster();
+  
+  // 从服务器加载已收集的物品
+  await loadCollectedItems();
+  
+  animate();
+  
+  // 点击移动
+  document.getElementById('seaContainer').addEventListener('click', handleContainerClick);
+}
+
+// ========== 粒子 ==========
+function spawnParticles() {
+  const container = document.getElementById('seaParticles');
+  for (let i = 0; i < 15; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `width:${2+Math.random()*5}px;height:${2+Math.random()*5}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*8}s;animation-delay:${Math.random()*5}s;`;
+    container.appendChild(p);
+  }
+}
+
+function spawnBubbles() {
+  const container = document.getElementById('seaContainer');
+  for (let i = 0; i < 12; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    b.style.cssText = `width:${4+Math.random()*10}px;height:${4+Math.random()*10}px;left:${Math.random()*100}%;bottom:${Math.random()*20}px;animation-duration:${3+Math.random()*4}s;animation-delay:${Math.random()*3}s;`;
+    container.appendChild(b);
+  }
+  setInterval(() => {
+    const existing = container.querySelectorAll('.bubble');
+    if (existing.length > 20) existing[0].remove();
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    b.style.cssText = `width:${4+Math.random()*10}px;height:${4+Math.random()*10}px;left:${Math.random()*100}%;bottom:0;animation-duration:${3+Math.random()*4}s;`;
+    container.appendChild(b);
+    setTimeout(() => b.remove(), 7000);
+  }, 2000);
+}
+
+// ========== 海洋生物 ==========
+function spawnSeaCreatures() {
+  seaCreatures = [];
+  for (let i = 0; i < 6; i++) {
+    seaCreatures.push({
+      emoji: SEA_CREATURES[Math.floor(Math.random() * SEA_CREATURES.length)],
+      x: Math.random() * window.innerWidth,
+      y: 100 + Math.random() * (window.innerHeight - 300),
+      speed: 0.5 + Math.random() * 1,
+      animDelay: Math.random() * 5
+    });
+  }
+  renderSeaCreatures();
+}
+
+function renderSeaCreatures() {
+  document.querySelectorAll('.sea-creature').forEach(el => el.remove());
+  const container = document.getElementById('seaContainer');
+  seaCreatures.forEach((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'sea-creature';
+    el.textContent = c.emoji;
+    el.style.cssText = `left:${c.x}px;top:${c.y}px;font-size:${18+Math.random()*14}px;animation-duration:${10+c.speed*5}s;animation-delay:${c.animDelay}s;`;
+    el.onclick = () => moveToAndPick(c);
+    container.appendChild(el);
+  });
+}
+
+function moveToAndPick(creature) {
+  myLobster.targetX = creature.x;
+  myLobster.targetY = creature.y;
+}
+
+// ========== 海底物品 ==========
+function spawnSeaItems() {
+  seaItems = [];
+  for (let i = 0; i < 10; i++) {
+    const template = FLOOR_ITEMS[Math.floor(Math.random() * FLOOR_ITEMS.length)];
+    seaItems.push({
+      uid: `item_${Date.now()}_${i}`,
+      ...template,
+      x: 30 + Math.random() * (window.innerWidth - 60),
+      y: window.innerHeight - 150 - Math.random() * 50,
+      collected: false
+    });
+  }
+  renderSeaItems();
+}
+
+function renderSeaItems() {
+  document.querySelectorAll('.sea-item').forEach(el => el.remove());
+  const container = document.getElementById('seaContainer');
+  seaItems.forEach(item => {
+    if (item.collected) return;
+    const el = document.createElement('div');
+    el.className = 'sea-item';
+    el.dataset.uid = item.uid;
+    el.textContent = item.emoji;
+    el.style.cssText = `left:${item.x}px;top:${item.y}px;`;
+    el.onclick = () => startPickup(item);
+    container.appendChild(el);
+  });
+}
+
+// ========== 珊瑚海底 ==========
+function renderSeaFloor() {
+  const container = document.getElementById('seaContainer');
+  const coralColors = ['#f472b6', '#22d3ee', '#a78bfa', '#4ade80', '#fbbf24', '#fb923c'];
+  
+  // 珊瑚
+  for (let i = 0; i < 20; i++) {
+    const coral = document.createElement('div');
+    coral.className = 'coral';
+    const emojis = ['🪸', '🪷', '🌿', '🪺'];
+    coral.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    coral.style.cssText = `left:${i*50 + Math.random()*30}px;bottom:${50 + Math.random()*40}px;font-size:${16+Math.random()*16}px;animation-delay:${Math.random()*2}s;filter:drop-shadow(0 0 8px ${coralColors[Math.floor(Math.random()*coralColors.length)]}80);`;
+    container.appendChild(coral);
+  }
+}
+
+// ========== 我的龙虾 ==========
+function renderMyLobster() {
+  let lobster = document.getElementById('myLobster');
+  if (!lobster) {
+    lobster = document.createElement('div');
+    lobster.id = 'myLobster';
+    lobster.className = 'lobster me';
+    lobster.textContent = '🦞';
+    lobster.onclick = showBag;
+    document.getElementById('seaContainer').appendChild(lobster);
+  }
+  lobster.style.left = myLobster.x + 'px';
+  lobster.style.top = myLobster.y + 'px';
+  
+  // 保护盾气泡
+  let shieldBubble = document.getElementById('shieldBubble');
+  if (myPlayer.isShielded) {
+    if (!shieldBubble) {
+      shieldBubble = document.createElement('div');
+      shieldBubble.id = 'shieldBubble';
+      shieldBubble.style.cssText = `
+        position: absolute;
+        width: 70px; height: 70px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(34,211,238,0.3) 0%, rgba(34,211,238,0.1) 50%, transparent 70%);
+        border: 2px solid rgba(34,211,238,0.6);
+        animation: shieldPulse 2s ease-in-out infinite;
+        z-index: 19;
+        pointer-events: none;
+      `;
+      document.getElementById('seaContainer').appendChild(shieldBubble);
+    }
+    shieldBubble.style.left = (myLobster.x - 6) + 'px';
+    shieldBubble.style.top = (myLobster.y - 6) + 'px';
+  } else if (shieldBubble) {
+    shieldBubble.remove();
+  }
+}
+
+// ========== 其他玩家（海底生物） ==========
+const MAX_CREATURES = 20;
+
+function renderOtherPlayers() {
+  // 确保有足够生物
+  while (otherPlayers.filter(p => !p.defeated).length < MAX_CREATURES) {
+    spawnNewCreature();
+  }
+  
+  otherPlayers.forEach(player => {
+    if (player.defeated) return;
+    
+    // 慢慢随机移动
+    if (Math.random() < 0.02) {
+      player.x += (Math.random() - 0.5) * 60;
+      player.y += (Math.random() - 0.5) * 40;
+      player.x = Math.max(30, Math.min(window.innerWidth - 80, player.x));
+      player.y = Math.max(80, Math.min(window.innerHeight - 180, player.y));
+    }
+    
+    let el = document.getElementById('player_' + player.id);
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'player_' + player.id;
+      el.className = 'lobster';
+      el.textContent = player.creature.emoji;
+      el.style.cssText = `font-size:32px;opacity:0.9;`;
+      el.onclick = () => handleAttackPlayer(player);
+      document.getElementById('seaContainer').appendChild(el);
+    }
+    el.style.left = player.x + 'px';
+    el.style.top = player.y + 'px';
+    
+    // 显示玩家昵称
+    let nameLabel = document.getElementById('name_' + player.id);
+    if (!nameLabel) {
+      nameLabel = document.createElement('div');
+      nameLabel.id = 'name_' + player.id;
+      nameLabel.style.cssText = `
+        position: absolute;
+        font-size: 11px;
+        color: #fff;
+        background: rgba(0,0,0,0.6);
+        padding: 3px 8px;
+        border-radius: 10px;
+        white-space: nowrap;
+        z-index: 25;
+        pointer-events: none;
+        text-align: center;
+      `;
+      document.getElementById('seaContainer').appendChild(nameLabel);
+    }
+    nameLabel.textContent = player.name;
+    nameLabel.style.left = (player.x - 10) + 'px';
+    nameLabel.style.top = (player.y - 25) + 'px';
+    
+    // 如果有保护盾显示气泡
+    let pShield = document.getElementById('pShield_' + player.id);
+    if (player.isShielded) {
+      if (!pShield) {
+        pShield = document.createElement('div');
+        pShield.id = 'pShield_' + player.id;
+        pShield.style.cssText = `
+          position: absolute;
+          width: 60px; height: 60px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(34,211,238,0.2) 0%, rgba(34,211,238,0.05) 50%, transparent 70%);
+          border: 2px solid rgba(34,211,238,0.4);
+          animation: shieldPulse 2s ease-in-out infinite;
+          z-index: 19;
+          pointer-events: none;
+        `;
+        el.parentNode.insertBefore(pShield, el);
+      }
+      pShield.style.left = (player.x - 2) + 'px';
+      pShield.style.top = (player.y - 2) + 'px';
+    } else if (pShield) {
+      pShield.remove();
+      pShield = null;
+    }
+  });
+}
+
+// ========== 攻击玩家 ==========
+function handleAttackPlayer(target) {
+  if (myPlayer.isShielded) {
+    showToast('⚠️ 开启保护盾时无法攻击！');
+    return;
+  }
+  
+  if (target.isShielded) {
+    showToast(`🛡️ ${target.name} 开启了保护盾，无法攻击！`);
+    return;
+  }
+  
+  // 攻击成功！
+  showToast(`⚔️ 攻击 ${target.name} 成功！获得标本！`);
+  
+  // 创建标本物品
+  const specimenItem = {
+    uid: `specimen_${Date.now()}`,
+    item: {
+      id: `specimen_${target.creature.name}`,
+      emoji: target.creature.emoji,
+      name: `${target.creature.name}标本`,
+      rarity: target.creature.rarity,
+      value: getRarityValue(target.creature.rarity),
+      desc: `被击败的${target.name}变成了标本保存在收纳袋中`
+    },
+    zone: currentZone,
+    player: myPlayer.name,
+    time: new Date().toLocaleString()
+  };
+  
+  // 添加到收藏
+  collectedItems.push(specimenItem);
+  saveItemToServer(specimenItem.item);
+  updateCollectionBadge();
+  
+  // 移除被击败的生物
+  target.defeated = true;
+  const el = document.getElementById('player_' + target.id);
+  const nameEl = document.getElementById('name_' + target.id);
+  const shieldEl = document.getElementById('pShield_' + target.id);
+  if (el) el.remove();
+  if (nameEl) nameEl.remove();
+  if (shieldEl) shieldEl.remove();
+  
+  // 显示战斗结果弹窗
+  showBattleResult({
+    attacker: myPlayer.name,
+    defender: target.name,
+    zone: currentZone,
+    zoneName: getZoneById(currentZone).name,
+    specimen: specimenItem.item,
+    time: new Date().toLocaleString()
+  });
+  
+  // 3-5秒后在随机位置重生新生物
+  setTimeout(() => {
+    respawnCreature(target.id);
+  }, 3000 + Math.random() * 2000);
+}
+
+function respawnCreature(oldId) {
+  const idx = otherPlayers.findIndex(p => p.id === oldId);
+  if (idx !== -1) {
+    const newCreature = PLAYER_CREATURES[Math.floor(Math.random() * PLAYER_CREATURES.length)];
+    otherPlayers[idx] = {
+      id: oldId,
+      name: generateCreatureName(),
+      creature: newCreature,
+      x: 50 + Math.random() * (window.innerWidth - 100),
+      y: 100 + Math.random() * (window.innerHeight - 350),
+      isShielded: Math.random() < 0.3,
+      defeated: false,
+      stats: generateCreatureStats(newCreature.rarity)
+    };
+  }
+}
+
+function spawnNewCreature() {
+  const newId = Date.now() + Math.random() * 1000;
+  const newCreature = PLAYER_CREATURES[Math.floor(Math.random() * PLAYER_CREATURES.length)];
+  // 从屏幕边缘生成
+  const edge = Math.floor(Math.random() * 4);
+  let x, y;
+  if (edge === 0) { x = -40; y = 100 + Math.random() * (window.innerHeight - 350); }
+  else if (edge === 1) { x = window.innerWidth + 40; y = 100 + Math.random() * (window.innerHeight - 350); }
+  else if (edge === 2) { x = Math.random() * window.innerWidth; y = -40; }
+  else { x = Math.random() * window.innerWidth; y = window.innerHeight - 250; }
+  
+  otherPlayers.push({
+    id: newId,
+    name: generateCreatureName(),
+    creature: newCreature,
+    x: x,
+    y: y,
+    isShielded: Math.random() < 0.2,
+    defeated: false,
+    stats: generateCreatureStats(newCreature.rarity)
+  });
+}
+
+function generateCreatureName() {
+  const prefixes = ['深海', '潮汐', '礁石', '珊瑚', '海藻', '珍珠', '贝壳', '浪花', '月光', '星辰', '海风', '潮汐'];
+  const suffixes = ['使者', '王子', '公主', '精灵', '守卫', '猎人', '王者', '仙子', '长老', '骑士', '领主'];
+  return prefixes[Math.floor(Math.random() * prefixes.length)] + suffixes[Math.floor(Math.random() * suffixes.length)];
+}
+
+function generateCreatureStats(rarity) {
+  const base = { common: 50, uncommon: 80, rare: 150, epic: 250, legendary: 400 };
+  const b = base[rarity] || 50;
+  const v = 0.7 + Math.random() * 0.6;
+  return {
+    power: Math.floor(b * v),
+    attack: Math.floor((b * 0.3 + Math.random() * 20) * v),
+    defense: Math.floor((b * 0.2 + Math.random() * 15) * v),
+    speed: Math.floor((b * 0.1 + Math.random() * 10) * v),
+    luck: Math.floor(Math.random() * 10 * v)
+  };
+}
+
+function getRarityValue(rarity) {
+  const values = { common: 30, uncommon: 60, rare: 120, epic: 300, legendary: 1000 };
+  return values[rarity] || 30;
+}
+
+function showBattleResult(report) {
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 300;
+  `;
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  
+  const specimen = report.specimen || {};
+  const isVictory = report.result === 'victory';
+  const borderColor = isVictory ? '#22c55e' : '#ef4444';
+  const titleColor = isVictory ? '#22c55e' : '#ef4444';
+  const title = isVictory ? '⚔️ 战斗胜利！' : '💀 战斗失败！';
+  const resultText = isVictory ? '标本已存入收纳袋！' : '下次再接再厉！';
+  
+  modal.innerHTML = `
+    <div style="background:linear-gradient(135deg,#1e3a5f,#164e63);border:2px solid ${borderColor};border-radius:20px;padding:24px;width:90%;max-width:320px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:12px;">${isVictory ? '🏆' : '💔'}</div>
+      <div style="font-size:20px;color:${titleColor};margin-bottom:16px;">${title}</div>
+      <div style="background:rgba(0,0,0,0.3);border-radius:12px;padding:14px;text-align:left;font-size:13px;line-height:1.8;">
+        <div><span style="color:#aaa;">战斗海域：</span><span style="color:#fff;">${report.zoneName}</span></div>
+        <div><span style="color:#aaa;">攻击方：</span><span style="color:#ff6b6b;">${report.attacker}</span> <span style="color:#aaa;">(战力:${report.myPower})</span></div>
+        <div><span style="color:#aaa;">防御方：</span><span style="color:#fff;">${report.defender}</span> <span style="color:#aaa;">(战力:${report.targetPower})</span></div>
+        ${isVictory ? `
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);">
+          <div><span style="color:#ffd700;">获得标本：</span><span style="font-size:20px;">${specimen.emoji || '🦐'}</span> <span style="color:#fff;">${specimen.name || ''}</span></div>
+          <div><span style="color:#ffd700;">标本价值：</span><span style="color:#ffd700;">💰 ${specimen.value || 0}</span></div>
+        </div>
+        ` : ''}
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);">
+          <span style="color:#aaa;">战斗时间：</span><span style="color:#fff;">${report.time}</span>
+        </div>
+      </div>
+      <div style="margin-top:14px;font-size:11px;color:#aaa;">${resultText}</div>
+      <button onclick="this.closest('div').parentElement.remove()" style="margin-top:16px;width:100%;padding:12px;background:linear-gradient(135deg,${isVictory ? '#22c55e' : '#ef4444'},${isVictory ? '#16a34a' : '#dc2626'});border:none;border-radius:10px;color:#fff;font-size:14px;cursor:pointer;">确定</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function animate() {
+  // 移动
+  const dx = myLobster.targetX - myLobster.x;
+  const dy = myLobster.targetY - myLobster.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist > 2) {
+    myLobster.x += (dx / dist) * myLobster.speed;
+    myLobster.y += (dy / dist) * myLobster.speed;
+    renderMyLobster();
+  }
+  
+  // 渲染其他玩家
+  renderOtherPlayers();
+  
+  // 检测靠近物品
+  if (!pickingItem) {
+    const nearby = seaItems.find(item => {
+      if (item.collected) return false;
+      const ix = item.x + 13;
+      const iy = item.y + 13;
+      const lx = myLobster.x + 16;
+      const ly = myLobster.y + 16;
+      return Math.sqrt((ix-lx)**2 + (iy-ly)**2) < 50;
+    });
+    if (nearby) startPickup(nearby);
+  }
+  
+  requestAnimationFrame(animate);
+}
+
+// ========== 拾取 ==========
+function startPickup(item) {
+  if (pickingItem) return;
+  pickingItem = item;
+  pickProgress = 0;
+  
+  const bar = document.getElementById('pickupBar');
+  bar.classList.add('show');
+  document.getElementById('pickupIcon').textContent = item.emoji;
+  document.getElementById('pickupName').textContent = item.name;
+  
+  pickTimer = setInterval(() => {
+    pickProgress += 6.67; // 1.5秒 = 100%
+    document.getElementById('pickupProgressBar').style.width = pickProgress + '%';
+    document.getElementById('pickupPercent').textContent = Math.floor(pickProgress);
+    
+    if (pickProgress >= 100) {
+      completePickup();
+    }
+  }, 100);
+}
+
+// 加载已收集的物品（从服务器）
+async function loadCollectedItems() {
+  try {
+    const agentId = localStorage.getItem('agent_id');
+    if (!agentId) return;
+    
+    const res = await fetch('/api/sea/collected', {
+      headers: { 'Authorization': 'Bearer ' + agentId }
+    });
+    const data = await res.json();
+    if (data.success && data.items) {
+      collectedItems = data.items;
+      updateCollectionBadge();
+    }
+  } catch(e) {
+    console.log('加载物品失败', e);
+  }
+}
+
+// 保存物品到服务器
+async function saveItemToServer(item) {
+  try {
+    const agentId = localStorage.getItem('agent_id') || '143';
+    await fetch('/api/sea/collect', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + agentId
+      },
+      body: JSON.stringify({
+        item_id: item.id,
+        emoji: item.emoji,
+        name: item.name,
+        rarity: item.rarity,
+        value: item.value || 0,
+        zone: currentZone,
+        desc: item.desc || ''
+      })
+    });
+  } catch(e) {
+    console.log('保存物品失败', e);
+  }
+}
+
+// 获取玩家战斗属性
+async function getPlayerStats() {
+  try {
+    const res = await fetch('/api/player/stats', { headers: { ...getAuthHeader() } });
+    const data = await res.json();
+    if (data.success) {
+      return data.stats;
+    }
+  } catch(e) {}
+  return { power: 100, attack: 50, defense: 30, speed: 20, wisdom: 10, luck: 5 };
+}
+
+function completePickup() {
+  clearInterval(pickTimer);
+  if (!pickingItem) return;
+  
+  const item = pickingItem;
+  item.collected = true;
+  
+  const newItem = {
+    uid: item.uid,
+    item: item,
+    zone: currentZone,
+    player: myPlayer.name,
+    time: new Date().toLocaleString()
+  };
+  collectedItems.push(newItem);
+  
+  // 保存到服务器
+  saveItemToServer(item);
+  
+  // 移除物品元素
+  const el = document.querySelector(`.sea-item[data-uid="${item.uid}"]`);
+  if (el) el.remove();
+  
+  // 隐藏进度条
+  document.getElementById('pickupBar').classList.remove('show');
+  document.getElementById('pickupProgressBar').style.width = '0%';
+  
+  showToast(`✨ 拾取了 ${item.emoji} ${item.name}`);
+  
+  pickingItem = null;
+  pickProgress = 0;
+  
+  // 3秒后物品重生
+  setTimeout(() => {
+    item.collected = false;
+    item.x = 30 + Math.random() * (window.innerWidth - 60);
+    item.y = window.innerHeight - 150 - Math.random() * 50;
+    renderSeaItems();
+  }, 5000);
+}
+
+// ========== 点击移动 ==========
+function handleContainerClick(e) {
+  if (e.target.closest('.sea-item') || e.target.closest('.sea-creature') || e.target.closest('.portal-bar') || e.target.closest('#myLobster')) return;
+  
+  const rect = document.getElementById('seaContainer').getBoundingClientRect();
+  myLobster.targetX = e.clientX - rect.left - 16;
+  myLobster.targetY = e.clientY - rect.top - 16;
+}
+
+// ========== 传送门 ==========
+function renderPortal() {
+  const list = document.getElementById('portalList');
+  list.innerHTML = ZONES.map(zone => `
+    <div class="portal-btn ${zone.id === currentZone ? 'current' : ''}" onclick="goToZone('${zone.id}')">
+      <span class="portal-icon">${zone.emoji}</span>
+      <span class="portal-name">${zone.name}</span>
+    </div>
+  `).join('');
+}
+
+function goToZone(zoneId) {
+  if (zoneId === currentZone) return;
+  
+  currentZone = zoneId;
+  document.body.style.background = getZoneById(zoneId).bg;
+  
+  // 重生物品和生物
+  spawnSeaItems();
+  spawnSeaCreatures();
+  
+  renderPortal();
+  showToast(`🌀 传送到 ${getZoneById(zoneId).name}`);
+}
+
+function getZoneById(id) {
+  return ZONES.find(z => z.id === id) || ZONES[0];
+}
+
+// ========== 收纳袋 ==========
+function showBag() {
+  const modal = document.createElement('div');
+  modal.className = 'bag-modal';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  
+  const totalValue = collectedItems.reduce((sum, c) => sum + c.item.value, 0);
+  
+  // 按物品ID分组统计数量
+  const grouped = {};
+  collectedItems.forEach(c => {
+    const key = c.item.id;
+    if (!grouped[key]) {
+      grouped[key] = { ...c.item, count: 0, uid: c.uid };
+    }
+    grouped[key].count++;
+  });
+  
+  const uniqueCount = Object.keys(grouped).length;
+  const totalCount = collectedItems.length;
+  
+  modal.innerHTML = `
+    <div class="bag-content">
+      <div class="bag-header">
+        <div class="bag-title">🎒 收纳袋</div>
+        <div class="bag-close" onclick="this.closest('.bag-modal').remove()">✕</div>
+      </div>
+      
+      <!-- 保护盾开关 -->
+      <div style="background:rgba(0,0,0,0.3);border-radius:12px;padding:12px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:14px;color:#fff;">🛡️ 保护盾</div>
+            <div style="font-size:11px;color:#aaa;margin-top:4px;">${myPlayer.isShielded ? '✓ 已开启 - 无法被攻击' : '✗ 已关闭 - 可以攻击他人'}</div>
+          </div>
+          <label class="shield-toggle ${myPlayer.isShielded ? 'on' : ''}">
+            <input type="checkbox" ${myPlayer.isShielded ? 'checked' : ''} onchange="toggleShield()">
+            <span class="shield-slider"></span>
+          </label>
+        </div>
+      </div>
+      
+      <div style="font-size:12px;color:#ffd700;margin-bottom:12px;">总价值: ${totalValue} 金贝 | ${uniqueCount} 种物品 共${totalCount}件</div>
+      <div class="bag-grid">
+        ${collectedItems.length === 0 ? '<div style="grid-column:1/-1;text-align:center;color:#666;padding:30px;">还没有拾取任何物品~</div>' : ''}
+        ${Object.values(grouped).map(c => `
+          <div class="bag-item ${c.rarity}" onclick="showItemCard('${c.uid}')">
+            <div class="item-icon" style="position:relative;">${c.emoji}${c.count > 1 ? `<span style="position:absolute;top:-8px;right:-8px;background:#ef4444;color:#fff;font-size:10px;padding:2px 5px;border-radius:10px;font-weight:bold;min-width:18px;text-align:center;">${c.count}</span>` : ''}</div>
+            <div class="item-name">${c.name}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function toggleShield() {
+  myPlayer.isShielded = !myPlayer.isShielded;
+  if (myPlayer.isShielded) {
+    showToast('🛡️ 保护盾已开启！');
+  } else {
+    showToast('⚠️ 保护盾已关闭，可以攻击他人');
+  }
+  // 关闭弹窗
+  document.querySelector('.bag-modal')?.remove();
+}
+
+// ========== 物品详情卡 ==========
+function showItemCard(uid) {
+  const col = collectedItems.find(c => c.uid === uid);
+  if (!col) return;
+  
+  const card = document.createElement('div');
+  card.className = 'item-card';
+  card.onclick = (e) => { if (e.target === card) card.remove(); };
+  
+  const { item, zone, player, time } = col;
+  const zoneName = getZoneById(zone).name;
+  const antiFake = 'QD' + Date.now().toString(36).toUpperCase() + '-' + uid.slice(-6).toUpperCase();
+  
+  card.innerHTML = `
+    <div class="card-inner ${item.rarity}">
+      <div class="card-wind"></div>
+      <div class="card-header">
+        <div class="card-icon-wrapper">
+          <span class="card-icon">${item.emoji}</span>
+          <span class="card-rarity rarity-${item.rarity}">${getRarityText(item.rarity)}</span>
+        </div>
+        <div class="card-id">
+          <span>防伪码</span>
+          <span style="font-size:8px;color:#aaa;">${antiFake}</span>
+        </div>
+      </div>
+      <div class="card-title">${item.name}</div>
+      <div class="card-info">
+        <div class="card-info-row"><span class="card-info-label">拾取时间</span><span class="card-info-value">${time}</span></div>
+        <div class="card-info-row"><span class="card-info-label">拾取海域</span><span class="card-info-value">${zoneName}</span></div>
+        <div class="card-info-row"><span class="card-info-label">拾取玩家</span><span class="card-info-value">${player}</span></div>
+        <div class="card-info-row"><span class="card-info-label">物品价值</span><span class="card-info-value" style="color:#ffd700">💰 ${item.value} 金贝</span></div>
+      </div>
+      <div class="card-desc">${item.desc}</div>
+      <button class="card-close" onclick="this.closest('.item-card').remove()">确定</button>
+    </div>
+  `;
+  document.body.appendChild(card);
+}
+
+function getRarityText(rarity) {
+  const map = { common: '普通', uncommon: '优秀', rare: '稀有', epic: '史诗', legendary: '传说' };
+  return map[rarity] || rarity;
+}
+
+// ========== Toast ==========
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ========== 启动 ==========
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🧘 冥想池 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { 
+      padding-top: 0; 
+      background: linear-gradient(180deg, #0a1a2e 0%, #1a3a5e 30%, #0a2a4a 60%, #051525 100%);
+      min-height: 100vh;
+    }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(10,40,70,0.95); border-bottom: 1px solid rgba(100,200,255,0.3); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: #00bfff; flex: 1; }
+    .back-btn { background: none; border: none; color: #00bfff; font-size: 20px; cursor: pointer; padding: 8px; }
+    
+    /* Floating particles */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(100,200,255,0.4);
+      border-radius: 50%;
+      animation: floatParticle 8s ease-in-out infinite;
+    }
+    @keyframes floatParticle {
+      0%, 100% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+      20% { opacity: 0.8; }
+      80% { opacity: 0.8; }
+      100% { transform: translateY(-100px) scale(1); opacity: 0; }
+    }
+    
+    /* Ripples */
+    .ripple {
+      position: fixed;
+      border: 2px solid rgba(100,200,255,0.2);
+      border-radius: 50%;
+      animation: rippleExpand 4s ease-out infinite;
+      pointer-events: none;
+    }
+    @keyframes rippleExpand {
+      0% { width: 0; height: 0; opacity: 0.8; transform: translate(-50%, -50%); }
+      100% { width: 300px; height: 300px; opacity: 0; transform: translate(-50%, -50%); }
+    }
+    
+    .content { 
+      margin-top: 60px; 
+      padding: 12px; 
+      position: relative;
+      z-index: 10;
+    }
+    
+    .mp-card {
+      background: rgba(10,40,70,0.85);
+      border: 2px solid rgba(100,200,255,0.4);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    
+    .mp-display {
+      text-align: center;
+      padding: 20px 0;
+    }
+    .mp-icon { font-size: 40px; margin-bottom: 10px; }
+    .mp-bar { height: 20px; background: rgba(0,0,0,0.4); border-radius: 10px; overflow: hidden; margin: 10px 20px; }
+    .mp-fill { height: 100%; background: linear-gradient(90deg, #6495ed, #00bfff); border-radius: 10px; transition: width 0.5s; }
+    .mp-text { font-size: 18px; color: #00bfff; margin-top: 8px; }
+    
+    .zone-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .zone {
+      background: rgba(100,200,255,0.1);
+      border: 1px solid rgba(100,200,255,0.3);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .zone:hover { background: rgba(100,200,255,0.2); transform: scale(1.02); }
+    .zone.active { border-color: #00bfff; background: rgba(100,200,255,0.25); }
+    .zone.locked { opacity: 0.5; cursor: not-allowed; }
+    .zone-icon { font-size: 32px; margin-bottom: 6px; }
+    .zone-name { font-size: 13px; color: #00bfff; margin-bottom: 4px; }
+    .zone-desc { font-size: 10px; color: rgba(100,200,255,0.6); }
+    .zone-bonus { font-size: 10px; color: #ffd700; margin-top: 4px; }
+    
+    .meditation-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(100,200,255,0.4), rgba(100,150,200,0.4));
+      border: 2px solid rgba(100,200,255,0.5);
+      border-radius: 12px;
+      color: #00bfff;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all 0.3s;
+    }
+    .meditation-btn:hover { background: linear-gradient(135deg, rgba(100,200,255,0.6), rgba(100,150,200,0.6)); }
+    .meditation-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .timer-display {
+      text-align: center;
+      padding: 16px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      margin-top: 12px;
+    }
+    .timer-label { font-size: 12px; color: rgba(100,200,255,0.7); margin-bottom: 4px; }
+    .timer-value { font-size: 28px; color: #00bfff; font-weight: bold; }
+    
+    .reward-info {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+    }
+    .reward-item { text-align: center; }
+    .reward-icon { font-size: 20px; }
+    .reward-value { font-size: 12px; color: #00bfff; }
+    .reward-label { font-size: 10px; color: rgba(100,200,255,0.5); }
+    
+    .stat-card { background: rgba(10,40,70,0.85); border: 2px solid rgba(100,200,255,0.4); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+    .stat-title { font-size: 14px; color: #00bfff; margin-bottom: 10px; }
+    .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(100,200,255,0.1); }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { font-size: 12px; color: rgba(100,200,255,0.7); }
+    .stat-value { font-size: 12px; color: #00bfff; }
+    
+    .progress-card {
+      background: rgba(10,40,70,0.85);
+      border: 2px solid rgba(100,200,255,0.4);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .progress-title { font-size: 14px; color: #00bfff; margin-bottom: 12px; display: flex; justify-content: space-between; }
+    .progress-bar { height: 8px; background: rgba(0,0,0,0.4); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #6495ed, #00bfff); transition: width 0.3s; }
+    .progress-text { font-size: 11px; color: rgba(100,200,255,0.6); margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+  <div id="ripples"></div>
+  
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>🧘 冥想池</h1>
+  </div>
+
+  <div class="content">
+    <div class="mp-card">
+      <div class="mp-display">
+        <div class="mp-icon">💫</div>
+        <div class="mp-bar"><div class="mp-fill" id="mpFill" style="width:80%"></div></div>
+        <div class="mp-text">MP: <span id="currentMp">80</span> / <span id="maxMp">100</span></div>
+      </div>
+    </div>
+    
+    <div class="zone-grid">
+      <div class="zone" id="zone1" onclick="selectZone(1)">
+        <div class="zone-icon">🌊</div>
+        <div class="zone-name">浅海冥想台</div>
+        <div class="zone-desc">适合新手</div>
+        <div class="zone-bonus">+5% MP恢复</div>
+      </div>
+      <div class="zone" id="zone2" onclick="selectZone(2)">
+        <div class="zone-icon">🌊</div>
+        <div class="zone-name">深海静心殿</div>
+        <div class="zone-desc">中级冥想</div>
+        <div class="zone-bonus">+10% MP恢复</div>
+      </div>
+      <div class="zone locked" id="zone3">
+        <div class="zone-icon">🔒</div>
+        <div class="zone-name">龙宫冥想室</div>
+        <div class="zone-desc">需VIP3</div>
+        <div class="zone-bonus">+20% MP恢复</div>
+      </div>
+      <div class="zone locked" id="zone4">
+        <div class="zone-icon">🔒</div>
+        <div class="zone-name">意识之海</div>
+        <div class="zone-desc">需VIP5</div>
+        <div class="zone-bonus">+30% MP恢复</div>
+      </div>
+    </div>
+    
+    <button class="meditation-btn" id="meditationBtn" onclick="toggleMeditation()">
+      🧘 开始冥想
+    </button>
+    
+    <div class="timer-display" id="timerDisplay" style="display:none">
+      <div class="timer-label">冥想剩余时间</div>
+      <div class="timer-value" id="timerValue">05:00</div>
+    </div>
+    
+    <div class="reward-info">
+      <div class="reward-item">
+        <div class="reward-icon">💫</div>
+        <div class="reward-value">+50</div>
+        <div class="reward-label">MP恢复</div>
+      </div>
+      <div class="reward-item">
+        <div class="reward-icon">✨</div>
+        <div class="reward-value">+10</div>
+        <div class="reward-label">冥想经验</div>
+      </div>
+      <div class="reward-item">
+        <div class="reward-icon">🧘</div>
+        <div class="reward-value">+5</div>
+        <div class="reward-label">专注度</div>
+      </div>
+    </div>
+    
+    <div class="progress-card">
+      <div class="progress-title">
+        <span>今日冥想进度</span>
+        <span id="meditationCount">0/3</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="meditationFill" style="width:0%"></div></div>
+      <div class="progress-text">完成3次冥想可获得额外奖励</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-title">📊 冥想统计</div>
+      <div class="stat-row">
+        <span class="stat-label">累计冥想次数</span>
+        <span class="stat-value" id="totalMeditations">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">累计恢复MP</span>
+        <span class="stat-value" id="totalMpRestored">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">冥想等级</span>
+        <span class="stat-value" id="meditationLevel">1</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">专注度</span>
+        <span class="stat-value" id="focusPoints">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/shared.js"></script>
+  <script>
+    let currentZone = 1;
+    let isMeditating = false;
+    let meditationTime = 300; // 5 minutes
+    let timerInterval = null;
+    
+    // Create floating particles
+    const particlesContainer = document.getElementById('particles');
+    for (let i = 0; i < 15; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.animationDuration = (Math.random() * 5 + 5) + 's';
+      particle.style.animationDelay = (Math.random() * 5) + 's';
+      particlesContainer.appendChild(particle);
+    }
+    
+    // Create ripples
+    const ripplesContainer = document.getElementById('ripples');
+    setInterval(() => {
+      const ripple = document.createElement('div');
+      ripple.className = 'ripple';
+      ripple.style.left = (30 + Math.random() * 40) + '%';
+      ripple.style.top = (40 + Math.random() * 30) + '%';
+      ripplesContainer.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 4000);
+    }, 2000);
+    
+    function selectZone(zone) {
+      if (zone <= 2) {
+        document.querySelectorAll('.zone').forEach((z, i) => z.classList.toggle('active', i + 1 === zone));
+        currentZone = zone;
+        showToast(`已选择区域 ${zone}`, 'success');
+      }
+    }
+    
+    function toggleMeditation() {
+      if (isMeditating) {
+        stopMeditation();
+      } else {
+        startMeditation();
+      }
+    }
+    
+    function startMeditation() {
+      isMeditating = true;
+      meditationTime = 300;
+      document.getElementById('meditationBtn').textContent = '⏹️ 停止冥想';
+      document.getElementById('timerDisplay').style.display = 'block';
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        meditationTime--;
+        updateTimerDisplay();
+        if (meditationTime <= 0) {
+          completeMeditation();
+        }
+      }, 1000);
+      showToast('🧘 冥想开始...', 'info');
+    }
+    
+    function stopMeditation() {
+      isMeditating = false;
+      clearInterval(timerInterval);
+      document.getElementById('meditationBtn').textContent = '🧘 开始冥想';
+      document.getElementById('timerDisplay').style.display = 'none';
+      showToast('冥想已停止', 'info');
+    }
+    
+    function completeMeditation() {
+      isMeditating = false;
+      clearInterval(timerInterval);
+      document.getElementById('meditationBtn').textContent = '🧘 开始冥想';
+      document.getElementById('timerDisplay').style.display = 'none';
+      
+      const bonus = currentZone === 1 ? 1.05 : 1.10;
+      const mpRestored = Math.floor(50 * bonus);
+      
+      // Update stats
+      const totalMeds = parseInt(document.getElementById('totalMeditations').textContent) + 1;
+      const totalMp = parseInt(document.getElementById('totalMpRestored').textContent) + mpRestored;
+      const focus = parseInt(document.getElementById('focusPoints').textContent) + 5;
+      
+      document.getElementById('totalMeditations').textContent = totalMeds;
+      document.getElementById('totalMpRestored').textContent = totalMp;
+      document.getElementById('focusPoints').textContent = focus;
+      
+      // Update progress
+      const count = totalMeds % 3;
+      document.getElementById('meditationCount').textContent = count + '/3';
+      document.getElementById('meditationFill').style.width = (count / 3 * 100) + '%';
+      
+      showToast(`✨ 冥想完成！恢复 ${mpRestored} MP`, 'success');
+      
+      // Update MP display (simulate)
+      const currentMp = parseInt(document.getElementById('currentMp').textContent);
+      const maxMp = parseInt(document.getElementById('maxMp').textContent);
+      const newMp = Math.min(maxMp, currentMp + mpRestored);
+      document.getElementById('currentMp').textContent = newMp;
+      document.getElementById('mpFill').style.width = (newMp / maxMp * 100) + '%';
+    }
+    
+    function updateTimerDisplay() {
+      const mins = Math.floor(meditationTime / 60);
+      const secs = meditationTime % 60;
+      document.getElementById('timerValue').textContent = 
+        `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    // Initialize
+    selectZone(1);
+  </script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>📬 邮件 - 深海掠夺者</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    body { padding-top: 0; }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 12px; z-index: 100; }
+    .header h1 { font-size: 16px; color: var(--accent); flex: 1; }
+    .back-btn { background: none; border: none; color: var(--accent); font-size: 20px; cursor: pointer; padding: 8px; }
+    .content { margin-top: 60px; padding: 12px; }
+    .mail-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 8px; }
+    .mail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .mail-type { font-size: 12px; padding: 4px 8px; background: rgba(0,212,170,0.2); color: var(--accent); border-radius: 4px; }
+    .mail-time { font-size: 11px; color: var(--text-dim); }
+    .mail-content { font-size: 13px; color: var(--text); line-height: 1.5; }
+    .mail-btn { padding: 8px 16px; background: var(--accent); color: #001a10; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; }
+    .del-btn { padding: 8px 16px; background: rgba(255,80,80,0.2); color: #ff6b6b; border: 1px solid rgba(255,80,80,0.5); border-radius: 8px; font-size: 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" onclick="location.href='/main.html'">←</button>
+    <h1>📬 邮件</h1>
+  </div>
+
+  <div class="content">
+    <div id="mailCount" style="font-size:13px;color:var(--text-dim);margin-bottom:12px">共 0 封邮件</div>
+    <button id="delAllBtn" onclick="deleteAllClaimed()" style="width:100%;padding:10px;background:rgba(255,80,80,0.2);border:1px solid rgba(255,80,80,0.5);color:#ff6b6b;border-radius:10px;font-size:13px;cursor:pointer;margin-bottom:12px">🗑️ 一键删除已领取邮件</button>
+    <div id="mailList"><div class="loading">加载中...</div></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/shared.js"></script>
+  <script>
+    let allMessages = [];
+
+    async function loadInbox() {
+      try {
+        const res = await fetch(`${API_BASE}/messages/inbox`, { headers: getAuthHeader() });
+        const data = await res.json();
+        allMessages = data.messages || data.data?.messages || [];
+        renderInbox();
+      } catch (e) { document.getElementById('mailList').innerHTML = '<div class="loading">加载失败</div>'; }
+    }
+
+    function renderInbox() {
+      document.getElementById('mailCount').textContent = `共 ${allMessages.length} 封邮件`;
+      const el = document.getElementById('mailList');
+      if (!allMessages.length) { 
+        el.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:40px">暂无邮件</div>'; 
+        return; 
+      }
+      el.innerHTML = allMessages.map(m => {
+        const typeLabel = m.message_type === 'system' ? '系统' : m.message_type === 'gift' || m.message_type === 'system_gift' ? '礼物' : '邮件';
+        const hasAttachments = m.attachments && m.attachments.length > 0;
+        const isClaimed = m.status === 'claimed';
+        // 没有附件的可以删除，有附件但已领取的也可以删除
+        const canDelete = !hasAttachments || isClaimed;
+        return `
+          <div class="mail-item">
+            <div class="mail-header">
+              <span class="mail-type">${typeLabel}</span>
+              <span class="mail-time">${new Date(m.created_at).toLocaleString()}</span>
+            </div>
+            <div class="mail-content">${m.content}</div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              ${hasAttachments && !isClaimed ? `<button class="mail-btn" onclick="claimMail('${m.id}')">领取附件</button>` : ''}
+              ${canDelete ? `<button class="mail-btn" style="background:rgba(255,80,80,0.2);border-color:rgba(255,80,80,0.5);color:#ff6b6b" onclick="deleteMail('${m.id}')">删除</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function claimMail(msgId) {
+      try {
+        const res = await fetch(`${API_BASE}/messages/claim`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ message_id: msgId })
+        });
+        const data = await res.json();
+        if (data.success || data.code === 0) {
+          showToast(`领取成功！`);
+          loadInbox();
+        } else {
+          showToast(data.message || '领取失败', 'error');
+        }
+      } catch (e) { showToast('网络错误', 'error'); }
+    }
+
+    async function deleteMail(msgId) {
+      showOceanConfirm('确定删除这封邮件？', async function() {
+      try {
+        const res = await fetch(`${API_BASE}/messages/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ message_id: msgId })
+        });
+        const data = await res.json();
+        if (data.success || data.code === 0) {
+          showToast('已删除');
+          loadInbox();
+        } else {
+          showToast(data.message || '删除失败', 'error');
+        }
+      } catch (e) { showToast('网络错误', 'error'); }
+      });
+    }
+
+    async function deleteAllClaimed() {
+      showOceanConfirm('确定删除所有已领取的邮件？', async function() {
+      try {
+        const res = await fetch(`${API_BASE}/messages/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ delete_all: true })
+        });
+        const data = await res.json();
+        if (data.success || data.code === 0) {
+          showToast(`已删除 ${data.deleted || 0} 封邮件`);
+          loadInbox();
+        } else {
+          showToast(data.message || '删除失败', 'error');
+        }
+      } catch (e) { showToast('网络错误', 'error'); }
+      });
+    }
+
+    function showOceanConfirm(msg, onConfirm) {
+      var overlay = document.createElement('div');
+      overlay.id = 'oceanConfirm';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:99999;display:flex;align-items:center;justify-content:center;';
+      overlay.innerHTML = '<div style="background:linear-gradient(160deg,rgba(0,40,80,0.98) 0%,rgba(0,15,50,0.99);border:2px solid rgba(0,180,255,0.45);border-radius:28px;max-width:310px;width:90%;padding:32px 24px;text-align:center;box-shadow:0 0 50px rgba(0,150,200,0.2),0 20px 60px rgba(0,0,0,0.7);animation:oceanPop 0.3s cubic-bezier(0.175,0.885,0.32,1.275)">' +
+        '<div style="font-size:54px;margin-bottom:14px;animation:oceanWave 2s ease-in-out infinite alternate">🌊</div>' +
+        '<div style="font-size:15px;color:#00d4ff;margin-bottom:10px;font-weight:700;text-shadow:0 0 14px rgba(0,212,255,0.45)">确定要删除吗？</div>' +
+        '<div style="font-size:12px;color:rgba(180,230,255,0.6);margin-bottom:26px;line-height:1.7">'+msg+'</div>' +
+        '<div style="display:flex;gap:10px">' +
+          '<button id="oceanCancel" style="flex:1;padding:14px;border-radius:18px;font-size:14px;cursor:pointer;background:rgba(255,255,255,0.06);border:1px solid rgba(0,180,255,0.2);color:rgba(180,230,255,0.7)">取消</button>' +
+          '<button id="oceanOk" style="flex:1;padding:14px;border-radius:18px;font-size:14px;cursor:pointer;background:linear-gradient(135deg,rgba(0,140,200,0.9),rgba(0,70,160,0.9));border:none;color:#fff;font-weight:700;box-shadow:0 6px 24px rgba(0,140,200,0.3)">确定</button>' +
+        '</div>' +
+        '<style>@keyframes oceanPop{0%{opacity:0;transform:scale(0.7)}100%{opacity:1;transform:scale(1)}}@keyframes oceanWave{0%{transform:translateY(0) rotate(-3deg)}100%{transform:translateY(-7px) rotate(3deg)}}</style>' +
+      '</div>';
+      document.body.appendChild(overlay);
+      document.getElementById('oceanCancel').addEventListener('click', function() { overlay.remove(); });
+      document.getElementById('oceanOk').addEventListener('click', function() { overlay.remove(); if(onConfirm) onConfirm(); });
+      overlay.addEventListener('click', function(e) { if(e.target===overlay) overlay.remove(); });
+    }
+
+    loadInbox();
+  </script>
+</body>
+</html>
